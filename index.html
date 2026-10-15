@@ -4942,6 +4942,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (a === 'doimport') { const d = S._import; if (!d) return; S.world = Object.assign(blankWorld(), d.world); for (const c of d.careers) { migrateCareer(c); Store.save('career', c); } Store.save('world', S.world); S.p = S.world.activeId ? d.careers.find(c => c.id === S.world.activeId) || null : null; await worldReady(); if (S.migMsg) { setTimeout(() => toast(S.migMsg), 3600); S.migMsg = ''; } if (S.p) S.choice = defaultChoice(S.p); if (d.crests && typeof d.crests === 'object') { S.crests = Object.assign({}, S.crests, d.crests); saveCrests(); } S._import = null; toast('세이브를 불러왔어요.'); S.view = 'world'; render(); return; }
     if (a === 'crestclear') { if (!S._clearArm) { S._clearArm = true; S.crestMsg = '한 번 더 누르면 직접 넣은 엠블럼을 모두 지워요.'; render(); setTimeout(() => { S._clearArm = false; }, 4000); return; } S._clearArm = false; S.crests = {}; saveCrests(); S.crestMsg = '모두 지웠어요.'; render(); return; }
     if (a === 'cancelimport') { S._import = null; $('#importconfirm').hidden = true; return; }
+    if (a === 'importcrests') { const d = S._import; if (!d?.crests) return; const n = Object.keys(d.crests).length; S.crests = Object.assign({}, S.crests, d.crests); saveCrests(); S._import = null; toast(`엠블럼 ${n}개를 가져왔어요. 세계선은 그대로예요.`); render(); return; }
   }
 
   async function exportSave() {
@@ -4954,7 +4955,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   }
   function importFile(file) {
     if (!file) return; const fr = new FileReader();
-    fr.onload = () => { try { const d = JSON.parse(fr.result); if (d.app !== 'sekaisen-career' || !d.world) throw 0; S._import = d; const b = $('#importconfirm'); b.hidden = false; b.innerHTML = `<p>‘${esc(d.world.name)}’(커리어 ${d.world.careers.length}개)로 지금 세계선을 덮어써요. 되돌릴 수 없어요.</p><div class="row"><button class="btn" data-act="cancelimport">취소</button><button class="btn primary" data-act="doimport">덮어쓰기</button></div>`; $$('[data-act]', b).forEach(x => x.onclick = () => act(x.dataset.act, x)); } catch { toast('세계선 커리어 세이브 파일이 아니에요.'); } };
+    fr.onload = () => { try { const d = JSON.parse(fr.result); if (d.app !== 'sekaisen-career' || !d.world) throw 0; S._import = d; const b = $('#importconfirm'); b.hidden = false; const nc = d.crests && typeof d.crests === 'object' ? Object.keys(d.crests).length : 0; b.innerHTML = `<p>‘${esc(d.world.name)}’(커리어 ${d.world.careers.length}개)로 지금 세계선을 덮어써요. 되돌릴 수 없어요.${nc ? ` 직접 넣은 엠블럼 ${nc}개도 같이 들어 있어요. 엠블럼만 가져오면 지금 세계선은 그대로 둬요.` : ''}</p><div class="row wrapgap"><button class="btn" data-act="cancelimport">취소</button>${nc ? `<button class="btn" data-act="importcrests">엠블럼만 가져오기</button>` : ''}<button class="btn primary" data-act="doimport">덮어쓰기</button></div>`; $$('[data-act]', b).forEach(x => x.onclick = () => act(x.dataset.act, x)); } catch { toast('세계선 커리어 세이브 파일이 아니에요.'); } };
     fr.readAsText(file);
   }
   async function runSample(id) {
