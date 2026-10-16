@@ -5566,7 +5566,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const kids = parent?.kids || [];
     // 세계선: 후손은 부모가 있는 세계선(과 그 갈래)에서만
     const lineIds = Object.keys(S.world.lines || { L0: 1 });
-    const allowed = f.mode === 'heir' && parent ? lineIds.filter(id => E.lineChain(S.world, id).some(x => x.id === (parent.line || 'L0') && (x.cut === Infinity || x.cut > parent.startYear))) : lineIds;
+    const kb = parent && f.kid >= 0 ? parent.kids?.[f.kid]?.born : null; const allowed = f.mode === 'heir' && parent ? lineIds.filter(id => E.lineChain(S.world, id).some(x => { if (x.id !== (parent.line || 'L0')) return false; const k = Math.min(x.cut, x.only?.[parent.id] ?? Infinity); return k === Infinity || k > (kb ?? parent.startYear); })) : lineIds;
     if (!allowed.includes(f.line)) f.line = allowed.includes(parent?.line) ? parent.line : (allowed.includes(S.viewLine) ? S.viewLine : allowed[0] || 'L0');
     const ledN = E.lineView(S.world, f.line); const span = ledN && ledN.people.length ? [Math.min(...ledN.people.map(c => c.startYear)), Math.max(...ledN.people.map(c => Math.min(c.endYear, (ledN.cut[c.id] ?? Infinity) - 1)))] : null;
     const lineFld = retired.length ? `<div class="fld"><span>세계선</span>${lineIds.length > 1 ? `<select id="f-line" class="inp">${allowed.map(id => `<option value="${id}" ${id === f.line ? 'selected' : ''}>${esc(lineLabel(id))}</option>`).join('')}</select>` : ''}<p class="muted small">${span ? `이 세계선엔 ${span[0]}–${span[1]}년의 기록이 있어요. 기록이 있는 해에 뛰면 역사가 버티고, 기록된 우승·발롱도르를 뒤집으면 세계선이 갈라져요. 그때 뛰던 선배들도 동료나 상대로 나와요.` : '아직 기록이 없는 세계선이에요.'}</p></div>` : '';
@@ -6357,7 +6357,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function keepMemo() { const m = $('#memo'); if (m && S.choice) S.choice.memo = m.value; }
   function setParent(id) {
     const f = S.newForm; const par = S.world.careers.find(c => c.id === id); if (!par) return;
-    f.parentId = id; f.nation = par.nation; f.club = par.topClubs[0]?.club || par.homeClub || f.club; f.look = AVATAR.inherit(par.look, Math.random, par.nation);
+    f.parentId = id; if (par.line && (S.world.lines || {})[par.line]) f.line = par.line; f.nation = par.nation; f.club = par.topClubs[0]?.club || par.homeClub || f.club; f.look = AVATAR.inherit(par.look, Math.random, par.nation);
     setKid((par.kids || []).length ? 0 : -1);
   }
   function setKid(i) {
