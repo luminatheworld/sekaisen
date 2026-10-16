@@ -543,6 +543,26 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .alm-split { border: 1px dashed #8f84e8; border-radius: 12px; padding: 9px 12px; margin-top: 10px; } .alm-split span { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: #8f84e8; } .alm-split p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.5; }
 .alm-p.ghost { opacity: .62; border-style: dashed; } .alm-p.ghost .px { filter: grayscale(1); } .alm-p.ghost p { margin: 0; line-height: 1.5; }
 .alm-p .memo { margin: 2px 0 0; font-size: 13px; }
+.cc-wi { text-align: center; font-size: 12px; font-weight: 800; letter-spacing: .06em; color: #b8a8ff; margin: 6px 0 -4px; }
+.pill.wi { background: rgba(143, 132, 232, .16); color: #8f84e8; box-shadow: inset 0 0 0 1px rgba(143, 132, 232, .5); }
+.wi-cmp, .wi-kids { margin-top: 16px; border-top: 1px solid rgba(255, 255, 255, .12); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; }
+.wi-eye { font-size: 10.5px; font-weight: 900; letter-spacing: .1em; color: #b8a8ff; }
+.wi-v { font-size: 17px; font-weight: 800; margin: 0; } .wi-q { font-size: 13px; font-style: italic; opacity: .75; margin: 0; }
+.wi-t { border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; min-width: 260px; }
+.wi-t th, .wi-t td { padding: 5px 12px; border-bottom: 1px solid rgba(255, 255, 255, .08); } .wi-t thead th { font-size: 11px; opacity: .7; font-weight: 700; }
+.wi-t tbody th { text-align: left; font-weight: 600; opacity: .8; } .wi-t td { text-align: right; font-weight: 800; } .wi-t td.up { color: #7fd6a0; } .wi-t td.dn { color: #e28a80; }
+.wi-strip { align-self: stretch; max-width: 100%; overflow-x: auto; padding-bottom: 4px; }
+.wi-grid { display: grid; gap: 3px 2px; align-items: center; justify-items: center; width: max-content; margin: 0 auto; }
+.wi-grid > span { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 5px; } .wi-grid > span i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .15); }
+.wi-grid > span.wi-rl { width: auto; white-space: nowrap; padding-right: 6px; font-size: 11px; font-weight: 800; opacity: .75; justify-self: end; }
+.wi-grid > span.fork { box-shadow: inset 0 0 0 1.5px #e9bc55; } .wi-grid small { font-size: 9.5px; opacity: .6; } .wi-grid small.fork { color: #e9bc55; opacity: 1; font-weight: 800; }
+.wi-kids .link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.wi-open { border: 1px solid rgba(143, 132, 232, .45); background: linear-gradient(180deg, rgba(143, 132, 232, .10), transparent 70%); }
+.wi-open .wi-eye { display: block; margin-bottom: 8px; } .wi-txt { font-family: 'Noto Serif KR', serif; font-size: 15.5px; line-height: 1.85; margin: 0 0 10px; }
+.wi-pts { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.wi-pt { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; font: inherit; }
+.wi-pt b { font-size: 15px; } .wi-pt small { font-size: 12.5px; color: var(--muted); } .wi-pt.on { border-color: #8f84e8; box-shadow: 0 0 0 2px rgba(143, 132, 232, .35); }
+.wi-ver { list-style: none; padding: 0; margin: 4px 0 10px; display: grid; gap: 6px; } .wi-ver li { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13.5px; border-bottom: 1px solid var(--line); padding-bottom: 6px; } .wi-ver li span { color: var(--muted); }
 .cut.split { background: radial-gradient(ellipse at 50% 42%, #302b78 0%, #15123a 50%, #06050f 100%); }
 </style>
 <div id="app"></div>
@@ -916,6 +936,7 @@ const ENGINE = (() => {
   function managerFor(clubId, year, world, p) {
     const ov = p?.mgrOverride?.[clubId + '|' + year]; if (ov) return ov;
     const led = ledOf(world, p); for (const lg of (led ? led.coaches : (world?.careers || []))) for (const st of (lg.coach?.stints || [])) {
+      if (p && !notMe(p, lg)) continue; if (led && st.from >= (led.cut[lg.id] ?? Infinity)) continue;
       if (st.club === clubId && year >= st.from && year <= st.to) return { name: lg.name, style: lg.coach.style, q: lg.coach.q, legendId: lg.id, legend: true, family: lg.familyId, blk: 'L' + lg.id + st.from };
     }
     const off = hashStr(clubId) % 4; const blk = Math.floor((year + off) / 4);
@@ -929,26 +950,29 @@ const ENGINE = (() => {
   // 갈라진 세계선은 갈라지기 전까지의 역사를 함께 쓰고, 원래 세계선은 그대로 남는다.
   const INERTIA = { league: 2.2, cont: 2.4, nat: 2.2, bdo: 3, award: 1 };
   function lineChain(world, lineId) {
-    const L = world?.lines || {}; const out = []; let id = lineId || 'L0'; let cut = Infinity; const seen = new Set();
-    while (id && !seen.has(id)) { seen.add(id); out.push({ id, cut }); const ln = L[id]; if (!ln || !ln.parent) break; cut = Math.min(cut, ln.split); id = ln.parent; }
+    const L = world?.lines || {}; const out = []; let id = lineId || 'L0'; let cut = Infinity; const seen = new Set(); const only = {};
+    // '만약' 세계선은 한 사람의 인생만 갈라 낸다: 부모 세계선의 다른 주인공 기록은 그대로 이어진다
+    while (id && !seen.has(id)) { seen.add(id); out.push({ id, cut, only: { ...only } }); const ln = L[id]; if (!ln || !ln.parent) break; if (ln.whatIf) only[ln.whatIf.of] = Math.min(only[ln.whatIf.of] ?? Infinity, ln.split); else cut = Math.min(cut, ln.split); id = ln.parent; }
     return out;
   }
   // 이 세계선에서 사실로 남은 기록. 기록 연도는 시즌 연도(여름 대회·발롱도르는 그 시즌)로 비교한다
   function buildLedger(world, lineId, exclude) {
-    const chain = lineChain(world, lineId); const cutOf = new Map(chain.map(c => [c.id, c.cut]));
+    const chain = lineChain(world, lineId); const cutOf = new Map(chain.map(c => [c.id, c.cut])); const onlyOf = new Map(chain.map(c => [c.id, c.only || {}]));
     const led = { world, line: lineId || 'L0', chain, lg: {}, cont: {}, nat: {}, bdo: {}, award: {}, seasons: [], people: [], cut: {}, retired: {}, hof: {}, coaches: [] };
     for (const c of world?.careers || []) {
       if (!c.line || (exclude && c.id === exclude)) continue;
-      const k = cutOf.get(c.line); if (k == null) continue;
+      let k = cutOf.get(c.line); if (k == null) continue; const ok = onlyOf.get(c.line)?.[c.id]; if (ok != null) k = Math.min(k, ok);
       if (c.startYear >= k) continue; // 갈라진 뒤에 데뷔한 선수는 이 세계선에 없다
       led.cut[c.id] = k; led.people.push(c); if (c.coach) led.coaches.push(c);
+      // '만약' 커리어: 갈라지기 전의 기록은 원래 인생의 것이다. 겹쳐 세지 않는다
+      const f0 = c.whatIf ? c.whatIf.y : -Infinity; const inR = (y) => y < k && y >= f0;
       const h = c.hist || {}; const who = { by: c.id, name: c.name };
-      (h.lg || []).forEach(([y, lg, club]) => { if (y < k) led.lg[lg + '|' + y] = { club, ...who }; });
-      (h.cont || []).forEach(([y, comp, club]) => { if (y < k) led.cont[comp + '|' + y] = { club, ...who }; });
-      (h.nat || []).forEach(([Y, kind, nation]) => { if (Y - 1 < k) led.nat[kind + '|' + Y] = { nation, ...who }; });
-      (c.bdoYears || []).forEach(Y => { if (Y - 1 < k) led.bdo[Y] = who; });
-      (h.aw || []).forEach(([y, lg, a, v]) => { if (y < k) led.award[a + '|' + lg + '|' + y] = { v, ...who }; });
-      (h.s || []).forEach(s => { if (s[0] < k) led.seasons.push({ c, s }); });
+      (h.lg || []).forEach(([y, lg, club]) => { if (inR(y)) led.lg[lg + '|' + y] = { club, ...who }; });
+      (h.cont || []).forEach(([y, comp, club]) => { if (inR(y)) led.cont[comp + '|' + y] = { club, ...who }; });
+      (h.nat || []).forEach(([Y, kind, nation]) => { if (inR(Y - 1)) led.nat[kind + '|' + Y] = { nation, ...who }; });
+      (c.bdoYears || []).forEach(Y => { if (inR(Y - 1)) led.bdo[Y] = who; });
+      (h.aw || []).forEach(([y, lg, a, v]) => { if (inR(y)) led.award[a + '|' + lg + '|' + y] = { v, ...who }; });
+      (h.s || []).forEach(s => { if (inR(s[0])) led.seasons.push({ c, s }); });
     }
     // 영구결번·명예의 전당은 그 일이 일어난 해부터, 그 세계선에서만
     for (const [cid, list] of Object.entries(world?.retired || {})) for (const r of list) { const k = led.cut[r.careerId]; if (k != null && r.year < k) (led.retired[cid] = led.retired[cid] || []).push(r); }
@@ -966,6 +990,88 @@ const ENGINE = (() => {
   // 화면이 지금 어느 세계선을 보고 있는지 알려준다 (진행 중인 커리어의 세계선)
   function useLine(world, lineId) { CUR = world ? { world, line: lineId || 'L0' } : null; return CUR ? lineView(world, CUR.line) : null; }
   function ledOf(world, p) { const w = world || CUR?.world; if (!w || !w.lines) return null; return lineView(w, p?.line || (CUR && CUR.world === w ? CUR.line : null) || 'L0'); }
+  // ---------- 만약 (What If) ----------
+  // 은퇴한 커리어의 갈림길을 골라, 그 시점의 선수를 되살려 다른 인생을 산다. 원래 기록은 건드리지 않는다
+  const WI_FATE = { parent: '가족을 잃은 해가', crash: '그 교통사고가', heart: '그날 그라운드에 쓰러진 일이', ban: '그 도핑 징계가', fixing: '승부조작 수사가', robbery: '그 밤의 강도 사건이', matefall: '동료에게 닥친 비극이', fold: '구단의 붕괴가', halt: '리그가 멈춘 일이', late: '서른 즈음의 기적이' };
+  const roTo = (w) => { const ch = String(w).slice(-1); const c = ch.charCodeAt(0) - 0xAC00; const j = c >= 0 && c < 11172 ? c % 28 : (/[013678]$/.test(ch) ? 8 : 0); return w + (j === 0 || j === 8 ? '로' : '으로'); };
+  function whatIfPoints(doc) {
+    if (!doc || !(doc.seasons || []).length) return []; const P = []; const by = doc.birthYear; const S = doc.seasons;
+    const ageAt = (y) => S.find(s => s.year === y)?.age ?? (y - by);
+    (doc.injuries || []).filter(i => i.year != null && (i.major || (i.weeks || 0) >= 20) && i.id !== 'crash' && i.id !== 'heart').forEach(i => P.push({ kind: 'inj', y: i.year, id: i.id, label: `${ageAt(i.year)}세의 ${jo(i.name || '부상', '이', '가')} 없었다면`, sub: `${slY(i.year)} · ${i.weeks}주 결장` }));
+    Object.keys(doc.flags || {}).forEach(k => { const m = /^f_f_(\w+)$/.exec(k); const y = doc.flags[k]; if (!m || typeof y !== 'number' || !WI_FATE[m[1]]) return; P.push({ kind: 'fate', y, id: m[1], label: `${ageAt(y)}세, ${WI_FATE[m[1]]} 없었다면`, sub: `${slY(y)} · 운명의 사건` }); });
+    for (let i = 1; i < S.length; i++) { const a = S[i - 1], b = S[i]; if (a.club === b.club || a.loan || b.loan || a.youthTeam) continue; P.push({ kind: 'stay', y: b.year, id: a.club, label: `${b.age}세, ${CLUB[a.club]?.name || a.club}에 남았다면`, sub: `${slY(b.year)} · 원래는 ${roTo(CLUB[b.club]?.name || b.club)} 이적` }); }
+    const last = S[S.length - 1]; if (last && !doc.forcedRetire && last.age <= 37) P.push({ kind: 'retire', y: last.year + 1, id: 'retire', label: `${last.age}세에 은퇴하지 않았다면`, sub: `${slY(last.year + 1)} · 한 시즌 더` });
+    const seen = new Set(); return P.filter(x => { const k = x.kind + x.y + x.id; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => a.y - b.y);
+  }
+  function rewind(doc, pt) {
+    const p = JSON.parse(JSON.stringify(doc)); const Y = pt.y;
+    const keep = p.seasons.filter(s => s.year < Y), cut = p.seasons.filter(s => s.year >= Y);
+    const sY = doc.seasons.find(s => s.year === Y) || null; const prev = keep[keep.length - 1] || null; const ref = (pt.kind === 'stay' ? prev : sY) || prev || sY;
+    // 능력치: 앞으로는 시즌 시작 스냅숏, 옛 기록은 시즌별 변화량을 거꾸로 뺀다
+    if (sY && sY.a0) p.attrs = { ...sY.a0 };
+    else for (const s of cut) for (const [k, d] of Object.entries(s.attrD || {})) p.attrs[k] = clamp((p.attrs[k] || 0) - d, 10, 99);
+    p.pos = (sY || prev || p).pos || p.pos;
+    if (sY && sY.ceil0 != null) p.ceil = sY.ceil0; else p.ceil = clamp((p.ceil || 0) - cut.reduce((a, s) => a + (s.ceilD || 0), 0), -6, 8);
+    // 시즌 시작 OVR이 기록과 맞는지 확인하고, 어긋나면 능력치 전체를 고르게 맞춘다
+    const target = sY ? sY.ovrStart : prev ? prev.ovrEnd : null; let adj = 0;
+    if (target != null && !(sY && sY.a0)) { for (let it = 0; it < 3; it++) { const d = target - ovrOf(p.attrs, p.pos); if (Math.abs(d) < .05) break; adj += d; for (const k of Object.keys(POS[p.pos].w)) p.attrs[k] = clamp((p.attrs[k] || 0) + d, 10, 99); } }
+    const verify = { target, got: Math.round(ovrOf(p.attrs, p.pos)), adj: +adj.toFixed(1), exact: !!(sY && sY.a0) };
+    p.year = Y; p.age = sY ? sY.age : prev ? prev.age + 1 : p.age;
+    p.youth = !!(sY ? sY.youthTeam : false) && p.age < 19;
+    p.club = pt.kind === 'stay' ? prev.club : (sY ? sY.club : prev ? prev.club : p.club); p.loanFrom = null;
+    p.number = (ref && ref.number) || p.number; p.role = (ref && ref.role) || p.role;
+    const yr = (x) => x == null || x < Y;
+    p.seasons = keep;
+    p.trophies = (p.trophies || []).filter(t => yr(t.year)); p.awards = (p.awards || []).filter(a => yr(a.year));
+    p.finals = (p.finals || []).filter(f => f.national ? f.year <= Y : yr(f.year));
+    const natGone = (p.national || []).filter(n => n.year > Y); p.national = (p.national || []).filter(n => n.year <= Y);
+    p.bdoYears = (p.bdoYears || []).filter(y => y <= Y); p.injuries = (p.injuries || []).filter(i => yr(i.year));
+    p.caps = Math.max(0, (p.caps || 0) - cut.reduce((a, s) => a + (s.caps || 0), 0) - natGone.filter(n => n.senior !== false).reduce((a, n) => a + (n.games || 0), 0));
+    p.intlGoals = Math.max(0, (p.intlGoals || 0) - cut.reduce((a, s) => a + (s.intlGoals || 0), 0) - natGone.filter(n => n.senior !== false).reduce((a, n) => a + (n.g || 0), 0));
+    p.wageHist = (p.wageHist || []).filter(w => pt.kind === 'stay' ? w.year < Y : w.year <= Y);
+    const lw = p.wageHist[p.wageHist.length - 1]; p.wage = lw ? lw.wage : (prev?.wage ?? p.wage);
+    p.contract = lw && lw.years ? Math.max(1, lw.years - (Y - lw.year)) : 2; if (p.youth) p.contract = 0;
+    p.earned = +keep.reduce((a, s) => a + (s.wage || 0), 0).toFixed(2);
+    p.peakOvr = Math.max(0, ...keep.filter(s => !s.youthTeam).map(s => s.ovrEnd || 0), verify.got);
+    if (prev && prev.meters) { p.morale = prev.meters.morale; p.trust = prev.meters.trust; p.rep = prev.meters.rep; }
+    const clubsKept = new Set(keep.map(s => s.club).concat([p.club])); Object.keys(p.fans || {}).forEach(c => { if (!clubsKept.has(c)) delete p.fans[c]; }); if (prev && prev.meters && p.fans) p.fans[prev.club] = prev.meters.fans;
+    p.kids = (p.kids || []).filter(k => k.born == null || k.born < Y);
+    p.numbers = (p.numbers || []).filter(n => n.year == null || n.year < Y || (pt.kind !== 'stay' && n.year === Y));
+    p.arcs = (p.arcs || []).filter(a => a.from < Y); p.clubMods = (p.clubMods || []).filter(m => m.from <= Y);
+    p.legends = (p.legends || []).filter(e => (String(e.ys || '').includes('/') ? e.y : e.y - 1) < Y);
+    p.feats = (p.feats || []).filter(e => (e.nation ? e.year - 1 : e.year) < Y);
+    p.press = (p.press || []).filter(x => yr(x.year)); p.branches = (p.branches || []).filter(b => b.year < Y);
+    p.pkLog = (p.pkLog || []).filter(x => x.y == null || x.y < Y); p.bigLog = (p.bigLog || []).filter(x => x.y == null || x.y < Y);
+    const F = p.flags || {}; for (const k of Object.keys(F)) { const v = F[k]; if (typeof v === 'number' && v >= 1990 && v >= Y) delete F[k]; else if (v && typeof v === 'object' && typeof v.year === 'number' && v.year >= Y) delete F[k]; }
+    ['lastSeason', 'fateRetire', 'early', 'fateMove', 'scandal'].forEach(k => { if (F[k] != null && !(typeof F[k] === 'number' && F[k] < Y)) delete F[k]; });
+    if (pt.kind === 'fate') F['f_f_' + pt.id] = 'blocked';
+    if (pt.kind === 'inj') F.wiNoInj = { y: Y, id: pt.id };
+    const fz = Object.keys(F).filter(k => /^f_f_/.test(k) && typeof F[k] === 'number'); F.fateN = fz.length; F.fateY = fz.length ? Math.max(...fz.map(k => F[k])) : -99;
+    if (p.intlRetired && !(F.intlRetY < Y)) p.intlRetired = false;
+    p.status = 'active'; p.forcedRetire = false; p.released = false; p.wantOut = false; p.wantOutNext = false; p.pendingOffers = []; p.pendingEvents = []; p.renewOffer = null;
+    delete p.retireMemo; delete p.coach; delete p.hidden;
+    const orig = doc.seasons.map(s => [s.year, s.club, s.age, s.ovrEnd, !!s.loan]); const oInj = (doc.injuries || []).filter(i => i.major || (i.weeks || 0) >= 20).map(i => [i.year, i.name]);
+    p.id = 'c' + Date.now().toString(36) + Math.floor(R() * 1e6).toString(36);
+    p.whatIf = { of: doc.id, y: Y, kind: pt.kind, pid: pt.id, label: pt.label, verify, orig, oInj, oEnd: doc.seasons[doc.seasons.length - 1].year, oRetAge: doc.seasons[doc.seasons.length - 1].age, seen: false };
+    return p;
+  }
+  // 갈림길에서 새 세계선을 연다. 그 사람의 인생만 갈라지고, 다른 주인공들의 역사는 그대로 이어진다
+  function forkWhatIf(world, doc, pt) {
+    const p = rewind(doc, pt); const w = world; w.lines = w.lines || {};
+    const parent = doc.line || 'L0'; const n = Object.keys(w.lines).length; const id = 'L' + n + '-' + Date.now().toString(36).slice(-4);
+    w.lines[id] = { id, name: `만약 · ${doc.name} ${slY(pt.y)}`, parent, split: pt.y, by: p.id, byName: doc.name, what: pt.label, whatIf: { of: doc.id, kind: pt.kind }, created: Date.now() };
+    p.line = id; return p;
+  }
+  // 원래 인생이 지나간 자리를 스치는 문장. 게임에는 아무 효과가 없다
+  function wiEcho(p, res) {
+    const W = p.whatIf; if (!W || !W.orig) return; const o = W.orig.find(r => r[0] === res.year); const F = p.flags;
+    const L = [];
+    if (o && o[1] !== res.club && !F.wiDiv) { F.wiDiv = res.year; L.push(`원래의 세계선에서, 그는 이 해 ${CLUB[o[1]]?.name || o[1]}에서 뛰고 있었다.`); }
+    else if (o && o[1] !== res.club && res.year - (F.wiDiv || 0) >= 4 && R() < .5) { F.wiDiv = res.year; L.push(`어딘가에서는 ${o[2]}세의 그가 ${CLUB[o[1]]?.name || o[1]}의 유니폼을 입고 있다.`); }
+    const oi = (W.oInj || []).find(i => i[0] === res.year); if (oi && !(p.injuries || []).some(i => i.year === res.year && (i.major || i.weeks >= 20))) L.push(`원래라면 이 시즌에 ${jo(oi[1], '이', '가')} 찾아왔을 것이다. 이번에는 아니었다.`);
+    if (res.year === W.oEnd + 1 && W.kind !== 'retire') L.push(`원래의 그는 지난여름 축구화를 벗었다. 여기서 그는 아직 뛰고 있다.`);
+    if (L.length) res.notes = (res.notes || []).concat(L.slice(0, 2));
+  }
   // 기록된 결과가 뒤집혔다: 새 세계선을 만든다. 한 시즌에 한 번만
   function overturn(world, p, year, what, res) {
     const w = world || CUR?.world; if (!w || !w.lines) return null;
@@ -1035,14 +1141,16 @@ const ENGINE = (() => {
     world.v = Math.max(world.v || 2, 3); return out;
   }
   // 세계선의 선배: 그 해 그 구단에 있던 이전 주인공들 (갈라진 뒤에도 그 사람의 길은 이어진다. 결과만 묶이지 않을 뿐)
+  // 나 자신(만약 커리어라면 원래의 나와, 같은 사람의 다른 만약까지)은 세계선의 '다른 사람'이 아니다
+  const notMe = (p, c) => c.id !== p?.id && !(p?.whatIf && (c.id === p.whatIf.of || c.whatIf?.of === p.whatIf.of));
   function peopleAt(world, p, clubId, year) {
     const led = ledOf(world, p); if (!led) return [];
-    return led.people.filter(c => c.id !== p?.id && (c.stints || []).some(s => s.club === clubId && year >= s.from && year <= s.to) && year - c.birthYear >= 17)
+    return led.people.filter(c => notMe(p, c) && (c.stints || []).some(s => s.club === clubId && year >= s.from && year <= s.to) && year - c.birthYear >= 17)
       .map(c => ({ id: c.id, name: c.name, pos: c.pos, age: year - c.birthYear, look: c.look, nation: c.nation, peak: c.peakOvr, bound: year < (led.cut[c.id] ?? Infinity) }));
   }
   function nationStar(world, p, nation, Y) {
     const led = ledOf(world, p); if (!led) return null;
-    return led.people.filter(c => c.id !== p?.id && c.nation === nation && (c.caps || 0) >= 10 && Y - c.birthYear >= 19 && Y - c.birthYear <= 35 && Y >= c.startYear + 2 && Y <= c.endYear + 1).sort((a, b) => b.peakOvr - a.peakOvr)[0] || null;
+    return led.people.filter(c => notMe(p, c) && c.nation === nation && (c.caps || 0) >= 10 && Y - c.birthYear >= 19 && Y - c.birthYear <= 35 && Y >= c.startYear + 2 && Y <= c.endYear + 1).sort((a, b) => b.peakOvr - a.peakOvr)[0] || null;
   }
   // 구단 연대기: 주인공이 뛴 해는 그 기록, 나머지는 세계의 기본 흐름으로 순위를 잡고 시대 이름을 붙인다
   function clubChronicle(world, lineId, clubId, extra) {
@@ -1480,7 +1588,8 @@ const ENGINE = (() => {
     let pr = .32 + Math.max(0, p.age - 29) * .035 + (attitude === 'push' ? .1 : 0) - (attitude === 'manage' ? .12 : 0) + (60 - p.dur) / 220 + (p.flags.hamRecur ? .05 : 0);
     if (p.trait === 'pro') pr -= .06;
     if (R() > clamp(pr, .08, .8)) return null;
-    const inj = wpick(INJURIES, i => i.w * (i.major ? 1 + Math.max(0, p.age - 28) * .12 : 1) * bodyInj(p, i.id));
+    const nb = p.flags?.wiNoInj && p.flags.wiNoInj.y === p.year ? p.flags.wiNoInj.id : null; // '만약': 그 시즌의 그 부상만 일어나지 않는다
+    const inj = wpick(INJURIES, i => i.id === nb ? 0 : i.w * (i.major ? 1 + Math.max(0, p.age - 28) * .12 : 1) * bodyInj(p, i.id));
     const wk = inj.weeks[0] + Math.floor(R() * (inj.weeks[1] - inj.weeks[0] + 1));
     return { ...inj, weeks: wk };
   }
@@ -1622,7 +1731,7 @@ const ENGINE = (() => {
       const mates = peopleAt(world, p, p.club, year); if (mates.length) res.mates = mates.map(m => ({ id: m.id, name: m.name, pos: m.pos, age: m.age }));
       awardsFor(p, res, lg, rank, age, led, world);
     }
-    const a0 = { ...p.attrs }; const fam0 = famLevel(famOf(p, role.id));
+    const a0 = { ...p.attrs }; const fam0 = famLevel(famOf(p, role.id)); res.a0 = {}; for (const k of Object.keys(a0)) res.a0[k] = +(+a0[k]).toFixed(2); res.ceil0 = +(p.ceil || 0).toFixed(2);
     growth(p, res, share * (p.youth ? 1 : clamp(av + .15, 0, 1)), choice, mgr, mods);
     res.attrD = {}; for (const k of attrsFor(p.pos)) res.attrD[k] = +((p.attrs[k] || 0) - (a0[k] || 0)).toFixed(1);
     nationalTeam(p, res, mods);
@@ -1642,6 +1751,7 @@ const ENGINE = (() => {
     res.ovrEnd = Math.round(ovr(p));
     res.meters = { morale: Math.round(p.morale), trust: Math.round(p.trust), fans: Math.round(p.fans[p.club] ?? 0), rep: Math.round(p.rep) };
     p.peakOvr = Math.max(p.peakOvr, res.ovrEnd);
+    try { wiEcho(p, res); } catch { }
     p.seasons.push(res);
     res.trophies.forEach(t => p.trophies.push({ ...t, year, club: p.club }));
     res.awards.forEach(a => p.awards.push({ name: a, year }));
@@ -2404,7 +2514,7 @@ const ENGINE = (() => {
       homeClub: p.homeClub, talent: p.talent, curve: p.curve, custom: !!p.custom, kids: (p.kids || []).slice(), numByClub, fans: { ...p.fans }, injuries: (p.injuries || []).length, majorInj: (p.injuries || []).filter(i => i.major).length, number: p.number, foot: p.foot, weak: p.weak,
       earned: Math.round(p.earned || 0), peakWage: Math.max(0, ...(p.wageHist || []).map(w => w.wage), p.wage || 0), early: p.flags.early || null, P: p.P,
       temper: temperament(p), tmp: { big: +T(p).big.toFixed(2), nat: +T(p).nat.toFixed(2) },
-      hist: histOf(p), scars: scarsOf(p), line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
+      hist: histOf(p), scars: scarsOf(p), whatIf: p.whatIf ? { of: p.whatIf.of, y: p.whatIf.y, kind: p.whatIf.kind, label: p.whatIf.label } : null, line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
     };
   }
   // ---------- 영구결번 · 구단 명예의 전당 ----------
@@ -2552,7 +2662,7 @@ const ENGINE = (() => {
     LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
     FOOT_NAME, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -5030,6 +5140,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     else if (S.view === 'rules') body = viewRules();
     else if (S.view === 'card') body = viewCardPage();
     else if (S.view === 'crests') body = viewCrests();
+    else if (S.view === 'whatif' && S.wi) body = viewWhatIf();
     else body = viewWorld();
     app.innerHTML = nav + `<main class="wrap main ${['career', 'new'].includes(S.view) ? 'narrow' : ''}">${body}</main>`;
     bind(); showCuts();
@@ -5042,7 +5153,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const hero = `<section class="hero"><div><p class="eyebrow">${esc(w.name)}</p>
       <h1>${cs.length ? `${cs.length}명의 커리어가 쌓인 세계` : '아직 아무도 뛰지 않은 세계'}</h1>
       <p class="muted">${years ? `${years[0]}년부터 ${years[1]}년까지 이어진 세계선이에요. 은퇴한 선수는 감독이 되고, 자식은 가문을 잇고, 등번호는 결번으로 남아요.` : '첫 선수를 만들면 이 세계선의 역사가 시작돼요. 은퇴한 선수는 다음 커리어에서 감독으로 나타나고, 커리어 중 태어난 아이는 후손 커리어로 이어져요.'}</p></div>
-      <div class="herobtn">${S.p ? `<button class="btn primary" data-go="career">${esc(S.p.name)} 이어하기</button>` : ''}<button class="btn ${S.p ? '' : 'primary'}" data-act="new">새 커리어</button></div></section>`;
+      <div class="herobtn">${S.p ? `<button class="btn primary" data-go="career">${esc(S.p.name)} 이어하기</button>` : ''}${(w.paused || []).filter(x => !S.p || x.id !== S.p.id).map(x => `<button class="btn" data-act="resume" data-id="${x.id}">${esc(x.name)}${x.wi ? ' (만약)' : ''} 이어하기</button>`).join('')}<button class="btn ${S.p ? '' : 'primary'}" data-act="new">새 커리어</button></div></section>`;
     if (!cs.length) return hero + `<section class="panel"><h2>이렇게 이어져요</h2><ol class="flow"><li><b>선수 만들기</b> 이름, 국적, 유스 구단, 외모를 정해요. 재능은 숨겨져 있어서 될 놈인지는 뛰어 봐야 알아요.</li><li><b>시즌마다 사건</b> 이적 시장, 부상, 감독 교체, 더비, 연애와 결혼 같은 사건이 시즌마다 한두 개씩 터지고, 고르는 대로 커리어가 갈라져요.</li><li><b>여름엔 대표팀</b> 월드컵, 유로, 아시안컵, 올림픽 같은 대회를 경기 단위로 직접 치러요. 승부차기 방향도 직접 골라요.</li><li><b>은퇴와 계승</b> 영구결번, 감독 데뷔, 자식의 커리어까지 세계선에 남아요.</li></ol></section>` + dataPanel();
     const tabs = [['legends', '명예의 전당'], ['families', '가문'], ['coaches', '감독'], ['retired', '결번·헌액'], ['bdo', '발롱도르'], ['chron', '구단 연대기'], ['records', '역대 기록'], ['alm', '시즌 연감'], ['lines', '세계선 계보']];
     // 지금 보고 있는 세계선: 그 세계선의 역사에 남은 사람들만
@@ -5081,7 +5192,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   }
   // 세계선 이름과 설명
   function lineLabel(id) { const w = S.world; const l = (w.lines || {})[id]; if (!l) return id; const n = w.careers.filter(c => c.line === id).length; return `${l.name}${l.parent ? ` · ${sl(l.split)} 분기` : ''}${n ? ` · 커리어 ${n}` : ''}${S.p?.line === id ? ' · 진행 중' : ''}`; }
-  function lineDesc(id) { const w = S.world; const l = (w.lines || {})[id]; if (!l) return ''; if (!l.parent) return '처음부터 이어진 세계선이에요.'; const par = w.lines[l.parent]; return `${sl(l.split)} 시즌에 ${par?.name || '원래 세계선'}에서 갈라졌어요. ${l.byName ? l.byName + ' · ' : ''}${l.what || ''}. 그 전까지의 역사는 함께 쓰고, 그 뒤로는 따로 흘러요.`; }
+  function lineDesc(id) { const w = S.world; const l = (w.lines || {})[id]; if (!l) return ''; if (!l.parent) return '처음부터 이어진 세계선이에요.'; if (l.whatIf) return `${sl(l.split)} 시즌, ${l.byName}의 인생에서 갈라진 만약의 세계선이에요. ${l.what}. 다른 주인공들의 역사는 그대로 이어져요.`; const par = w.lines[l.parent]; return `${sl(l.split)} 시즌에 ${par?.name || '원래 세계선'}에서 갈라졌어요. ${l.byName ? l.byName + ' · ' : ''}${l.what || ''}. 그 전까지의 역사는 함께 쓰고, 그 뒤로는 따로 흘러요.`; }
   function viewLines(w) {
     const L = w.lines || {}; const kids = {}; Object.values(L).forEach(l => { if (l.parent) (kids[l.parent] = kids[l.parent] || []).push(l); });
     const own = (id) => w.careers.filter(c => c.line === id);
@@ -5107,13 +5218,13 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   // 커리어가 쌓일수록 같은 해에 겹치는 사람이 늘어난다. 나이테처럼.
   const ALM = { docs: {}, loading: new Set() };
   function almPeople(VL, led) {
-    const L = led.people.map(c => ({ c, cut: led.cut[c.id], live: false }));
-    if (S.p && (S.p.line || 'L0') === VL && S.p.seasons.length) L.push({ c: { id: S.p.id, name: S.p.name, pos: S.p.pos, nation: S.p.nation, look: S.p.look, birthYear: S.p.birthYear, startYear: S.p.startYear, endYear: S.p.year - 1, parentId: S.p.parentId, hist: E.histOf(S.p) }, cut: null, live: true, doc: S.p });
+    const L = led.people.map(c => ({ c, cut: led.cut[c.id], live: false, from: c.whatIf ? c.whatIf.y : null, re: led.people.some(q => q.whatIf?.of === c.id) }));
+    if (S.p && (S.p.line || 'L0') === VL && S.p.seasons.length) { if (S.p.whatIf) L.forEach(x => { if (x.c.id === S.p.whatIf.of) x.re = true; }); } if (S.p && (S.p.line || 'L0') === VL && S.p.seasons.length) L.push({ from: S.p.whatIf ? S.p.whatIf.y : null, c: { id: S.p.id, name: S.p.name, pos: S.p.pos, nation: S.p.nation, look: S.p.look, birthYear: S.p.birthYear, startYear: S.p.startYear, endYear: S.p.year - 1, parentId: S.p.parentId, whatIf: S.p.whatIf || null, hist: E.histOf(S.p) }, cut: null, live: true, doc: S.p });
     return L;
   }
-  const almOn = (x, y) => x.c.startYear <= y && y <= x.c.endYear && (x.cut == null || y < x.cut);
+  const almOn = (x, y) => x.c.startYear <= y && y <= x.c.endYear && (x.cut == null || y < x.cut) && (x.from == null || y >= x.from);
   // 갈라지기 전 세계선의 주인공: 갈라진 뒤에도 원래 세계선에선 뛰었지만, 이 세계선에는 그 뒤가 없다
-  const almGhost = (x, y) => x.cut != null && isFinite(x.cut) && y >= x.cut && x.c.startYear <= y && y <= x.c.endYear;
+  const almGhost = (x, y) => !x.re && x.cut != null && isFinite(x.cut) && y >= x.cut && x.c.startYear <= y && y <= x.c.endYear;
   function almSplits(w, led) { return (led.chain || []).map(c => w.lines?.[c.id]).filter(l => l && l.parent && l.split != null).map(l => ({ y: l.split, what: l.what || '', by: l.byName || '', name: l.name })); }
   function almGhostEntry(x, Y, w) {
     const c = x.c; const age = Y - c.birthYear; const h = (c.hist?.s || []).find(s => s[0] === Y); const home = w.lines?.[c.line]?.name || '원래 세계선';
@@ -5137,7 +5248,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const r = doc ? (doc.seasons || []).find(s => s.year === Y) : null; const h = (c.hist?.s || []).find(s => s[0] === Y);
     const clubId = r ? r.club : h ? h[1] : null; const lgK = r ? r.lg : h ? h[2] : null;
     const par = c.parentId ? led.people.find(q => q.id === c.parentId) || S.world.careers.find(q => q.id === c.parentId) : null;
-    const head = `<div class="alm-h">${ava(c.look, clubId || c.topClubs?.[0]?.club || c.homeClub, { gk: c.pos === 'GK', age, cls: 'sm' })}<div><b><button class="link" ${x.live ? 'data-go="career"' : `data-card="${c.id}"`}>${esc(c.name)}</button></b>${x.live ? ' <span class="pill gold">진행 중</span>' : ''}<small>${flag(c.nation)} ${age}세 · ${esc(E.POS[(r && r.pos) || c.pos]?.name || c.pos)}${par ? ` · ${esc(par.name)}의 2세` : ''}</small></div></div>`;
+    const head = `<div class="alm-h">${ava(c.look, clubId || c.topClubs?.[0]?.club || c.homeClub, { gk: c.pos === 'GK', age, cls: 'sm' })}<div><b><button class="link" ${x.live ? 'data-go="career"' : `data-card="${c.id}"`}>${esc(c.name)}</button></b>${x.live ? ' <span class="pill gold">진행 중</span>' : ''}${c.whatIf ? ' <span class="pill wi">만약</span>' : ''}<small>${flag(c.nation)} ${age}세 · ${esc(E.POS[(r && r.pos) || c.pos]?.name || c.pos)}${par ? ` · ${esc(par.name)}의 2세` : ''}</small></div></div>`;
     if (!clubId && !r) return `<li class="alm-p">${head}<p class="small muted">${doc === undefined ? '기록을 불러오는 중…' : age <= 18 ? '유스 팀에서 이름을 알리기 전이었다.' : '기록이 남지 않은 해.'}</p></li>`;
     const youth = r?.youthTeam; const loan = r?.loan;
     const apps = r ? r.apps : h[3], g = r ? r.goals : h[4], as = r ? r.assists : h[5], rt = r ? r.rating : h[6], rk = r ? r.rank : h[7];
@@ -5207,7 +5318,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   // 한 줄 목록: 피크 · 이름 · 포지션 · 기간 · 핵심 기록
   function legendRow(c, led) {
     const isGK = c.pos === 'GK';
-    return `<div class="legrow" role="button" tabindex="0" data-card="${c.id}"><span class="lr-ovr">${c.peakOvr}</span>${crest(c.topClubs[0]?.club, 'xs')}<span class="lr-main"><b>${esc(c.name)}</b>${c.nickname ? ` <span class="muted small">‘${esc(nickT(c))}’</span>` : ''}<span class="lr-sub small muted">${c.pos} · ${natTag(c.nation)} · ${sl(c.startYear)}–${sl(c.endYear)} · ${isGK ? `${nf(c.cs)} CS` : `${nf(c.goals)}골 ${nf(c.assists)}도움`} · 우승 ${c.trophies}</span></span><span class="lr-pills">${c.bdo ? `<span class="pill gold">발롱 ${c.bdo}</span>` : ''}${c.generation > 1 ? `<span class="pill">${c.generation}대</span>` : ''}${c.coach ? '<span class="pill">감독</span>' : ''}</span></div>`;
+    return `<div class="legrow" role="button" tabindex="0" data-card="${c.id}"><span class="lr-ovr">${c.peakOvr}</span>${crest(c.topClubs[0]?.club, 'xs')}<span class="lr-main"><b>${esc(c.name)}</b>${c.nickname ? ` <span class="muted small">‘${esc(nickT(c))}’</span>` : ''}<span class="lr-sub small muted">${c.pos} · ${natTag(c.nation)} · ${sl(c.startYear)}–${sl(c.endYear)} · ${isGK ? `${nf(c.cs)} CS` : `${nf(c.goals)}골 ${nf(c.assists)}도움`} · 우승 ${c.trophies}</span></span><span class="lr-pills">${c.whatIf ? '<span class="pill wi">만약</span>' : ''}${c.bdo ? `<span class="pill gold">발롱 ${c.bdo}</span>` : ''}${c.generation > 1 ? `<span class="pill">${c.generation}대</span>` : ''}${c.coach ? '<span class="pill">감독</span>' : ''}</span></div>`;
   }
   function legendCard(c, led) {
     const isGK = c.pos === 'GK'; const partial = led && led.cut?.[c.id] != null && led.cut[c.id] !== Infinity && led.cut[c.id] <= c.endYear;
@@ -5449,7 +5560,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const actions = `<section class="panel go ${!canRetire && !p.forcedRetire && !blockers.length ? 'only-start' : ''}"><div class="row wrapgap">${p.forcedRetire ? '<p class="note">이제 은퇴할 때예요.</p>' : `<button class="btn primary big" data-act="start" ${disabled ? 'disabled' : ''}>${sl(p.year)} 시즌 시작</button>`}${canRetire ? `<button class="btn" data-act="retire">은퇴 선언</button>` : ''}</div>
       ${blockers.length ? `<p class="muted small">${blockers.join(' ')}</p>` : ''}</section>`;
     const simbar = !p.forcedRetire ? `<div class="simbar"><button class="btn primary big" data-act="start" ${disabled ? 'disabled' : ''}>${disabled ? esc(blockers[0]) : sl(p.year) + ' 시즌 시작'}</button></div>` : '';
-    return header(p) + chgPanel(p) + lastFold + market + terms + numberPicker + plan + attrs + decide + actions + simbar;
+    return header(p) + wiBanner(p) + chgPanel(p) + lastFold + market + terms + numberPicker + plan + attrs + decide + actions + simbar;
   }
   function lastLine(r, p) {
     if (r.youthTeam) return `${sl(r.year)} 유스 ${r.youthApps}경기`;
@@ -5727,7 +5838,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <div class="cc-mid"><div><span class="cc-ovr">${sum.peakOvr}</span><span class="cc-lbl">PEAK OVR</span><span class="cc-pos">${sum.pos}</span>${(sum.roles || []).length ? `<span class="cc-roles">${sum.roles.map(r => esc(r.name)).join(' · ')}</span>` : ''}<span class="small">${natTag(sum.nation)}</span>${sum.body ? `<span class="small muted">${sum.body.h}cm · ${E.BUILD[sum.body.b] || ''}</span>` : ''}${sum.foot ? `<span class="small muted">${E.FOOT_NAME[sum.foot]} · 약발 ${sum.weak || 3}</span>` : ''}</div>
         <div class="cc-ava">${ava(sum.look, sum.topClubs[0]?.club, { gk: isGK, age: 28, cls: 'lg' })}</div>
         <div class="right">${sum.bdo ? `<span class="cc-ovr">${sum.bdo}</span><span class="cc-lbl">BALLON D'OR</span>` : ''}</div></div>
-      <h2 class="cc-name">${esc(sum.name)}</h2>${sum.nickname ? `<p class="cc-sub">‘${esc(nickT(sum))}’</p>` : ''}
+      ${sum.whatIf ? `<p class="cc-wi">만약 · ${esc(sum.whatIf.label)}</p>` : ''}<h2 class="cc-name">${esc(sum.name)}</h2>${sum.nickname ? `<p class="cc-sub">‘${esc(nickT(sum))}’</p>` : ''}
       <p class="cc-sub">${sum.seasons}시즌 · ${sum.clubs}개 구단 · ${sum.retireAge}세 은퇴${sum.generation > 1 ? ` · ${esc(surname(sum.name))} 가문 ${sum.generation}대` : ''}</p>
       ${sum.early ? `<p class="cc-sub small">${sum.early.age}세 조기 은퇴 · ${esc(EARLY_NAME[sum.early.reason] || '')}</p>` : ''}
       ${sum.talent && sum.curve ? (() => { const bn = E.bloomNote(sum); return `<p class="cc-sub small">숨겨져 있던 재능: <b>${esc(E.TALENT[sum.talent]?.label || '')}</b> · 성장 곡선: <b>${esc(({ early: '조숙형', normal: '보통형', late: '대기만성형' })[sum.curve] || '')}</b>${bn ? ` · <b class="cc-bloom ${bn.kind}">${esc(bn.badge)}</b>` : ''}</p>${bn ? `<p class="cc-bloomtxt">${esc(bn.text)}</p>` : ''}`; })() : ''}
@@ -5738,9 +5849,85 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       ${(sum.legends || []).length || (sum.feats || []).length ? `<div class="cc-legend"><span>사람들이 기억하는 장면</span>${(sum.feats || []).map(e => `<p><b class="cc-feat">${esc(e.title)}</b> ${esc(e.line || E.featLine(e))}</p>`).join('')}${(sum.legends || []).map(e => `<p>${esc(e.line || E.legendLine(e))}</p>`).join('')}</div>` : ''}
       <div class="cc-clubs ${sum.topClubs.length > 5 ? 'many' : ''}">${sum.topClubs.map(t => `<span>${crest(t.club, 'md')}<small>${t.n}시즌</small></span>`).join('')}</div>${uf}${sum.earned ? `<p class="small">커리어 총수입 ${E.fmtWon(sum.earned)}${sum.peakWage ? ` · 최고 연봉 ${E.fmtWon(sum.peakWage)}` : ''}</p>` : ''}${coachLine}${bestBlock}${lineBlock}${tmBlock}
       </div></div>
+      ${wiCompare(sum)}${wiKids(sum)}
     </section>
-    <section class="panel"><div class="row wrapgap">${fresh ? '<button class="btn primary" data-act="newafter">다음 커리어 시작</button>' : ''}<button class="btn" data-act="saveimg" data-what="card">카드 이미지로 저장</button>${S.world.careers.some(c => c.id === sum.id) ? `<button class="btn" data-act="hidecareer" data-id="${sum.id}">${S.world.careers.find(c => c.id === sum.id)?.hidden ? '목록에 다시 보이기' : '목록에서 숨기기'}</button>` : ''}<button class="btn" data-act="viewrec" data-id="${sum.id}">전체 기록 보기</button><button class="btn" data-act="sample" data-id="${sum.id}" id="samplebtn" hidden>커뮤 반응 만들기</button><button class="btn" data-go="world">세계선으로</button></div>
+    <section class="panel"><div class="row wrapgap">${fresh ? '<button class="btn primary" data-act="newafter">다음 커리어 시작</button>' : ''}<button class="btn" data-act="saveimg" data-what="card">카드 이미지로 저장</button>${S.world.careers.some(c => c.id === sum.id) ? `<button class="btn" data-act="hidecareer" data-id="${sum.id}">${S.world.careers.find(c => c.id === sum.id)?.hidden ? '목록에 다시 보이기' : '목록에서 숨기기'}</button>` : ''}<button class="btn" data-act="viewrec" data-id="${sum.id}">전체 기록 보기</button>${S.world.careers.some(c => c.id === sum.id) ? `<button class="btn wi-btn" data-act="whatif" data-id="${sum.id}">만약…</button>` : ''}<button class="btn" data-act="sample" data-id="${sum.id}" id="samplebtn" hidden>커뮤 반응 만들기</button><button class="btn" data-go="world">세계선으로</button></div>
     <div id="sampleout" class="sampleout" hidden></div></section>`;
+  }
+  // ---------- 만약 (What If) ----------
+  function wiCompare(sum) {
+    if (!sum.whatIf) return ''; const o = S.world.careers.find(c => c.id === sum.whatIf.of); if (!o) return '';
+    const gk = sum.pos === 'GK' || o.pos === 'GK';
+    const rows = [['최고 OVR', o.peakOvr, sum.peakOvr], ['출전', o.apps, sum.apps], ...(gk ? [['클린시트', o.cs, sum.cs]] : [['골', o.goals, sum.goals], ['도움', o.assists, sum.assists]]), ['우승', o.trophies, sum.trophies], ['발롱도르', o.bdo || 0, sum.bdo || 0], ['은퇴 나이', o.retireAge, sum.retireAge]];
+    const dp = sum.peakOvr - o.peakOvr, da = sum.retireAge - o.retireAge, dt = sum.trophies - o.trophies;
+    const db = (sum.bdo || 0) - (o.bdo || 0);
+    const a = dp >= 3 ? '더 높이 올랐' : dp <= -3 ? '원래만큼 오르지 못했' : db >= 1 ? '발롱도르를 더 들었' : db <= -1 ? '발롱도르는 더 적게 들었' : '비슷한 곳까지 올랐';
+    const b = da >= 2 ? '더 오래 뛰었다' : da <= -2 ? '더 일찍 멈췄다' : dt >= 3 ? '더 많은 트로피를 들었다' : dt <= -3 ? '트로피는 더 적었다' : '';
+    const good = (x) => /높이|오래|많은|더 들었/.test(x), bad = (x) => /못했|일찍|적었|적게/.test(x);
+    const mixed = b && ((good(a) && bad(b)) || (bad(a) && good(b)));
+    const verdict = b ? `${a}${mixed ? '지만' : '고'}, ${b}.` : `${a}다.`;
+    const by0 = o.birthYear, by1 = sum.birthYear; const row = (c, by) => { const m = {}; (c.hist?.s || []).forEach(r => { m[r[0] - by] = r[1]; }); return m; };
+    const mo = row(o, by0), mw = row(sum, by1); const fa = sum.whatIf.y - by1;
+    const ages = []; for (let a2 = Math.max(16, fa - 1); a2 <= Math.max(o.retireAge, sum.retireAge); a2++) ages.push(a2);
+    const cell = (m, a2) => m[a2] ? crest(m[a2], 'xs') : '<i></i>';
+    const strip = `<div class="wi-strip"><div class="wi-grid" style="grid-template-columns:auto repeat(${ages.length},22px)"><span class="wi-rl">원래</span>${ages.map(a2 => `<span class="${a2 === fa ? 'fork' : ''}">${cell(mo, a2)}</span>`).join('')}<span class="wi-rl">만약</span>${ages.map(a2 => `<span class="${a2 === fa ? 'fork' : ''}">${cell(mw, a2)}</span>`).join('')}<span></span>${ages.map(a2 => `<small class="${a2 === fa ? 'fork' : ''}">${a2 % 2 === 0 || a2 === fa ? a2 : ''}</small>`).join('')}</div></div>`;
+    return `<div class="wi-cmp"><span class="wi-eye">다른 인생</span><p class="wi-v">${esc(verdict)}</p>${mixed ? '<p class="wi-q">어느 쪽이 더 나은 인생이었는지는, 기록이 말해 주지 않는다.</p>' : ''}<table class="wi-t"><thead><tr><th></th><th>원래 역사</th><th>만약</th></tr></thead><tbody>${rows.map(([k, x, y]) => `<tr><th>${k}</th><td>${nf(x || 0)}</td><td class="${(y || 0) > (x || 0) ? 'up' : (y || 0) < (x || 0) ? 'dn' : ''}">${nf(y || 0)}</td></tr>`).join('')}</tbody></table>${strip}<p class="small muted">나이마다 그 해에 입고 있던 유니폼이에요. 금색 칸이 갈라진 해예요.</p></div>`;
+  }
+  function wiKids(sum) {
+    const K = S.world.careers.filter(c => c.whatIf?.of === sum.id); if (!K.length) return '';
+    return `<div class="wi-kids"><span class="wi-eye">이 인생의 만약</span>${K.map(c => `<button class="link" data-card="${c.id}">${esc(c.whatIf.label)} <span class="muted small">· 피크 ${c.peakOvr} · ${c.retireAge}세 은퇴</span></button>`).join('')}</div>`;
+  }
+  function wiIntro(p) {
+    const W = p.whatIf; const nm = p.name; const season = sl(W.y);
+    const mid = { inj: '어딘가가 끊어지는 소리를 들은 것 같은데, 다리는 멀쩡하다. 손으로 쓸어 보아도 흉터 하나 없다.', stay: '현관에 싸 둔 짐 가방이 보인다. 이상하게도, 이 도시를 떠나면 안 될 것 같은 기분이 든다.', retire: '축구화를 벗었던 것 같은데, 축구화는 아직 현관에 가지런히 놓여 있다. 끈에서 잔디 냄새가 난다.', fate: '무언가 큰일이 있었던 것 같은 기분이 든다. 하지만 달력은 아직 그날에 닿지 않았다.' }[W.kind] || '';
+    return [`어느 아침, ${J(nm, '은')} 뒤숭숭한 꿈에서 깨어나 자신이 ${p.age}세의 ${season} 시즌 앞으로 돌아와 있는 것을 발견했다.`, mid, '이것이 꿈인지, 아까 그것이 꿈이었는지는 알 수 없다.'];
+  }
+  function wiBanner(p) {
+    if (!p.whatIf || p.whatIf.seen) return '';
+    return `<section class="panel wi-open"><p class="wi-eye">만약 · ${esc(p.whatIf.label)}</p>${wiIntro(p).filter(Boolean).map(t => `<p class="wi-txt">${esc(t)}</p>`).join('')}<div class="row"><button class="btn primary" data-act="wiseen">눈을 뜬다</button></div></section>`;
+  }
+  function viewWhatIf() {
+    const W = S.wi; const doc = W.doc; const sum = S.world.careers.find(c => c.id === W.id) || null;
+    if (!doc) return `<section class="panel"><p class="muted">기록을 불러오지 못했어요.</p><button class="btn" data-act="wiback">돌아가기</button></section>`;
+    const pts = W.pts; const sel = W.sel != null ? pts[W.sel] : null; let pv = null; try { pv = sel ? E.rewind(doc, sel) : null; } catch (e) { console.warn(e); pv = null; }
+    const head = `<section class="panel"><p class="eyebrow">만약 · What If</p><div class="alm-h">${ava(doc.look, doc.seasons[doc.seasons.length - 1]?.club, { gk: doc.pos === 'GK', age: 26, cls: 'md' })}<div><b style="font-size:20px">${esc(doc.name)}</b><small>${flag(doc.nation)} ${sl(doc.startYear)}–${sl((sum?.endYear) ?? doc.year - 1)} · 피크 ${doc.peakOvr}</small></div></div>
+      <p class="small muted" style="margin-top:10px">갈림길을 하나 고르면, 그 시점의 그를 되살려 다른 인생을 살아요. 바뀌는 건 고른 일 하나뿐이고, 그 뒤로는 주사위가 새로 굴러요. 원래 기록은 그대로 남아요.</p></section>`;
+    const list = pts.length ? `<section class="panel"><h2>갈림길</h2><ul class="wi-pts">${pts.map((x, i) => `<li><button class="wi-pt${W.sel === i ? ' on' : ''}" data-act="wisel" data-i="${i}"><b>${esc(x.label)}</b><small>${esc(x.sub)}</small></button></li>`).join('')}</ul></section>` : `<section class="panel"><p class="muted">이 커리어에서는 되돌아갈 갈림길을 찾지 못했어요.</p></section>`;
+    let conf = '';
+    if (sel && pv) {
+      const v = pv.whatIf.verify; const ok = v.target == null || Math.abs(v.got - v.target) <= 0;
+      const prem = { inj: '그 시즌, 그 부상 하나만 일어나지 않아요. 다른 부상은 얼마든지 올 수 있어요.', stay: '그 여름의 이적이 없었던 상태로 시작해요. 다음 해에 떠날 수도 있어요.', retire: '그 나이에 은퇴하지 않고 다음 시즌을 시작해요. 몸은 그 나이 그대로예요.', fate: '그 사건 하나만 일어나지 않아요. 다른 운명은 얼마든지 찾아올 수 있어요.' }[sel.kind];
+      conf = `<section class="panel wi-conf"><h2>${esc(sl(sel.y))} 시즌 앞의 ${esc(doc.name)}</h2>
+        <ul class="wi-ver"><li><span>시즌 시작 OVR</span><b class="${ok ? 'pos' : ''}">${v.got}${v.target != null ? (ok ? ' · 기록과 일치' : ` · 기록 ${v.target}`) : ''}</b></li><li><span>소속 · 나이 · 연봉</span><b class="pos">${esc(club(pv.club).name)} · ${pv.age}세 · ${E.fmtWon(pv.wage)} · 복원 완료</b></li><li><span>능력치 세부</span><b>${v.exact ? '시즌 시작 기록으로 복원' : '시즌 기록으로 역산'}</b></li><li><span>개인 관계 · 일부 이벤트 상태</span><b class="muted">추정 복원</b></li></ul>
+        <p class="small muted">새로운 세계선은 기록된 상태를 바탕으로 시작돼요. 일부 세부 상태는 원래 역사와 다를 수 있어요.</p>
+        <p class="note">${esc(prem || '')}</p>
+        ${S.p && S.p.id !== doc.id ? `<p class="small muted">진행 중인 ${esc(S.p.name)} 커리어는 멈춰 두고, 세계선 화면에서 언제든 이어 할 수 있어요.</p>` : ''}
+        <div class="row wrapgap"><button class="btn primary" data-act="wistart">이 갈림길에서 다시 산다</button></div></section>`;
+    }
+    return head + list + conf + `<div class="row"><button class="btn" data-act="wiback">카드로 돌아가기</button></div>`;
+  }
+  async function openWhatIf(id) {
+    let doc = null; try { doc = await Store.loadCareer(id); } catch { doc = null; }
+    S.wi = { id, doc, pts: doc ? E.whatIfPoints(doc) : [], sel: null }; S.view = 'whatif'; render(); window.scrollTo(0, 0);
+  }
+  function pauseActive() {
+    const p = S.p; if (!p) return; Store.save('career', p);
+    S.world.paused = (S.world.paused || []).filter(x => x.id !== p.id).concat({ id: p.id, name: p.name, year: p.year, wi: p.whatIf ? p.whatIf.label : null });
+  }
+  function startWhatIf() {
+    const W = S.wi; if (!W || W.sel == null) return; const pt = W.pts[W.sel];
+    if (S.p) pauseActive();
+    const np = E.forkWhatIf(S.world, W.doc, pt); E.useLine(S.world, np.line); S.viewLine = np.line;
+    S.p = np; S.world.activeId = np.id; S.choice = defaultChoice(np); S.offerPick = -1; S.lastRes = null; S.phase = 'prep'; S.windowQ = []; S.pendingNumber = null; S.wi = null;
+    Store.save('career', np); Store.save('world', S.world);
+    S.view = 'career'; render(); window.scrollTo(0, 0);
+  }
+  async function resumeCareer(id) {
+    let doc = null; try { doc = await Store.loadCareer(id); } catch { doc = null; } if (!doc) { toast('기록을 불러오지 못했어요.'); return; }
+    if (S.p && S.p.id !== id) pauseActive();
+    S.world.paused = (S.world.paused || []).filter(x => x.id !== id);
+    S.p = migrateCareer(doc); S.world.activeId = id; E.useLine(S.world, S.p.line || 'L0'); S.viewLine = S.p.line || 'L0'; afterLoad();
+    Store.save('world', S.world); S.view = 'career'; render(); window.scrollTo(0, 0);
   }
   function viewCardPage() {
     const c = S.viewCareer; if (!c) return viewWorld();
@@ -6405,11 +6592,18 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       const parent = f.mode === 'heir' ? S.world.careers.find(c => c.id === f.parentId) : null;
       const np = E.createPlayer({ name: f.name, nation: f.nation, pos: f.pos, role: f.role, talent: f.talent || undefined, startYear: f.startYear, club: f.club, parent, trait: f.trait, look: f.look, number: f.number, foot: f.foot || undefined });
       if (parent && f.kid >= 0) { const k = parent.kids[f.kid]; if (k) k.used = true; }
+      if (S.p && S.p.status !== 'retired' && S.p.id !== np.id) pauseActive();
       np.line = f.line && (S.world.lines || {})[f.line] ? f.line : 'L0'; E.useLine(S.world, np.line); S.viewLine = np.line;
       S.p = np; S.world.activeId = np.id; S.choice = defaultChoice(np); S.offerPick = -1; S.lastRes = null; S.phase = 'prep'; S.windowQ = []; S.pendingNumber = null;
       Store.save('career', np); Store.save('world', S.world);
       S.view = 'career'; render(); window.scrollTo(0, 0); return;
     }
+    if (a === 'whatif') return openWhatIf(el.dataset.id);
+    if (a === 'wisel') { S.wi.sel = +el.dataset.i; render(); const c = $('.wi-conf'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
+    if (a === 'wistart') return startWhatIf();
+    if (a === 'wiback') { S.wi = null; S.view = S.viewCareer ? 'card' : 'world'; render(); return; }
+    if (a === 'wiseen') { if (p?.whatIf) { p.whatIf.seen = true; Store.save('career', p); } render(); return; }
+    if (a === 'resume') return resumeCareer(el.dataset.id);
     if (a === 'start') return startSeason();
     if (a === 'numopen') { keepMemo(); S.open.add(el.dataset.k); render(); return; }
     if (a === 'qnext') { keepMemo(); S.choice.q = nextQuestion(p); S.open.add('memo'); render(); const m = $('#memo'); if (m) m.focus(); return; }
