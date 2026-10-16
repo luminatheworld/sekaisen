@@ -321,6 +321,7 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .cc-ovr { font-size: 50px; font-weight: 900; line-height: 1; color: var(--gold); letter-spacing: -.03em; }
 .cc-lbl { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: var(--gold); }
 .cc-pos { font-size: 24px; font-weight: 900; margin-top: 6px; }
+.cc-roles { font-size: 12px; font-weight: 700; color: var(--gold); margin: -2px 0 4px; line-height: 1.35; }
 .cc-name { font-size: clamp(24px, 6vw, 32px); font-weight: 900; letter-spacing: -.02em; text-align: center; }
 .cc-sub { text-align: center; font-size: 14px; color: var(--muted); }
 .cc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 14px 0; text-align: center; }
@@ -2297,7 +2298,7 @@ const ENGINE = (() => {
     const awardCount = {}; p.awards.forEach(a => awardCount[a.name] = (awardCount[a.name] || 0) + 1);
     const numByClub = {}; (p.numbers || []).forEach(n => numByClub[n.club] = n.num);
     return {
-      id: p.id, name: p.name, nation: p.nation, pos: p.pos, origPos: p.origPos, role: p.role, trait: p.trait, look: p.look, nickname: p.nickname, nickLocal: p.nickLocal || null, body: p.body ? { h: p.body.h, b: p.body.b } : null, legends: (p.legends || []).map(e => ({ ...e, line: legendLine(e) })), birthYear: p.birthYear, startYear: p.startYear, endYear: p.year - 1,
+      id: p.id, name: p.name, nation: p.nation, pos: p.pos, origPos: p.origPos, role: p.role, trait: p.trait, look: p.look, nickname: p.nickname, nickLocal: p.nickLocal || null, roles: mainRoles(p), body: p.body ? { h: p.body.h, b: p.body.b } : null, legends: (p.legends || []).map(e => ({ ...e, line: legendLine(e) })), birthYear: p.birthYear, startYear: p.startYear, endYear: p.year - 1,
       retireAge: p.age - 1, seasons: s.length, clubs: topClubs.length, peakOvr: p.peakOvr,
       apps: sum('apps'), goals: sum('goals'), assists: sum('assists'), saves: sum('saves'), cs: sum('cs'), avgRating: +avg.toFixed(2),
       trophies: p.trophies.filter(t => t.type !== 'youth').length, youthTrophies: p.trophies.filter(t => t.type === 'youth').length, awards: p.awards.length, awardCount, bdo: p.bdoYears.length, bdoYears: p.bdoYears.slice(),
@@ -2367,6 +2368,16 @@ const ENGINE = (() => {
     return { season: { year: b.year, club: b.club, rating: b.rating, g: b.goals, a: b.assists, cs: b.cs || 0, apps: b.apps, tro: b.trophies.filter(t => t.type !== 'youth').map(t => t.comp), aw: b.awards.slice() }, form, peak: pk ? { ovr: pk.ovrEnd, year: pk.year, age: pk.age, club: pk.club } : null };
   }
   // 아버지와 다른 길: 부모 카드와 대비되는 점 두 개
+  // 주 역할: 가장 오래 뛴 역할 + 3시즌 이상 뛰며 커리어 평균 이상을 해낸 역할(최대 3개)
+  function mainRoles(p) {
+    const ss = (p.seasons || []).filter(s => !s.youthTeam && (s.apps || 0) >= 10 && s.role && ROLE[s.role]);
+    if (!ss.length) return [];
+    const avg = ss.reduce((a, s) => a + s.rating, 0) / ss.length; const by = {};
+    for (const s of ss) { const b = by[s.role] = by[s.role] || { id: s.role, n: 0, r: 0, pos: s.pos }; b.n++; b.r += s.rating; }
+    const L = Object.values(by).map(b => ({ ...b, r: b.r / b.n })).sort((a, b) => b.n - a.n || b.r - a.r);
+    const out = [L[0]]; for (const b of L.slice(1)) if (b.n >= 3 && b.r >= avg - .03 && out.length < 3) out.push(b);
+    return out.map(b => ({ id: b.id, name: ROLE[b.id].name, n: b.n, r: +b.r.toFixed(2) }));
+  }
   function heirContrast(sum, par) {
     if (!sum || !par) return [];
     const L = []; const cn = (id) => CLUB[id]?.name || id;
@@ -5391,8 +5402,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       const ys = Object.keys(by).map(Number).sort((a, b) => b - a);
       inner = ys.length ? ys.map(y => { const L = by[y]; const hs = L.filter(x => x.kind !== 'review'); const rv = L.filter(x => x.kind === 'review'); return `<div class="pyear"><h3 class="h3">${sl(y)}</h3>${hs.length ? `<div class="press">${hs.map(clip).join('')}</div>` : ''}${reviewRows(rv)}</div>`; }).join('') : '<p class="muted">아직 신문에 실린 적이 없어요. 1군에 데뷔하면 시즌이 끝날 때마다 현지 언론이 평점을 매겨요.</p>';
     } else if (t === 'diary') {
-      const rows = p.seasons.filter(s => s.memo);
-      inner = rows.length ? `<ul class="diary">${rows.map(s => `<li><span class="dd"><b>${sl(s.year)}</b>${s.age}세<br>${esc(club(s.club).name)}</span><div>${s.memoQ ? `<p class="dq">${esc(s.memoQ)}</p>` : ''}<p class="dt">${esc(s.memo)}</p></div></li>`).join('')}</ul>` : '<p class="muted">아직 쓴 일기가 없어요. 시즌을 시작하기 전에 ‘일기’를 펼쳐 한 줄 남겨 보세요.</p>';
+      const rows = p.seasons.filter(s => s.memo); const rm = p.retireMemo;
+      inner = rows.length || rm ? `<ul class="diary">${rows.map(s => `<li><span class="dd"><b>${sl(s.year)}</b>${s.age}세<br>${esc(club(s.club).name)}</span><div>${s.memoQ ? `<p class="dq">${esc(s.memoQ)}</p>` : ''}<p class="dt">${esc(s.memo)}</p></div></li>`).join('')}${rm ? `<li><span class="dd"><b>은퇴</b>${rm.age}세<br>${esc(club(rm.club).name)}</span><div>${rm.q ? `<p class="dq">${esc(rm.q)}</p>` : ''}<p class="dt">${esc(rm.text)}</p></div></li>` : ''}</ul>` : '<p class="muted">아직 쓴 일기가 없어요. 시즌을 시작하기 전에 ‘일기’를 펼쳐 한 줄 남겨 보세요.</p>';
     } else if (t === 'story') {
       const rows = p.seasons.filter(s => (s.notes || []).length || s.events.length || s.memo || s.branch);
       const inj = p.injuries || []; const wh = p.wageHist || []; const majorN = inj.filter(i => i.major).length;
@@ -5445,7 +5456,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return `<section class="careercard">
       <div class="cc-top"><span class="eyebrow">세계선 커리어${Object.keys(S.world.lines || {}).length > 1 && S.world.lines[sum.line] ? ' · ' + esc(S.world.lines[sum.line].name) : ''}</span><span class="num">${sl(sum.startYear)}–${sl(sum.endYear)}</span></div>
       <div class="cc-cols"><div class="cc-l">
-      <div class="cc-mid"><div><span class="cc-ovr">${sum.peakOvr}</span><span class="cc-lbl">PEAK OVR</span><span class="cc-pos">${sum.pos}</span><span class="small">${natTag(sum.nation)}</span>${sum.body ? `<span class="small muted">${sum.body.h}cm · ${E.BUILD[sum.body.b] || ''}</span>` : ''}${sum.foot ? `<span class="small muted">${E.FOOT_NAME[sum.foot]} · 약발 ${sum.weak || 3}</span>` : ''}</div>
+      <div class="cc-mid"><div><span class="cc-ovr">${sum.peakOvr}</span><span class="cc-lbl">PEAK OVR</span><span class="cc-pos">${sum.pos}</span>${(sum.roles || []).length ? `<span class="cc-roles">${sum.roles.map(r => esc(r.name)).join(' · ')}</span>` : ''}<span class="small">${natTag(sum.nation)}</span>${sum.body ? `<span class="small muted">${sum.body.h}cm · ${E.BUILD[sum.body.b] || ''}</span>` : ''}${sum.foot ? `<span class="small muted">${E.FOOT_NAME[sum.foot]} · 약발 ${sum.weak || 3}</span>` : ''}</div>
         <div class="cc-ava">${ava(sum.look, sum.topClubs[0]?.club, { gk: isGK, age: 28, cls: 'lg' })}</div>
         <div class="right">${sum.bdo ? `<span class="cc-ovr">${sum.bdo}</span><span class="cc-lbl">BALLON D'OR</span>` : ''}</div></div>
       <h2 class="cc-name">${esc(sum.name)}</h2>${sum.nickname ? `<p class="cc-sub">‘${esc(nickT(sum))}’</p>` : ''}
@@ -6124,12 +6135,13 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (a === 'saveimg') { saveImage(el.dataset.what); return; }
     if (a === 'evcustom') { const v = ($('#evcustom')?.value || '').trim(); if (!v) { toast('별명을 입력해 줘요.'); return; } const list = S.phase === 'events' ? S.evQ : S.phase === 'post' ? S.postQ : S.windowQ.filter(e => !e.done); const ev = S.phase === 'prep' ? list[0] : list[S.evIdx]; if (!ev?.custom) return; const k = ev.options.push({ label: `‘${v}’`, run: (x) => ev.custom.run(x, v) }) - 1; return chooseOpt(k); }
     if (a === 'tonext') return toNextSeason();
-    if (a === 'retire') { S.retire = { post: 'coach', style: bestStyle(p.role), done: false, reason: null }; S.view = 'retire'; render(); window.scrollTo(0, 0); return; }
+    if (a === 'retire') { keepMemo(); S.retire = { post: 'coach', style: bestStyle(p.role), done: false, reason: null }; S.view = 'retire'; render(); window.scrollTo(0, 0); return; }
     if (a === 'cancelretire') { S.view = 'career'; render(); return; }
     if (a === 'confirmretire') {
       const st = $('#r-style'); if (st) S.retire.style = st.value;
       if (p.stage === 'post') { const l = p.seasons[p.seasons.length - 1]; if (l?.pendingFinal) E.autoClubFinal(p, l, S.world); E.ballonLate(p, S.world); E.endOfSeason(p, S.world); }
       const early = p.age - 1 <= 31 && !p.forcedRetire; if (early) { if (!S.retire.reason) return; p.flags.early = { reason: S.retire.reason, age: p.age - 1 }; }
+      { const mm = (S.choice?.memo || '').trim(); if (mm) p.retireMemo = { text: mm.slice(0, 600), q: S.choice.q || '', year: p.year, age: p.age - 1, club: p.club }; }
       const sum = E.summarize(p); sum.post = S.retire.post; sum.line = p.line || 'L0'; sum.v10 = 1; sum.v14 = 1;
       const parS = p.parentId ? S.world.careers.find(c => c.id === p.parentId) : null; if (parS) sum.heirLines = E.heirContrast(sum, parS);
       if (S.retire.post === 'coach') sum.coach = E.makeCoach(sum, S.retire.style);
@@ -6241,6 +6253,10 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       if (c.v10) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
       if (doc) { try { const n = E.summarize(doc); for (const k of ['apps', 'goals', 'assists', 'saves', 'cs', 'trophies', 'youthTrophies']) c[k] = n[k]; } catch { } }
       c.v10 = 1; changed = true;
+    }
+    for (const c of w.careers) {
+      if (c.roles) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
+      try { c.roles = doc ? E.summarize(doc).roles : []; } catch { c.roles = []; } changed = true;
     }
     for (const c of w.careers) {
       if (c.body) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
