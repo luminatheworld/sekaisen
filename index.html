@@ -5597,7 +5597,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const roles = E.rolesFor(f.pos); if (!roles.find(r => r.id === f.role)) f.role = roles[0].id;
     const lgGroups = Object.entries(E.LEAGUES).map(([lk, lg]) => `<optgroup label="${esc(lg.name)}">${E.leagueClubs(lk).filter(c => !c.mil).map(c => `<option value="${c.id}" ${c.id === f.club ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</optgroup>`).join('');
     const parent = f.parentId ? retired.find(c => c.id === f.parentId) : null;
-    const heirNats = f.mode === 'heir' && parent ? heirNations(parent, f.startYear).filter(n => n !== f.nation && n !== f.nat2) : [];
+    const heirNats = f.mode === 'heir' && parent ? heirNationsWhy(parent, f.startYear).filter(x => x.n !== f.nation && x.n !== f.nat2) : [];
     const L = f.look;
     const sw = (arr, cur, key) => arr.map((c, i) => `<button class="sw ${cur === i ? 'on' : ''}" style="--c:${c}" data-look="${key}" data-v="${i}" aria-label="색 ${i + 1}"></button>`).join('');
     const look = `<div class="lookctl"><div class="row"><button class="btn sm" data-act="rlook">외모 무작위</button></div>
@@ -5623,7 +5623,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <div class="newtop">${ava(L, f.club, { gk: f.pos === 'GK', cls: 'lg' })}<div class="grow">
         <label class="fld"><span>이름</span><div class="row"><input id="f-name" class="inp grow" maxlength="40" value="${esc(f.name)}" placeholder="이름"><button class="btn" data-act="rname" title="국적에 맞는 이름 무작위">무작위</button></div></label>
         <label class="fld"><span>국적</span><div class="row">${flag(f.nation, 'md')}<select id="f-nation" class="inp grow">${nationOpts}</select><button class="btn" data-act="rnation">무작위</button></div></label>
-        <label class="fld"><span>두 번째 국적 <span class="muted">(선택)</span></span><select id="f-nat2" class="inp">${nat2Opts}</select>${heirNats.length ? `<p class="muted small">물려받는 국적: ${heirNats.map(n => `${flag(n)} ${esc(n)}`).join(' · ')}</p>` : ''}</label>
+        <label class="fld"><span>두 번째 국적 <span class="muted">(선택)</span></span><select id="f-nat2" class="inp">${nat2Opts}</select>${heirNats.length ? `<p class="muted small">물려받는 국적: ${heirNats.map(x => `${flag(x.n)} ${esc(x.n)} <span class="muted">(${esc(x.why)})</span>`).join(' · ')}</p>` : ''}</label>
       </div></div>
       <div class="grid2">
         <label class="fld"><span>포지션</span><select id="f-pos" class="inp">${posOpts}</select></label>
@@ -6123,11 +6123,15 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   }
   // ---------- 국적 · 가문 잇기 ----------
   // 후손이 물려받을 수 있는 국적: 부모의 국적들, 부모의 배우자 국적, 태어난 해에 부모가 뛰던 나라
-  function heirNations(par, startYear) {
-    const by = startYear - 16; const L = [par.nation, ...(par.nations || [])]; if (par.spouse?.nation) L.push(par.spouse.nation);
-    const row = (par.hist?.s || []).find(r => r[0] === by) || (par.hist?.s || []).find(r => r[0] === by - 1); if (row && E.LEAGUES[row[2]]) L.push(E.LEAGUES[row[2]].country);
-    return [...new Set(L.filter(n => n && E.NATION[n]))];
+  function heirNationsWhy(par, startYear) {
+    const by = startYear - 16; const L = []; const pw = "부모";
+    [par.nation, ...(par.nations || [])].forEach(n => L.push({ n, why: `${pw}의 국적` }));
+    if (par.spouse?.nation) L.push({ n: par.spouse.nation, why: `${par.spouse.name || '배우자'}의 국적` });
+    const row = (par.hist?.s || []).find(r => r[0] === by - 1) || (par.hist?.s || []).find(r => r[0] === by);
+    if (row && E.LEAGUES[row[2]]) L.push({ n: E.LEAGUES[row[2]].country, why: `출생지 · ${by}년, ${J(par.name, "이")} ${club(row[1]).name}에서 뛰던 해` });
+    const seen = new Set(); return L.filter(x => x.n && E.NATION[x.n] && !seen.has(x.n) && seen.add(x.n));
   }
+  function heirNations(par, startYear) { return heirNationsWhy(par, startYear).map(x => x.n); }
   // 이미 끝난 커리어를 누군가의 자녀로 잇는다: 나이가 말이 되고, 부모가 이 세계선의 역사에 있어야 한다
   function linkCands(sum) {
     const desc = new Set([sum.id]); let grew = true; while (grew) { grew = false; for (const c of S.world.careers) if (c.parentId && desc.has(c.parentId) && !desc.has(c.id)) { desc.add(c.id); grew = true; } }
