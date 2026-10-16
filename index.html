@@ -233,6 +233,7 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .evopts { display: flex; flex-direction: column; gap: 8px; }
 .evopt { text-align: left; border: 0; background: var(--panel-2); border-radius: 14px; padding: 13px 16px; display: flex; flex-direction: column; gap: 2px; min-height: 52px; transition: background .15s; }
 .evopt b { font-weight: 700; }
+.hidlist { margin-top: 14px; font-size: 13px; color: var(--muted); } .hidlist summary { cursor: pointer; } .hidlist ul { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
 .rolecell { white-space: nowrap; font-size: 13px; } .fitg { display: inline-block; min-width: 16px; text-align: center; font-size: 10.5px; font-weight: 900; border-radius: 5px; padding: 1px 4px; background: var(--panel-3, #e4e8ef); }
 .fitg.gS { background: #e9bc55; color: #1c1406; } .fitg.gA { background: #bfe7cf; color: #0f4a2a; } .fitg.gC { background: #f6d6c8; color: #7a2e16; } .fitg.gD { background: #f3b8ae; color: #6d140a; }
 .fam { font-size: 11px; color: var(--muted); } .fam.f2 { color: #b0860f; font-weight: 700; } .fam.f0 { color: #b8513a; }
@@ -4898,7 +4899,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const VL = (w.lines || {})[S.viewLine] ? S.viewLine : 'L0'; const led = E.lineView(w, VL) || { people: cs, coaches: cs.filter(c => c.coach), retired: w.retired || {}, hof: w.hof || {}, bdo: {}, cut: {} };
     const csAll = cs; { const cs = led.people;
     let inner = '';
-    if (S.worldTab === 'legends') inner = cs.length ? `<div class="cards">${[...cs].sort((a, b) => b.peakOvr - a.peakOvr).map(c => legendCard(c, led)).join('')}</div>` : '<p class="muted">이 세계선엔 아직 은퇴한 선수가 없어요.</p>';
+    if (S.worldTab === 'legends') inner = cs.length ? `<div class="cards">${[...cs].filter(c => !c.hidden).sort((a, b) => b.peakOvr - a.peakOvr).map(c => legendCard(c, led)).join('')}</div>${hiddenList(cs)}` : '<p class="muted">이 세계선엔 아직 은퇴한 선수가 없어요.</p>';
     else if (S.worldTab === 'families') {
       const fam = {}; cs.forEach(c => (fam[c.familyId] = fam[c.familyId] || []).push(c));
       if (S.p && (S.p.line || 'L0') === VL) { const a = { ...E.summarize(S.p), active: true }; (fam[a.familyId] = fam[a.familyId] || []).push(a); }
@@ -4948,6 +4949,11 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const strip = `<div class="cstrip">${ch.rows.map(r => `<span class="cy t${tier(r)}${r.fromRec ? ' rec' : ''}${r.cont.length ? ' cw' : ''}" title="${sl(r.y)} · ${r.rank}위${r.cont.length ? ' · ' + esc(r.cont.join(', ')) + ' 우승' : ''}${r.here.length ? ' · ' + esc(r.here.join(', ')) : ''}"></span>`).join('')}</div><div class="cstrip-l small muted"><span>${ch.rows[0].y}</span><span>${ch.rows[ch.rows.length - 1].y}</span></div>`;
     const eras = ch.eras.map(e => `<li class="ce ${e.kind}"><span class="ce-y num">${e.from === e.to ? sl(e.from) : `${e.from}–${String(e.to + 1).slice(2)}`}</span><div><b>${esc(e.title)}</b><p class="small muted">${esc(e.text)}</p></div></li>`).join('');
     return `${sel}${strip}<p class="small muted">${crest(cid, 'xs')} 리그 우승 ${ch.titles.length}회${ch.cont.length ? ` · 대륙 대회 우승 ${ch.cont.length}회` : ''}. 칸 하나가 한 시즌이에요(금색 우승 · 진한 색 4위 안 · 붉은색 하위권 · 테두리는 주인공이 뛴 시즌). 주인공이 없던 해는 세계의 기본 흐름이에요.</p><ul class="chron">${eras || '<li class="muted small">특별한 시대 없이 흘러갔어요.</li>'}</ul>`;
+  }
+  // 숨긴 커리어: 지우지 않고 목록 아래에 작게 접어 둔다
+  function hiddenList(cs) {
+    const hs = cs.filter(c => c.hidden); if (!hs.length) return '';
+    return `<details class="hidlist"><summary>숨긴 커리어 ${hs.length}명</summary><ul>${hs.sort((a, b) => a.startYear - b.startYear).map(c => `<li><button class="link" data-card="${c.id}">${esc(c.name)}</button> <span class="muted small">${c.pos} · ${sl(c.startYear)}–${sl(c.endYear)} · 피크 ${c.peakOvr}</span></li>`).join('')}</ul></details>`;
   }
   function legendCard(c, led) {
     const isGK = c.pos === 'GK'; const partial = led && led.cut?.[c.id] != null && led.cut[c.id] !== Infinity && led.cut[c.id] <= c.endYear;
@@ -5476,7 +5482,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <div class="cc-clubs ${sum.topClubs.length > 5 ? 'many' : ''}">${sum.topClubs.map(t => `<span>${crest(t.club, 'md')}<small>${t.n}시즌</small></span>`).join('')}</div>${uf}${sum.earned ? `<p class="small">커리어 총수입 ${E.fmtWon(sum.earned)}${sum.peakWage ? ` · 최고 연봉 ${E.fmtWon(sum.peakWage)}` : ''}</p>` : ''}${coachLine}${bestBlock}${lineBlock}${tmBlock}
       </div></div>
     </section>
-    <section class="panel"><div class="row wrapgap">${fresh ? '<button class="btn primary" data-act="newafter">다음 커리어 시작</button>' : ''}<button class="btn" data-act="saveimg" data-what="card">카드 이미지로 저장</button><button class="btn" data-act="viewrec" data-id="${sum.id}">전체 기록 보기</button><button class="btn" data-act="sample" data-id="${sum.id}" id="samplebtn" hidden>커뮤 반응 만들기</button><button class="btn" data-go="world">세계선으로</button></div>
+    <section class="panel"><div class="row wrapgap">${fresh ? '<button class="btn primary" data-act="newafter">다음 커리어 시작</button>' : ''}<button class="btn" data-act="saveimg" data-what="card">카드 이미지로 저장</button>${S.world.careers.some(c => c.id === sum.id) ? `<button class="btn" data-act="hidecareer" data-id="${sum.id}">${S.world.careers.find(c => c.id === sum.id)?.hidden ? '목록에 다시 보이기' : '목록에서 숨기기'}</button>` : ''}<button class="btn" data-act="viewrec" data-id="${sum.id}">전체 기록 보기</button><button class="btn" data-act="sample" data-id="${sum.id}" id="samplebtn" hidden>커뮤 반응 만들기</button><button class="btn" data-go="world">세계선으로</button></div>
     <div id="sampleout" class="sampleout" hidden></div></section>`;
   }
   function viewCardPage() {
@@ -6137,6 +6143,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     }
     if (a === 'qclear') { keepMemo(); S.choice.q = ''; render(); return; }
     if (a === 'evnext') return evNext();
+    if (a === 'hidecareer') { const c = S.world.careers.find(x => x.id === el.dataset.id); if (!c) return; c.hidden = !c.hidden; Store.save('world', S.world); toast(c.hidden ? '목록에서 숨겼어요. 기록과 세계선 역사는 그대로예요.' : '목록에 다시 보이게 했어요.'); render(); return; }
     if (a === 'saveimg') { saveImage(el.dataset.what); return; }
     if (a === 'evcustom') { const v = ($('#evcustom')?.value || '').trim(); if (!v) { toast('별명을 입력해 줘요.'); return; } const list = S.phase === 'events' ? S.evQ : S.phase === 'post' ? S.postQ : S.windowQ.filter(e => !e.done); const ev = S.phase === 'prep' ? list[0] : list[S.evIdx]; if (!ev?.custom) return; const k = ev.options.push({ label: `‘${v}’`, run: (x) => ev.custom.run(x, v) }) - 1; return chooseOpt(k); }
     if (a === 'tonext') return toNextSeason();
