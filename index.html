@@ -555,7 +555,7 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .wi-grid { display: grid; gap: 3px 2px; align-items: center; justify-items: center; width: max-content; margin: 0 auto; }
 .wi-grid > span { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 5px; } .wi-grid > span i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .15); }
 .wi-grid > span.wi-rl { width: auto; white-space: nowrap; padding-right: 6px; font-size: 11px; font-weight: 800; opacity: .75; justify-self: end; }
-.wi-grid > span.fork { box-shadow: inset 0 0 0 1.5px #e9bc55; } .wi-grid small { font-size: 9.5px; opacity: .6; } .wi-grid small.fork { color: #e9bc55; opacity: 1; font-weight: 800; }
+.wi-grid > span.fork { box-shadow: inset 0 0 0 1.5px #e9bc55; } .wi-grid small { font-size: 9.5px; opacity: .6; white-space: nowrap; width: 22px; text-align: center; overflow: visible; } .wi-grid small.fork { color: #e9bc55; opacity: 1; font-weight: 800; }
 .wi-kids .link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .wi-open { border: 1px solid rgba(143, 132, 232, .45); background: linear-gradient(180deg, rgba(143, 132, 232, .10), transparent 70%); }
 .wi-open .wi-eye { display: block; margin-bottom: 8px; } .wi-txt { font-family: 'Noto Serif KR', serif; font-size: 15.5px; line-height: 1.85; margin: 0 0 10px; }
@@ -2670,7 +2670,7 @@ const ENGINE = (() => {
   function bloomNote(sum) {
     if (!sum || sum.P == null || !sum.peakOvr || sum.deceased) return null;
     const gap = sum.P - sum.peakOvr; const sc = sum.scars || null; const pk = sum.best?.peak; const form = sum.best?.form;
-    const hs = hashS(sum.id || sum.name); const pickH = (L, k = 0) => L[(hs >> (k * 3)) % L.length];
+    const hs = hashS(sum.id || sum.name); const pickH = (L, k = 0) => L[(hs >>> (k * 3)) % L.length];
     const tal = TALENT[sum.talent]?.label || '';
     if (gap >= 3 && !sum.bdo && sum.peakOvr < 88) {
       const why = [];
@@ -2686,7 +2686,7 @@ const ENGINE = (() => {
       const but = [];
       if (form && pk && form.from <= pk.year && pk.year <= form.to + 1) but.push(`${CLUB[pk.club]?.name || ''}에서의 몇 해만큼은, 재능이 거짓말이 아니었다는 걸 보여 줬다.`);
       else if (pk) but.push(`${pk.age}세, ${CLUB[pk.club]?.name || ''}에서 닿은 OVR ${pk.ovr}. 그게 그가 도착한 곳이었다.`);
-      if (sum.seasons >= 17) but.splice(but.length && /보여 줬다/.test(but[0]) ? 1 : 0, 0, `${sum.seasons}시즌, ${sum.apps}경기. 버틴 것도 재능이다.`);
+      if (sum.seasons >= 17) but.splice(but.length && /보여 줬다/.test(but[0]) ? 1 : 0, 0, why.some(t => t.includes(`${sum.seasons}시즌`)) ? `${sum.apps}경기. 버틴 것도 재능이다.` : `${sum.seasons}시즌, ${sum.apps}경기. 버틴 것도 재능이다.`);
       else if (sum.trophies >= 3) but.push(`트로피 ${sum.trophies}개는 그대로 남았다.`);
       const q = [...(win || fz ? ['만약 그 해가 없었다면. 세계선은 그 질문에 답하지 않는다.'] : []), '재능은 약속이었지, 계약은 아니었다.', '그를 실패라고 부를 수 있을까.', '사람들은 그가 될 수 있었던 선수를 이야기하고, 그는 자신이 된 선수로 은퇴했다.', '피지 못한 꽃에도 계절은 있었다.'];
       return { kind: 'unbloom', badge: gap >= 6 ? '못다 핀 재능' : '조금 못다 핀 재능', text: [why.slice(0, 2).join(' '), but[0], pickH(q, 1)].filter(Boolean).join(' ') };
@@ -6073,7 +6073,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   const OMEN = ['훈련장으로 가는 길, 하늘이 낮게 내려앉아 있다.', '라커룸 거울에 김이 서려, 오늘은 얼굴이 잘 보이지 않는다.', '새벽에 깼다. 이유 없이, 다시 잠들지 못했다.', '구단 버스 창밖으로 까마귀 몇 마리가 낮게 난다.', '어머니가 전화로, 별일 없느냐고 두 번 물었다.', '오늘따라 경기장 조명이 조금 늦게 켜졌다.', '축구화 끈 하나가 이유 없이 풀려 있었다.', '창밖의 비는 밤새 그치지 않았다.', '서랍에서 오래된 사진 한 장이 떨어졌다. 열여섯 살의 얼굴이었다.', '손목시계가 몇 분 늦게 가고 있다는 걸, 오늘에서야 알았다.', '빈 관중석 한가운데, 누군가 두고 간 목도리가 바람에 흔들린다.', '오래 연락이 없던 친구의 이름이, 꿈에 나왔다.'];
   function omenLine(p) {
     if (!p || E.sevOf(p) !== 'harsh' || p.youth) return ''; const h = E.hashStr(p.id + '|omen|' + p.year);
-    if (h % 100 >= 14) return ''; return `<p class="omen">${esc(OMEN[(h >> 8) % OMEN.length])}</p>`;
+    if (h % 100 >= 14) return ''; return `<p class="omen">${esc(OMEN[(h >>> 8) % OMEN.length])}</p>`;
   }
   // ---------- 만약 (What If) ----------
   function wiCompare(sum) {
