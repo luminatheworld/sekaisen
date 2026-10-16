@@ -1453,7 +1453,7 @@ const ENGINE = (() => {
       if (a.allAttr) { m.attr = Object.assign({}, m.attr); for (const k of Object.keys(p.attrs || {})) m.attr[k] = (m.attr[k] || 0) + a.allAttr * t * (0.75 + 0.5 * Math.random()); }
       if (a.morale) bump(p, 'morale', a.morale * t);
       if (a.dur) bump(p, 'dur', a.dur * t);
-      if (a.note) m.notes.push(year === a.from ? a.note : (a.later || a.note));
+      if (a.note && (year === a.from || a.later)) m.notes.push(year === a.from ? a.note : a.later); // 같은 문장이 해마다 반복되지 않게
     }
     return m;
   }
@@ -4608,8 +4608,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'f_crash', phase: 'mid', cd: 99, w: (c) => fateOK(c) && !c.p.flags.f_f_crash ? FW * .7 : 0, make(c) {
     const p = c.p; fate(p, 'f_crash'); press(p, PR('both', 'crash', p, {}));
     return { title: '빗길의 교차로', tone: 'bad', major: true, text: '훈련장으로 가던 차가 빗길에 미끄러졌다. 구조대가 차 문을 잘라 냈다. 의사는 "살아 있는 게 기적"이라고 했다.', options: [
-      { label: '몸이 먼저다. 시즌을 통째로 쉰다', hint: '시즌 아웃', run(x) { const q = x.p; const h = H(x); h.mod('injWeeks', 40); h.attr('PAC', -2); h.attr('STA', -1.5); q.injuries.push({ id: 'crash', name: '교통사고', year: q.year, weeks: 40, major: true }); E.addArc(q, { id: 'second', from: q.year + 1, to: q.year + 3, fade: .5, morale: 4, form: .02, note: '두 번째 삶' }); h.note('교통사고 · 시즌 아웃'); return '긴 재활이 시작됐다. 창밖을 오래 봤다.'; } },
-      { label: '최대한 빨리 돌아간다', hint: '해 봐야 안다', run(x) { const q = x.p; const h = H(x); h.mod('injWeeks', 20); q.injuries.push({ id: 'crash', name: '교통사고', year: q.year, weeks: 20, major: true }); h.note('교통사고'); if (chance(.5)) { h.attr('PAC', -5); h.attr('STA', -3); E.bump(q, 'dur', -12); E.addArc(q, { id: 'scar', from: q.year, to: q.year + 3, fade: .5, decay: 1.25, allAttr: -.7, dur: -2, note: '사고의 후유증' }); return '다섯 달 만에 복귀했다. 무언가가 예전 같지 않다.'; } h.attr('PAC', -1.5); return '다섯 달 만에 복귀했다. 관중이 기립했다. ' + h.b('fans', 6); } },
+      { label: '몸이 먼저다. 시즌을 통째로 쉰다', hint: '시즌 아웃', run(x) { const q = x.p; const h = H(x); h.mod('injWeeks', 40); h.attr('PAC', -2); h.attr('STA', -1.5); q.injuries.push({ id: 'crash', name: '교통사고', year: q.year, weeks: 40, major: true }); E.addArc(q, { id: 'second', from: q.year + 1, to: q.year + 3, fade: .5, morale: 4, form: .02, note: '두 번째 삶', later: '사고 이후, 조금 다르게 사는 법' }); h.note('교통사고 · 시즌 아웃'); return '긴 재활이 시작됐다. 창밖을 오래 봤다.'; } },
+      { label: '최대한 빨리 돌아간다', hint: '해 봐야 안다', run(x) { const q = x.p; const h = H(x); h.mod('injWeeks', 20); q.injuries.push({ id: 'crash', name: '교통사고', year: q.year, weeks: 20, major: true }); h.note('교통사고'); if (chance(.5)) { h.attr('PAC', -5); h.attr('STA', -3); E.bump(q, 'dur', -12); E.addArc(q, { id: 'scar', from: q.year, to: q.year + 3, fade: .5, decay: 1.25, allAttr: -.7, dur: -2, note: '사고의 후유증', later: '날씨가 궂은 날마다 쑤시는 몸' }); return '다섯 달 만에 복귀했다. 무언가가 예전 같지 않다.'; } h.attr('PAC', -1.5); return '다섯 달 만에 복귀했다. 관중이 기립했다. ' + h.b('fans', 6); } },
     ] };
   } });
   def({ id: 'f_heart', phase: 'mid', cd: 99, w: (c) => fateOK(c, 23) && !c.p.flags.f_f_heart ? FW * .7 : 0, make(c) {
@@ -4617,7 +4617,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const ita = E.CLUB[p.club].lg === 'ITA' || E.CLUB[p.club].lg === 'ITA2';
     return { title: '그라운드에 쓰러지다', tone: 'bad', major: true, text: `전반 40분, 스로인을 받으러 가다 그대로 쓰러졌다. 동료들이 둘러서서 벽을 만들었다. 눈을 뜬 건 병원이었다. 의사는 심장에 작은 기계를 넣자고 한다.${ita ? ' 이 나라 규정상, 그 기계를 단 선수는 리그에서 뛸 수 없다.' : ''}`, options: [
       { label: '여기서 멈춘다', hint: '이번 시즌이 마지막', run(x) { const q = x.p; const h = H(x); h.mod('injWeeks', 46); q.flags.lastSeason = q.year; q.flags.fateRetire = 1; h.note('경기 중 쓰러짐 · 은퇴 결심'); return '살아 있다는 것으로 충분했다.'; } },
-      { label: '기계를 달고 돌아간다', hint: ita ? '시즌 아웃 · 다음 여름엔 이 리그를 떠나야 한다' : '시즌 아웃', run(x) { const q = x.p; const h = H(x); h.mod('injWeeks', 30); h.attr('STA', -2); E.bump(q, 'dur', -6); q.injuries.push({ id: 'heart', name: '심정지', year: q.year, weeks: 30, major: true }); E.addArc(q, { id: 'miracle', from: q.year + 1, to: q.year + 2, fade: .5, morale: 6, form: .02, note: '기적의 복귀' }); for (const k of Object.keys(q.fans)) E.bump(q, 'fans', 8, k); E.bump(q, 'rep', 6); h.note('경기 중 쓰러짐'); if (ita) q.flags.fateMove = { year: q.year, why: '규정상 이 리그에서는 더 뛸 수 없다' }; return '여섯 달 뒤, 훈련장에 다시 섰다. 모든 구단의 팬들이 박수를 보냈다.'; } },
+      { label: '기계를 달고 돌아간다', hint: ita ? '시즌 아웃 · 다음 여름엔 이 리그를 떠나야 한다' : '시즌 아웃', run(x) { const q = x.p; const h = H(x); h.mod('injWeeks', 30); h.attr('STA', -2); E.bump(q, 'dur', -6); q.injuries.push({ id: 'heart', name: '심정지', year: q.year, weeks: 30, major: true }); E.addArc(q, { id: 'miracle', from: q.year + 1, to: q.year + 2, fade: .5, morale: 6, form: .02, note: '기적의 복귀', later: '심장과 함께 뛰는 두 번째 시즌' }); for (const k of Object.keys(q.fans)) E.bump(q, 'fans', 8, k); E.bump(q, 'rep', 6); h.note('경기 중 쓰러짐'); if (ita) q.flags.fateMove = { year: q.year, why: '규정상 이 리그에서는 더 뛸 수 없다' }; return '여섯 달 뒤, 훈련장에 다시 섰다. 모든 구단의 팬들이 박수를 보냈다.'; } },
     ] };
   } });
   def({ id: 'f_ban', phase: 'mid', cd: 99, w: (c) => fateOK(c, 21) && !c.p.flags.f_f_ban ? FW * .55 : 0, make(c) {
@@ -4630,7 +4630,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'f_fixing', phase: 'mid', cd: 99, w: (c) => fateOK(c, 21) && !c.p.flags.f_f_fixing && lgOf(c.p).tier >= 2 ? FW * .7 : 0, make(c) {
     const p = c.p; fate(p, 'f_fixing'); press(p, PR('both', 'fixing', p, {}));
     return { title: '승부조작 수사', tone: 'bad', major: true, text: '경찰이 훈련장에 들이닥쳤다. 브로커의 휴대폰에 네 번호가 있었다. 너는 그 사람을 모른다. 구단은 수사가 끝날 때까지 출전을 막았다.', options: [
-      { label: '모든 기록을 내놓고 싸운다', hint: '해 봐야 안다', run(x) { const q = x.p; const h = H(x); h.mod('miss', 12); if (chance(.75)) { h.note('승부조작 혐의 · 무혐의'); E.addArc(q, { id: 'cleared', from: q.year + 1, to: q.year + 1, form: .03, note: '누명을 벗은 시즌' }); return '넉 달 만에 무혐의. 브로커가 번호를 사서 저장해 둔 것이었다. ' + [h.b('rep', 2), h.b('morale', -4)].join(' · '); } h.note('승부조작 혐의 · 결론 없이 종결'); scandal(q, .4, '승부조작 의혹', true); E.addArc(q, { id: 'stain', from: q.year + 1, to: q.year + 3, fade: .5, morale: -4, note: '지워지지 않는 꼬리표' }); return '수사는 결론 없이 끝났다. 의심만 남았다. ' + [h.b('rep', -8), h.b('fans', -8)].join(' · '); } },
+      { label: '모든 기록을 내놓고 싸운다', hint: '해 봐야 안다', run(x) { const q = x.p; const h = H(x); h.mod('miss', 12); if (chance(.75)) { h.note('승부조작 혐의 · 무혐의'); E.addArc(q, { id: 'cleared', from: q.year + 1, to: q.year + 1, form: .03, note: '누명을 벗은 시즌' }); return '넉 달 만에 무혐의. 브로커가 번호를 사서 저장해 둔 것이었다. ' + [h.b('rep', 2), h.b('morale', -4)].join(' · '); } h.note('승부조작 혐의 · 결론 없이 종결'); scandal(q, .4, '승부조작 의혹', true); E.addArc(q, { id: 'stain', from: q.year + 1, to: q.year + 3, fade: .5, morale: -4, note: '지워지지 않는 꼬리표', later: '여전히 따라다니는 의혹' }); return '수사는 결론 없이 끝났다. 의심만 남았다. ' + [h.b('rep', -8), h.b('fans', -8)].join(' · '); } },
       { label: '해외로 떠나 조용히 다시 시작한다', hint: '다음 여름 이적', run(x) { const q = x.p; const h = H(x); h.mod('miss', 10); q.flags.fateMove = { year: q.year, why: '이 리그에 더는 있을 수 없다', abroad: true }; h.note('승부조작 수사 · 해외로'); return '짐을 쌌다. ' + [h.b('rep', -4), h.b('morale', -6)].join(' · '); } },
     ] };
   } });
@@ -4673,7 +4673,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'f_late', phase: 'mid', cd: 99, w: (c) => { const p = c.p; return fateOK(c, 24) && p.age <= 29 && !p.flags.f_f_late && ovr(p) <= 76 && (p.P + p.ceil) - ovr(p) < 4 ? FW * .9 : 0; }, make(c) {
     const p = c.p; fate(p, 'f_late'); const coach = NAMES.gen(pick(E.NATIONS).name);
     return { title: '서른 즈음의 기적', tone: 'good', major: true, text: `무명 시절 공장에서 일하며 축구했다는 피지컬 코치 ${J(coach, '가')} 새로 왔다. 첫 주에 네 훈련 영상을 보고 말했다. "넌 아직 한 번도 제대로 달려 본 적이 없다."`, options: [
-      { label: '그의 방식에 전부를 건다', hint: '해 봐야 안다', run(x) { const q = x.p; const h = H(x); if (chance(.7)) { h.mod('ceil', 4); E.addArc(q, { id: 'late', from: q.year, to: q.year + 2, fade: .4, growth: 1.5, decay: .6, allAttr: 1.5, form: .03, note: '늦깎이의 폭발' }); press(q, PR('both', 'lateblossom', q, { age: q.age })); return '몸이 다르게 움직이기 시작했다.'; } h.mod('ceil', 1); return '좋아지긴 했다. 기적까지는 아니었다.'; } },
+      { label: '그의 방식에 전부를 건다', hint: '해 봐야 안다', run(x) { const q = x.p; const h = H(x); if (chance(.7)) { h.mod('ceil', 4); E.addArc(q, { id: 'late', from: q.year, to: q.year + 2, fade: .4, growth: 1.5, decay: .6, allAttr: 1.5, form: .03, note: '늦깎이의 폭발', later: '아직 끝나지 않은 각성' }); press(q, PR('both', 'lateblossom', q, { age: q.age })); return '몸이 다르게 움직이기 시작했다.'; } h.mod('ceil', 1); return '좋아지긴 했다. 기적까지는 아니었다.'; } },
       { label: '지금 방식을 유지한다', hint: '변화 없음', run() { return '익숙한 길을 택했다.'; } },
     ] };
   } });
