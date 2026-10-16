@@ -537,6 +537,9 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .alm-l li.gold { color: var(--gold); font-weight: 700; } .alm-l li.red { color: #d0675c; } .alm-l li.ev { color: var(--muted); }
 .alm-feat { margin: 0; font-size: 13px; line-height: 1.5; border-left: 3px solid var(--gold); padding-left: 8px; } .alm-feat b { color: var(--gold); }
 .alm-news { margin: 0; font-size: 13.5px; font-weight: 800; line-height: 1.4; } .alm-news span { display: block; font-size: 10.5px; font-weight: 700; color: var(--muted); letter-spacing: .04em; }
+.alm-strip .ay.sp { box-shadow: inset 0 -4px 0 #8f84e8; } .alm-strip .ay.sp.on { box-shadow: 0 0 0 2px var(--gold), inset 0 -4px 0 #8f84e8; }
+.alm-split { border: 1px dashed #8f84e8; border-radius: 12px; padding: 9px 12px; margin-top: 10px; } .alm-split span { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: #8f84e8; } .alm-split p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.5; }
+.alm-p.ghost { opacity: .62; border-style: dashed; } .alm-p.ghost .px { filter: grayscale(1); } .alm-p.ghost p { margin: 0; line-height: 1.5; }
 .alm-p .memo { margin: 2px 0 0; font-size: 13px; }
 .cut.split { background: radial-gradient(ellipse at 50% 42%, #302b78 0%, #15123a 50%, #06050f 100%); }
 </style>
@@ -5060,6 +5063,13 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return L;
   }
   const almOn = (x, y) => x.c.startYear <= y && y <= x.c.endYear && (x.cut == null || y < x.cut);
+  // 갈라지기 전 세계선의 주인공: 갈라진 뒤에도 원래 세계선에선 뛰었지만, 이 세계선에는 그 뒤가 없다
+  const almGhost = (x, y) => x.cut != null && isFinite(x.cut) && y >= x.cut && x.c.startYear <= y && y <= x.c.endYear;
+  function almSplits(w, led) { return (led.chain || []).map(c => w.lines?.[c.id]).filter(l => l && l.parent && l.split != null).map(l => ({ y: l.split, what: l.what || '', by: l.byName || '', name: l.name })); }
+  function almGhostEntry(x, Y, w) {
+    const c = x.c; const age = Y - c.birthYear; const h = (c.hist?.s || []).find(s => s[0] === Y); const home = w.lines?.[c.line]?.name || '원래 세계선';
+    return `<li class="alm-p ghost"><div class="alm-h">${ava(c.look, h ? h[1] : c.topClubs?.[0]?.club || c.homeClub, { gk: c.pos === 'GK', age, cls: 'sm' })}<div><b><button class="link" data-card="${c.id}">${esc(c.name)}</button></b><small>${flag(c.nation)} ${age}세 · ${esc(E.POS[c.pos]?.name || c.pos)}</small></div></div><p class="small">${sl(x.cut)} 시즌에 세계선이 갈라진 뒤, 이 세계선에서 그의 행방은 기록되지 않았다.</p>${h ? `<p class="small muted">${esc(home)}에서는 이 해 ${esc(club(h[1]).name)}에서 뛰고 있었다.</p>` : ''}</li>`;
+  }
   function almDoc(x) { if (x.doc) return x.doc; const d = ALM.docs[x.c.id]; return d === undefined ? undefined : d; }
   function almLoad(list) {
     const need = list.filter(x => !x.doc && ALM.docs[x.c.id] === undefined && !ALM.loading.has(x.c.id)); if (!need.length) return;
@@ -5067,10 +5077,11 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     Promise.all(need.map(x => Store.loadCareer(x.c.id).then(d => { ALM.docs[x.c.id] = d || null; }, () => { ALM.docs[x.c.id] = null; }).finally(() => ALM.loading.delete(x.c.id))))
       .then(() => { if (S.view === 'world' && S.worldTab === 'alm') { const y = scrollY; render(); scrollTo(0, y); } });
   }
-  function almRing(years, cnt, Y) {
+  function almRing(years, cnt, Y, splits = []) {
     const n = years.length; if (!n) return ''; const R0 = 6, Rm = 46; const step = (Rm - R0) / n; const mx = Math.max(...years.map(y => cnt[y] || 0), 1);
+    const sp = splits.filter(s => years.includes(s.y)).map(s => { const r = R0 + step * years.indexOf(s.y); return `<circle cx="50" cy="50" r="${r.toFixed(2)}" fill="none" stroke="#8f84e8" stroke-width="1.1" stroke-dasharray="2.2 1.6"/>`; }).join('');
     const rings = years.map((y, i) => { const r = R0 + step * (i + .5); const k = cnt[y] || 0; const on = y === Y; return `<circle cx="50" cy="50" r="${r.toFixed(2)}" fill="none" stroke="${on ? 'var(--gold)' : 'currentColor'}" stroke-opacity="${on ? 1 : (.08 + .5 * k / mx).toFixed(2)}" stroke-width="${(on ? Math.max(step, 2.2) : step * .82).toFixed(2)}"/>`; }).join('');
-    return `<svg class="alm-ringsvg" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="${R0}" fill="currentColor" fill-opacity=".18"/>${rings}</svg>`;
+    return `<svg class="alm-ringsvg" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="${R0}" fill="currentColor" fill-opacity=".18"/>${rings}${sp}</svg>`;
   }
   function almEntry(x, Y, led) {
     const c = x.c; const doc = almDoc(x); const age = Y - c.birthYear;
@@ -5120,8 +5131,10 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const best = years.reduce((b, y) => (cnt[y] >= (cnt[b] || 0) ? y : b), years[0]);
     const Y = years.includes(S.almY) ? S.almY : best; S.almY = Y;
     const on = P.filter(x => almOn(x, Y)).sort((a, b) => a.c.birthYear - b.c.birthYear); almLoad(on);
+    const ghosts = P.filter(x => almGhost(x, Y)).sort((a, b) => a.c.birthYear - b.c.birthYear);
+    const splits = almSplits(w, led); const spY = new Set(splits.map(s => s.y)); const spNow = splits.filter(s => s.y === Y);
     const mx = Math.max(...years.map(y => cnt[y]));
-    const strip = `<div class="alm-strip" role="list">${years.map(y => `<button class="ay${y === Y ? ' on' : ''}" data-almy="${y}" style="--k:${(cnt[y] / mx).toFixed(2)}" title="${sl(y)} · 주인공 ${cnt[y]}명" aria-label="${sl(y)} 시즌, 주인공 ${cnt[y]}명"></button>`).join('')}</div><div class="cstrip-l small muted"><span>${lo}</span><span>${hi + 1}</span></div>`;
+    const strip = `<div class="alm-strip" role="list">${years.map(y => `<button class="ay${y === Y ? ' on' : ''}${spY.has(y) ? ' sp' : ''}" data-almy="${y}" style="--k:${(cnt[y] / mx).toFixed(2)}" title="${sl(y)} · 주인공 ${cnt[y]}명${spY.has(y) ? ' · 세계선 분기' : ''}" aria-label="${sl(y)} 시즌, 주인공 ${cnt[y]}명"></button>`).join('')}</div><div class="cstrip-l small muted"><span>${lo}</span><span>${hi + 1}</span></div>`;
     const sel = `<select id="almy" class="inp">${years.slice().reverse().map(y => `<option value="${y}" ${y === Y ? 'selected' : ''}>${sl(y)} · ${cnt[y]}명</option>`).join('')}</select>`;
     const nav = `<div class="alm-nav"><button class="btn sm" data-almy="${Y - 1}" ${Y <= lo ? 'disabled' : ''} aria-label="이전 시즌">‹</button>${sel}<button class="btn sm" data-almy="${Y + 1}" ${Y >= hi ? 'disabled' : ''} aria-label="다음 시즌">›</button></div>`;
     // 그해 세계선에 기록된 것: 주인공들이 남긴 우승과 상
@@ -5131,10 +5144,10 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     Object.entries(led.nat).forEach(([k, v]) => { const [kind, y] = k.split('|'); if (+y === Y + 1) W.push(`${Y + 1} ${E.TOUR[kind]?.comp || kind} · ${v.nation} (${v.name})`); });
     if (S.p && (S.p.line || 'L0') === VL) { if ((S.p.bdoYears || []).includes(Y + 1) && !bd) W.push(`발롱도르 ${Y + 1} · ${S.p.name}`); }
     const cross = almCross(on, Y);
-    const head = `<div class="alm-top">${almRing(years, cnt, Y)}<div><p class="eyebrow">시즌 연감</p><h3 class="alm-y">${sl(Y)}</h3><p class="small muted">${on.length ? `이 세계선의 주인공 ${on.length}명이 같은 해를 지나고 있었어요.` : '이 해에는 주인공이 없었어요.'}</p></div></div>`;
+    const head = `<div class="alm-top">${almRing(years, cnt, Y, splits)}<div><p class="eyebrow">시즌 연감</p><h3 class="alm-y">${sl(Y)}</h3><p class="small muted">${on.length ? `이 세계선의 주인공 ${on.length}명이 같은 해를 지나고 있었어요.` : '이 해에는 주인공이 없었어요.'}</p></div></div>${spNow.map(s => `<div class="alm-split"><span>세계선 분기</span><p>${esc(J(s.name, '이'))} 이 시즌에 갈라졌어요.</p>${s.what ? `<p class="small muted">${s.by ? `${esc(s.by)} · ` : ''}${esc(s.what)}</p>` : ''}</div>`).join('')}`;
     const wl = W.length ? `<div class="alm-world"><span>그해의 기록</span>${W.map(t => `<p>${esc(t)}</p>`).join('')}</div>` : '';
     const cl = cross.length ? `<div class="alm-cross"><span>엇갈린 길</span>${cross.map(t => `<p>${esc(t)}</p>`).join('')}</div>` : '';
-    return `${head}${nav}${strip}${wl}${cl}<ul class="alm-list">${on.map(x => almEntry(x, Y, led)).join('')}</ul><p class="muted small">고리 하나가 한 시즌이에요. 같은 해를 산 주인공이 많을수록 짙어져요. 커리어가 쌓일수록 나이테가 두꺼워져요.</p>`;
+    return `${head}${nav}${strip}${wl}${cl}<ul class="alm-list">${on.map(x => almEntry(x, Y, led)).join('')}${ghosts.map(x => almGhostEntry(x, Y, w)).join('')}</ul><p class="muted small">고리 하나가 한 시즌이에요. 같은 해를 산 주인공이 많을수록 짙어져요. 커리어가 쌓일수록 나이테가 두꺼워져요.${splits.length ? ' 보라색 점선은 이 세계선이 갈라진 해예요.' : ''}</p>`;
   }
   // 숨긴 커리어: 지우지 않고 목록 아래에 작게 접어 둔다
   function hiddenList(cs) {
