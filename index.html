@@ -133,6 +133,14 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
 .lcard { text-align: left; border: 0; background: var(--panel-2); border-radius: var(--r); padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; transition: background .15s; }
 .lcard:hover { background: var(--panel-3); }
+.legbar { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.seg.sm button { padding: 5px 10px; font-size: 12.5px; }
+.lrows { display: flex; flex-direction: column; gap: 4px; }
+.legrow { display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; cursor: pointer; text-align: left; border: 0; background: var(--panel-2); border-radius: 10px; padding: 8px 12px; min-width: 0; }
+.legrow:hover { background: var(--panel-3); }
+.lr-ovr { font-weight: 900; font-size: 18px; color: var(--gold); min-width: 26px; font-variant-numeric: tabular-nums; }
+.lr-main { display: flex; flex-direction: column; min-width: 0; flex: 1; } .lr-main b { font-size: 14.5px; } .lr-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lr-pills { display: flex; gap: 4px; flex: none; }
 .lc-row { display: flex; gap: 12px; align-items: center; } .lc-main { min-width: 0; }
 .lc-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .lc-ovr { font-size: 26px; font-weight: 900; line-height: 1; color: var(--gold); }
@@ -4899,7 +4907,9 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const VL = (w.lines || {})[S.viewLine] ? S.viewLine : 'L0'; const led = E.lineView(w, VL) || { people: cs, coaches: cs.filter(c => c.coach), retired: w.retired || {}, hof: w.hof || {}, bdo: {}, cut: {} };
     const csAll = cs; { const cs = led.people;
     let inner = '';
-    if (S.worldTab === 'legends') inner = cs.length ? `<div class="cards">${[...cs].filter(c => !c.hidden).sort((a, b) => b.peakOvr - a.peakOvr).map(c => legendCard(c, led)).join('')}</div>${hiddenList(cs)}` : '<p class="muted">이 세계선엔 아직 은퇴한 선수가 없어요.</p>';
+    if (S.worldTab === 'legends') inner = cs.length ? (() => { const lv = legPref('view', 'list'), ls = legPref('sort', 'peak'); const L = [...cs].filter(c => !c.hidden).sort(ls === 'recent' ? (a, b) => b.endYear - a.endYear : (a, b) => b.peakOvr - a.peakOvr);
+      const bar = `<div class="legbar"><div class="seg sm"><button data-legsort="peak" class="${ls === 'peak' ? 'on' : ''}">피크순</button><button data-legsort="recent" class="${ls === 'recent' ? 'on' : ''}">최근순</button></div><div class="seg sm"><button data-legview="list" class="${lv === 'list' ? 'on' : ''}">목록</button><button data-legview="cards" class="${lv === 'cards' ? 'on' : ''}">카드</button></div></div>`;
+      return bar + (lv === 'cards' ? `<div class="cards">${L.map(c => legendCard(c, led)).join('')}</div>` : `<div class="lrows">${L.map(c => legendRow(c, led)).join('')}</div>`) + hiddenList(cs); })() : '<p class="muted">이 세계선엔 아직 은퇴한 선수가 없어요.</p>';
     else if (S.worldTab === 'families') {
       const fam = {}; cs.forEach(c => (fam[c.familyId] = fam[c.familyId] || []).push(c));
       if (S.p && (S.p.line || 'L0') === VL) { const a = { ...E.summarize(S.p), active: true }; (fam[a.familyId] = fam[a.familyId] || []).push(a); }
@@ -4954,6 +4964,12 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function hiddenList(cs) {
     const hs = cs.filter(c => c.hidden); if (!hs.length) return '';
     return `<details class="hidlist"><summary>숨긴 커리어 ${hs.length}명</summary><ul>${hs.sort((a, b) => a.startYear - b.startYear).map(c => `<li><button class="link" data-card="${c.id}">${esc(c.name)}</button> <span class="muted small">${c.pos} · ${sl(c.startYear)}–${sl(c.endYear)} · 피크 ${c.peakOvr}</span></li>`).join('')}</ul></details>`;
+  }
+  const legPref = (k, d) => { try { return localStorage.getItem('sk_leg_' + k) || d; } catch { return d; } };
+  // 한 줄 목록: 피크 · 이름 · 포지션 · 기간 · 핵심 기록
+  function legendRow(c, led) {
+    const isGK = c.pos === 'GK';
+    return `<div class="legrow" role="button" tabindex="0" data-card="${c.id}"><span class="lr-ovr">${c.peakOvr}</span>${crest(c.topClubs[0]?.club, 'xs')}<span class="lr-main"><b>${esc(c.name)}</b>${c.nickname ? ` <span class="muted small">‘${esc(nickT(c))}’</span>` : ''}<span class="lr-sub small muted">${c.pos} · ${natTag(c.nation)} · ${sl(c.startYear)}–${sl(c.endYear)} · ${isGK ? `${nf(c.cs)} CS` : `${nf(c.goals)}골 ${nf(c.assists)}도움`} · 우승 ${c.trophies}</span></span><span class="lr-pills">${c.bdo ? `<span class="pill gold">발롱 ${c.bdo}</span>` : ''}${c.generation > 1 ? `<span class="pill">${c.generation}대</span>` : ''}${c.coach ? '<span class="pill">감독</span>' : ''}</span></div>`;
   }
   function legendCard(c, led) {
     const isGK = c.pos === 'GK'; const partial = led && led.cut?.[c.id] != null && led.cut[c.id] !== Infinity && led.cut[c.id] <= c.endYear;
@@ -5646,6 +5662,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const cc = $('#chronclub'); if (cc) cc.onchange = () => { S.chronClub = cc.value; render(); };
     $$('[data-rtab]').forEach(b => b.onclick = () => { S.rtab = b.dataset.rtab; render(); });
     $$('[data-card]').forEach(b => b.onclick = () => openCard(b.dataset.card));
+    $$('[data-legview]').forEach(b => b.onclick = () => { try { localStorage.setItem('sk_leg_view', b.dataset.legview); } catch { } render(); });
+    $$('[data-legsort]').forEach(b => b.onclick = () => { try { localStorage.setItem('sk_leg_sort', b.dataset.legsort); } catch { } render(); });
     $$('[data-act]').forEach(b => b.onclick = () => act(b.dataset.act, b));
     $$('[data-opt]').forEach(b => b.onclick = () => chooseOpt(+b.dataset.opt));
     $$('details[data-k]').forEach(d => d.ontoggle = () => { if (d.open) S.open.add(d.dataset.k); else S.open.delete(d.dataset.k); });
