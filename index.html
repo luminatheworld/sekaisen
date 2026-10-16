@@ -233,6 +233,7 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .evopts { display: flex; flex-direction: column; gap: 8px; }
 .evopt { text-align: left; border: 0; background: var(--panel-2); border-radius: 14px; padding: 13px 16px; display: flex; flex-direction: column; gap: 2px; min-height: 52px; transition: background .15s; }
 .evopt b { font-weight: 700; }
+.evcustom { display: flex; gap: 8px; order: 99; } .evcustom .inp { flex: 1; min-width: 0; }
 .evopt:hover { background: var(--panel-3); } .evopt .small { color: var(--muted); }
 .outcome { background: var(--gold-bg); border-radius: 14px; padding: 12px 16px; font-size: 14.5px; }
 .outcome .lines li { font-size: 14px; } .outcome p + p { margin-top: 4px; }
@@ -2145,7 +2146,7 @@ const ENGINE = (() => {
     const awardCount = {}; p.awards.forEach(a => awardCount[a.name] = (awardCount[a.name] || 0) + 1);
     const numByClub = {}; (p.numbers || []).forEach(n => numByClub[n.club] = n.num);
     return {
-      id: p.id, name: p.name, nation: p.nation, pos: p.pos, origPos: p.origPos, role: p.role, trait: p.trait, look: p.look, nickname: p.nickname, birthYear: p.birthYear, startYear: p.startYear, endYear: p.year - 1,
+      id: p.id, name: p.name, nation: p.nation, pos: p.pos, origPos: p.origPos, role: p.role, trait: p.trait, look: p.look, nickname: p.nickname, nickLocal: p.nickLocal || null, birthYear: p.birthYear, startYear: p.startYear, endYear: p.year - 1,
       retireAge: p.age - 1, seasons: s.length, clubs: topClubs.length, peakOvr: p.peakOvr,
       apps: sum('apps'), goals: sum('goals'), assists: sum('assists'), saves: sum('saves'), cs: sum('cs'), avgRating: +avg.toFixed(2),
       trophies: p.trophies.filter(t => t.type !== 'youth').length, youthTrophies: p.trophies.filter(t => t.type === 'youth').length, awards: p.awards.length, awardCount, bdo: p.bdoYears.length, bdoYears: p.bdoYears.slice(),
@@ -3378,15 +3379,67 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     for (const k of ['goals', 'apps']) for (const n of MILES[k]) if (tot[k] >= n && !p.flags['ms_' + k + n] && (p.pos !== 'GK' || k === 'apps')) return { k, n };
     return null;
   }
+  // 별명: 뛰는 리그의 말로 불린다. 한국어 뜻은 괄호로 함께 적는다.
+  // 순서: en es it de fr pt nl tr el ar ja
+  const NL = ['en', 'es', 'it', 'de', 'fr', 'pt', 'nl', 'tr', 'el', 'ar', 'ja'];
+  const NICK = {
+    '거미손': ['Spider Hands', 'Manos de Araña', 'Mani di Ragno', 'Spinnenhände', "Mains d'Araignée", 'Mãos de Aranha', 'Spinnenhanden', 'Örümcek Eller', 'Χέρια Αράχνης', 'يد العنكبوت', 'スパイダーハンド'],
+    '통곡의 벽': ['The Wailing Wall', 'El Muro de los Lamentos', 'Il Muro del Pianto', 'Die Klagemauer', 'Le Mur des Lamentations', 'O Muro das Lamentações', 'De Klaagmuur', 'Ağlama Duvarı', 'Το Τείχος των Δακρύων', 'حائط المبكى', '嘆きの壁'],
+    '수호신': ['Guardian Angel', 'El Ángel de la Guarda', "L'Angelo Custode", 'Schutzengel', 'Ange Gardien', 'O Anjo da Guarda', 'Beschermengel', 'Koruyucu Melek', 'Ο Φύλακας Άγγελος', 'الملاك الحارس', '守護神'],
+    '문어': ['The Octopus', 'El Pulpo', 'Il Polpo', 'Der Krake', 'La Pieuvre', 'O Polvo', 'De Octopus', 'Ahtapot', 'Το Χταπόδι', 'الأخطبوط', 'タコ'],
+    '철벽': ['Iron Wall', 'Muro de Hierro', 'Muro di Ferro', 'Eiserne Wand', 'Mur de Fer', 'Muro de Ferro', 'IJzeren Muur', 'Demir Duvar', 'Σιδερένιος Τοίχος', 'الجدار الحديدي', '鉄壁'],
+    '바위': ['The Rock', 'La Roca', 'La Roccia', 'Der Fels', 'Le Roc', 'A Rocha', 'De Rots', 'Kaya', 'Ο Βράχος', 'الصخرة', '岩'],
+    '사령관': ['The Commander', 'El Comandante', 'Il Comandante', 'Der Kommandant', 'Le Commandant', 'O Comandante', 'De Commandant', 'Komutan', 'Ο Διοικητής', 'القائد', '司令官'],
+    '탱크': ['The Tank', 'El Tanque', 'Il Carro Armato', 'Der Panzer', 'Le Tank', 'O Tanque', 'De Tank', 'Tank', 'Το Τανκ', 'الدبابة', '戦車'],
+    '측면의 엔진': ['Engine of the Flank', 'El Motor de la Banda', 'Il Motore della Fascia', 'Flügelmotor', 'Le Moteur du Couloir', 'O Motor da Ala', 'De Flankmotor', 'Kanat Motoru', 'Η Μηχανή της Πτέρυγας', 'محرك الجناح', 'サイドのエンジン'],
+    '왼쪽의 기관차': ['The Left-Flank Locomotive', 'La Locomotora de la Izquierda', 'La Locomotiva di Sinistra', 'Die Linke Lokomotive', 'La Locomotive de Gauche', 'A Locomotiva da Esquerda', 'De Linkse Locomotief', 'Sol Kanadın Lokomotifi', 'Η Ατμομηχανή της Αριστερής', 'قاطرة اليسار', '左の機関車'],
+    '오른쪽의 기관차': ['The Right-Flank Locomotive', 'La Locomotora de la Derecha', 'La Locomotiva di Destra', 'Die Rechte Lokomotive', 'La Locomotive de Droite', 'A Locomotiva da Direita', 'De Rechtse Locomotief', 'Sağ Kanadın Lokomotifi', 'Η Ατμομηχανή της Δεξιάς', 'قاطرة اليمين', '右の機関車'],
+    '기관차': ['The Locomotive', 'La Locomotora', 'La Locomotiva', 'Die Lokomotive', 'La Locomotive', 'A Locomotiva', 'De Locomotief', 'Lokomotif', 'Η Ατμομηχανή', 'القاطرة', '機関車'],
+    '고속열차': ['The Bullet Train', 'El Tren Bala', 'Il Treno Proiettile', 'Der Schnellzug', 'Le TGV', 'O Trem-Bala', 'De Hogesnelheidstrein', 'Hızlı Tren', 'Το Τρένο Βολίδα', 'القطار السريع', '新幹線'],
+    '왕복 셔틀': ['The Shuttle', 'La Lanzadera', 'La Navetta', 'Das Pendel', 'La Navette', 'O Vaivém', 'De Pendel', 'Mekik', 'Η Σαΐτα', 'المكوك', 'シャトル'],
+    '청소부': ['The Cleaner', 'El Barrendero', 'Lo Spazzino', 'Der Ausputzer', 'Le Nettoyeur', 'O Faxineiro', 'De Schoonmaker', 'Çöpçü', 'Ο Οδοκαθαριστής', 'عامل النظافة', '掃除屋'],
+    '방패': ['The Shield', 'El Escudo', 'Lo Scudo', 'Der Schild', 'Le Bouclier', 'O Escudo', 'Het Schild', 'Kalkan', 'Η Ασπίδα', 'الدرع', '盾'],
+    '지휘자': ['The Conductor', 'El Director de Orquesta', 'Il Direttore', 'Der Dirigent', "Le Chef d'Orchestre", 'O Maestro', 'De Dirigent', 'Orkestra Şefi', 'Ο Μαέστρος', 'قائد الأوركسترا', '指揮者'],
+    '진공청소기': ['The Hoover', 'La Aspiradora', "L'Aspirapolvere", 'Der Staubsauger', "L'Aspirateur", 'O Aspirador', 'De Stofzuiger', 'Elektrik Süpürgesi', 'Η Ηλεκτρική Σκούπα', 'المكنسة الكهربائية', '掃除機'],
+    '엔진': ['The Engine', 'El Motor', 'Il Motore', 'Der Motor', 'Le Moteur', 'O Motor', 'De Motor', 'Motor', 'Η Μηχανή', 'المحرك', 'エンジン'],
+    '심장': ['The Heart', 'El Corazón', 'Il Cuore', 'Das Herz', 'Le Cœur', 'O Coração', 'Het Hart', 'Kalp', 'Η Καρδιά', 'القلب', '心臓'],
+    '메트로놈': ['The Metronome', 'El Metrónomo', 'Il Metronomo', 'Das Metronom', 'Le Métronome', 'O Metrônomo', 'De Metronoom', 'Metronom', 'Ο Μετρονόμος', 'الميترونوم', 'メトロノーム'],
+    '마에스트로': ['The Maestro', 'El Maestro', 'Il Maestro', 'Der Maestro', 'Le Maestro', 'O Maestro', 'De Maestro', 'Maestro', 'Ο Μαέστρος', 'المايسترو', 'マエストロ'],
+    '마법사': ['The Magician', 'El Mago', 'Il Mago', 'Der Zauberer', 'Le Magicien', 'O Mágico', 'De Tovenaar', 'Sihirbaz', 'Ο Μάγος', 'الساحر', '魔術師'],
+    '연금술사': ['The Alchemist', 'El Alquimista', "L'Alchimista", 'Der Alchemist', "L'Alchimiste", 'O Alquimista', 'De Alchemist', 'Simyacı', 'Ο Αλχημιστής', 'الخيميائي', '錬金術師'],
+    '작은 왕자': ['The Little Prince', 'El Principito', 'Il Piccolo Principe', 'Der Kleine Prinz', 'Le Petit Prince', 'O Pequeno Príncipe', 'De Kleine Prins', 'Küçük Prens', 'Ο Μικρός Πρίγκιπας', 'الأمير الصغير', '小さな王子'],
+    '총알': ['The Bullet', 'La Bala', 'Il Proiettile', 'Die Kugel', 'La Balle', 'A Bala', 'De Kogel', 'Kurşun', 'Η Σφαίρα', 'الرصاصة', '弾丸'],
+    '번개': ['Lightning', 'El Rayo', 'Il Fulmine', 'Der Blitz', "L'Éclair", 'O Raio', 'De Bliksem', 'Şimşek', 'Η Αστραπή', 'البرق', '稲妻'],
+    '드리블 마법사': ['The Dribble Wizard', 'El Mago del Regate', 'Il Mago del Dribbling', 'Der Dribbelkünstler', 'Le Magicien du Dribble', 'O Mágico do Drible', 'De Dribbelkoning', 'Çalım Sihirbazı', 'Ο Μάγος της Ντρίμπλας', 'ساحر المراوغة', 'ドリブルの魔術師'],
+    '골잡이': ['The Goalgetter', 'El Goleador', 'Il Bomber', 'Der Torjäger', 'Le Buteur', 'O Artilheiro', 'De Goalgetter', 'Golcü', 'Ο Γκολτζής', 'الهداف', '点取り屋'],
+    '저격수': ['The Sniper', 'El Francotirador', 'Il Cecchino', 'Der Scharfschütze', "Le Tireur d'Élite", 'O Atirador', 'De Scherpschutter', 'Keskin Nişancı', 'Ο Ελεύθερος Σκοπευτής', 'القناص', 'スナイパー'],
+    '폭격기': ['The Bomber', 'El Bombardero', 'Il Bombardiere', 'Der Bomber', 'Le Bombardier', 'O Bombardeiro', 'De Bommenwerper', 'Bombacı', 'Ο Βομβαρδιστής', 'القاذفة', '爆撃機'],
+    '해결사': ['The Fixer', 'El Hombre Clave', 'Il Risolutore', 'Der Vollstrecker', 'Le Sauveur', 'O Decisivo', 'De Beslisser', 'Kurtarıcı', 'Ο Λυτρωτής', 'المنقذ', '仕事人'],
+    '에이스': ['The Ace', 'El As', "L'Asso", 'Der Trumpf', "L'As", 'O Ás', 'De Aas', 'As', 'Ο Άσσος', 'الآس', 'エース'],
+    '교수님': ['The Professor', 'El Profesor', 'Il Professore', 'Der Professor', 'Le Professeur', 'O Professor', 'De Professor', 'Profesör', 'Ο Καθηγητής', 'الأستاذ', '教授'],
+    '정복자': ['The Conqueror', 'El Conquistador', 'Il Conquistatore', 'Der Eroberer', 'Le Conquérant', 'O Conquistador', 'De Veroveraar', 'Fatih', 'Ο Κατακτητής', 'الفاتح', '征服者'],
+    '원클럽맨': ['Mr. One Club', 'El Hombre de un Solo Club', 'La Bandiera', 'Der Vereinstreue', 'Le Fidèle', 'O Homem de Um Clube Só', 'De Clubman', 'Sadık', 'Ο Πιστός', 'الوفي', 'ワンクラブマン'],
+    '록스타': ['The Rockstar', 'El Rockero', 'La Rockstar', 'Der Rockstar', 'La Rockstar', 'O Roqueiro', 'De Rockster', 'Rock Yıldızı', 'Ο Ροκ Σταρ', 'نجم الروك', 'ロックスター'],
+    '쇼맨': ['The Showman', 'El Showman', 'Lo Showman', 'Der Showman', 'Le Showman', 'O Showman', 'De Showman', 'Şovmen', 'Ο Σόουμαν', 'الاستعراضي', 'ショーマン'],
+    '캡틴': ['The Captain', 'El Capitán', 'Il Capitano', 'Der Kapitän', 'Le Capitaine', 'O Capitão', 'De Kapitein', 'Kaptan', 'Ο Αρχηγός', 'القائد', 'キャプテン'],
+  };
+  const LG_LANG = { ENG: 'en', ENG2: 'en', SCO: 'en', USA: 'en', ESP: 'es', ESP2: 'es', ARG: 'es', ITA: 'it', ITA2: 'it', GER: 'de', GER2: 'de', FRA: 'fr', FRA2: 'fr', POR: 'pt', BRA: 'pt', NED: 'nl', BEL: 'nl', TUR: 'tr', GRE: 'el', KSA: 'ar', JPN: 'ja', KOR: 'ko' };
+  const CLUB_LANG = { and: 'fr', stl: 'fr', usg: 'fr', cha: 'fr' };
+  const langOf = (clubId) => CLUB_LANG[clubId] || LG_LANG[E.CLUB[clubId]?.lg] || 'en';
+  const localNick = (ko, clubId) => { const l = langOf(clubId); if (l === 'ko') return null; const row = NICK[ko]; return row ? row[NL.indexOf(l)] : null; };
+  const nickShow = (p) => p.nickLocal ? `${p.nickLocal} (${p.nickname})` : p.nickname;
   def({ id: 'nickname', phase: 'post', cd: 0, w: (c) => !c.p.nickname && c.res && c.res.rating >= 7.25 && !c.p.youth ? 70 : 0, make(c) {
-    const opts = nicknames(c.p).slice(0, 3);
-    return { title: '팬들이 별명을 붙였다', tone: 'good', text: '커뮤니티와 중계진이 저마다 별명을 부르기 시작했다. 어떤 게 살아남을까.', options: opts.map(n => ({ label: `‘${n}’`, hint: '별명이 기록에 남는다', run(x) { x.p.nickname = n; return `이제 사람들은 ‘${n}’라고 부른다.`; } })) };
+    const p = c.p; const opts = nicknames(p).slice(0, 3); const lg = E.LEAGUES[E.CLUB[p.club]?.lg]?.country || '현지';
+    const set = (q, ko, loc) => { q.nickname = ko; q.nickLocal = loc || null; q.nickClub = q.club; q.nickYear = q.year; };
+    return { title: '팬들이 별명을 붙였다', tone: 'good', text: `${lg} 커뮤니티와 중계진이 저마다 별명을 부르기 시작했다. 어떤 게 살아남을까.`, options: opts.map(n => { const loc = localNick(n, p.club); return { label: loc ? `‘${loc}’ (${n})` : `‘${n}’`, hint: '별명이 기록에 남는다', raw: true, run(x) { set(x.p, n, loc); return `이제 사람들은 ‘${nickShow(x.p)}’라고 부른다.`; } }; }),
+      custom: { placeholder: '직접 지어 주기 (예: El Niño, 미친 왼발)', run(x, text) { const t = String(text).trim().slice(0, 30); if (!t) return ''; set(x.p, t, null); x.p.nickCustom = true; return `이제 사람들은 ‘${t}’라고 부른다.`; } } };
   } });
   function nicknames(p) {
-    const byPos = { GK: ['거미손', '통곡의 벽', '수호신', '문어'], CB: ['철벽', '바위', '사령관', '탱크'], LB: ['측면의 엔진', '왼쪽의 기관차', '고속열차'], RB: ['오른쪽의 기관차', '측면의 엔진', '고속열차'], LWB: ['기관차', '왕복 셔틀'], RWB: ['기관차', '왕복 셔틀'], DM: ['청소부', '방패', '지휘자', '진공청소기'], CM: ['엔진', '심장', '메트로놈'], AM: ['마에스트로', '마법사', '연금술사', '작은 왕자'], LW: ['총알', '번개', '드리블 마법사'], RW: ['총알', '번개', '드리블 마법사'], ST: ['골잡이', '저격수', '폭격기', '해결사'] };
-    const tr = { pro: '교과서', amb: '정복자', loyal: '원클럽', mood: '록스타', show: '쇼맨', lead: '캡틴' };
-    const a = (byPos[p.pos] || ['에이스']).slice().sort(() => R() - .5);
-    return [a[0], `${E.CLUB[p.club].name}의 ${a[1] || a[0]}`, tr[p.trait] ? `${tr[p.trait]} ${a[2] || a[0]}` : a[2] || a[0]];
+    const byPos = { GK: ['거미손', '통곡의 벽', '수호신', '문어'], CB: ['철벽', '바위', '사령관', '탱크'], LB: ['측면의 엔진', '왼쪽의 기관차', '고속열차'], RB: ['오른쪽의 기관차', '측면의 엔진', '고속열차'], LWB: ['기관차', '왕복 셔틀', '측면의 엔진'], RWB: ['기관차', '왕복 셔틀', '측면의 엔진'], DM: ['청소부', '방패', '지휘자', '진공청소기'], CM: ['엔진', '심장', '메트로놈', '지휘자'], AM: ['마에스트로', '마법사', '연금술사', '작은 왕자'], LW: ['총알', '번개', '드리블 마법사'], RW: ['총알', '번개', '드리블 마법사'], ST: ['골잡이', '저격수', '폭격기', '해결사'] };
+    const tr = { pro: '교수님', amb: '정복자', loyal: '원클럽맨', mood: '록스타', show: '쇼맨', lead: '캡틴' };
+    const a = (byPos[p.pos] || ['에이스', '엔진', '심장']).slice().sort(() => R() - .5);
+    const out = [a[0], a[1] || '에이스']; out.push(tr[p.trait] && !out.includes(tr[p.trait]) ? tr[p.trait] : (a[2] || '에이스'));
+    return [...new Set(out)];
   }
   def({ id: 'sacked', phase: 'post', cd: 2, w: (c) => { const r = c.res; if (!r || c.p.youth || r.rank == null) return 0; const big = E.clubStr(c.p.club, c.p.year) >= 80; return (big && r.rank > 5) || r.rank > r.lgSize * .7 ? 28 : 0; }, make(c) {
     const p = c.p; const old = c.res.mgr.name;
@@ -4171,7 +4224,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (inj1 ? R() < .12 : R() < .3) { const inj2 = E.rollInjury(p, ctx.attitude); if (inj2) q.push(Object.assign(injuryEvent(inj2), { id: 'injury' })); }
     return q;
   }
-  return { draw, seasonQueue, injuryEvent, count: () => D.length, ids: () => D.map(d => d.id), _all: () => D };
+  return { draw, seasonQueue, injuryEvent, count: () => D.length, ids: () => D.map(d => d.id), _all: () => D, nickShow, localNick };
 })();
 
 </script>
@@ -4370,7 +4423,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const isGK = c.pos === 'GK'; const partial = led && led.cut?.[c.id] != null && led.cut[c.id] !== Infinity && led.cut[c.id] <= c.endYear;
     return `<button class="lcard" data-card="${c.id}"><div class="lc-row">${ava(c.look, c.topClubs[0]?.club, { gk: isGK, age: c.retireAge, cls: 'sm' })}<div class="lc-main">
       <div class="lc-top"><span class="lc-ovr">${c.peakOvr}</span><span class="lc-pos">${c.pos}</span>${c.bdo ? `<span class="pill gold">발롱 ${c.bdo}</span>` : ''}${c.coach ? '<span class="pill">감독</span>' : ''}${c.generation > 1 ? `<span class="pill">${c.generation}대</span>` : ''}${partial ? `<span class="pill quiet" title="이 세계선에선 ${led.cut[c.id]}년 이후의 기록이 정해져 있지 않아요">${led.cut[c.id] - 1}년까지</span>` : ''}</div>
-      <div class="lc-name">${esc(c.name)}</div>${c.nickname ? `<div class="small muted">‘${esc(c.nickname)}’</div>` : ''}${c.temper ? `<div class="lc-tmp">${esc(c.temper.big)}${c.temper.nat ? ' · ' + esc(c.temper.nat) : ''}</div>` : ''}
+      <div class="lc-name">${esc(c.name)}</div>${c.nickname ? `<div class="small muted">‘${esc(nickT(c))}’</div>` : ''}${c.temper ? `<div class="lc-tmp">${esc(c.temper.big)}${c.temper.nat ? ' · ' + esc(c.temper.nat) : ''}</div>` : ''}
       <div class="muted small">${natTag(c.nation)} · ${sl(c.startYear)}–${sl(c.endYear)} · ${c.retireAge}세 은퇴</div></div></div>
       <div class="lc-stats"><span><b>${nf(c.apps)}</b>경기</span>${isGK ? `<span><b>${nf(c.cs)}</b>클린시트</span>` : `<span><b>${nf(c.goals)}</b>골</span><span><b>${nf(c.assists)}</b>도움</span>`}<span><b>${c.trophies}</b>우승</span></div>
       <div class="lc-clubs">${c.topClubs.slice(0, 4).map(t => `${crest(t.club, 'xs')}<span class="small">${t.n}</span>`).join('')}</div></button>`;
@@ -4652,13 +4705,14 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (!heads.length && !(pr.review || []).length) return '';
     return `<div class="press">${heads.map(clip).join('')}${reviewRows(pr.review)}</div>`;
   }
+  const nickT = (x) => x.nickLocal ? `${x.nickLocal} (${x.nickname})` : x.nickname;
   function eventCard(ev, i, n, label) {
     if (!ev) return '';
     const opts = ev.options.filter(o => !o.when || o.when(ctxFor(S.p)));
     const lbl = ev.label ? ev.label : `${label}${n > 1 ? ` · ${i + 1}/${n}` : ''}`;
     return `<section class="panel event tone-${ev.tone || 'neutral'} ${ev.label === '대표팀' || ev.label === CF ? 'natl' : ''}" aria-live="polite"><span class="eyebrow">${esc(lbl)}</span>
       <h2 class="evt">${esc(ev.title)}</h2>${ev.text ? `<p>${esc(ev.text)}</p>` : ''}${ev.html || ''}${(ev.heads || []).length ? `<div class="press">${ev.heads.map(clip).join('')}</div>` : ''}
-      ${S.evOut ? `<div class="outcome">${S.evOutHtml || esc(vague(S.evOut))}</div><div class="row"><button class="btn primary" data-act="evnext">계속</button></div>` : `<div class="evopts">${opts.map((o) => `<button class="evopt" data-opt="${ev.options.indexOf(o)}"><b>${esc(o.label)}</b>${(() => { const v = o.raw ? vague(o.hint) : veil(o.hint, (ev.id || ev.title) + '|' + o.label); return v ? `<span class="small">${esc(v)}</span>` : ''; })()}</button>`).join('')}</div>`}
+      ${S.evOut ? `<div class="outcome">${S.evOutHtml || esc(vague(S.evOut))}</div><div class="row"><button class="btn primary" data-act="evnext">계속</button></div>` : `<div class="evopts">${ev.custom ? `<div class="evcustom"><input id="evcustom" class="inp" maxlength="30" placeholder="${esc(ev.custom.placeholder || '직접 입력')}"><button class="btn" data-act="evcustom">이걸로</button></div>` : ''}${opts.map((o) => `<button class="evopt" data-opt="${ev.options.indexOf(o)}"><b>${esc(o.label)}</b>${(() => { const v = o.raw ? vague(o.hint) : veil(o.hint, (ev.id || ev.title) + '|' + o.label); return v ? `<span class="small">${esc(v)}</span>` : ''; })()}</button>`).join('')}</div>`}
     </section>`;
   }
   // 수치를 감춘다: 확률은 말로, 증감은 화살표로. 정확한 값은 규칙 페이지에만.
@@ -4835,7 +4889,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <div class="cc-mid"><div><span class="cc-ovr">${sum.peakOvr}</span><span class="cc-lbl">PEAK OVR</span><span class="cc-pos">${sum.pos}</span><span class="small">${natTag(sum.nation)}</span>${sum.foot ? `<span class="small muted">${E.FOOT_NAME[sum.foot]} · 약발 ${sum.weak || 3}</span>` : ''}</div>
         <div class="cc-ava">${ava(sum.look, sum.topClubs[0]?.club, { gk: isGK, age: 28, cls: 'lg' })}</div>
         <div class="right">${sum.bdo ? `<span class="cc-ovr">${sum.bdo}</span><span class="cc-lbl">BALLON D'OR</span>` : ''}</div></div>
-      <h2 class="cc-name">${esc(sum.name)}</h2>${sum.nickname ? `<p class="cc-sub">‘${esc(sum.nickname)}’</p>` : ''}
+      <h2 class="cc-name">${esc(sum.name)}</h2>${sum.nickname ? `<p class="cc-sub">‘${esc(nickT(sum))}’</p>` : ''}
       <p class="cc-sub">${sum.seasons}시즌 · ${sum.clubs}개 구단 · ${sum.retireAge}세 은퇴${sum.generation > 1 ? ` · ${esc(surname(sum.name))} 가문 ${sum.generation}대` : ''}</p>
       ${sum.early ? `<p class="cc-sub small">${sum.early.age}세 조기 은퇴 · ${esc(EARLY_NAME[sum.early.reason] || '')}</p>` : ''}
       ${sum.talent && sum.curve ? `<p class="cc-sub small">숨겨져 있던 재능: <b>${esc(E.TALENT[sum.talent]?.label || '')}</b> · ${esc(E.CURVES[sum.curve] || '')}${sum.early && sum.P && sum.P - sum.peakOvr >= 5 ? ' · <b>못다 핀 재능</b>' : ''}</p>` : ''}
@@ -5492,6 +5546,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     }
     if (a === 'qclear') { keepMemo(); S.choice.q = ''; render(); return; }
     if (a === 'evnext') return evNext();
+    if (a === 'evcustom') { const v = ($('#evcustom')?.value || '').trim(); if (!v) { toast('별명을 입력해 줘요.'); return; } const list = S.phase === 'events' ? S.evQ : S.phase === 'post' ? S.postQ : S.windowQ.filter(e => !e.done); const ev = S.phase === 'prep' ? list[0] : list[S.evIdx]; if (!ev?.custom) return; const k = ev.options.push({ label: `‘${v}’`, run: (x) => ev.custom.run(x, v) }) - 1; return chooseOpt(k); }
     if (a === 'tonext') return toNextSeason();
     if (a === 'retire') { S.retire = { post: 'coach', style: bestStyle(p.role), done: false, reason: null }; S.view = 'retire'; render(); window.scrollTo(0, 0); return; }
     if (a === 'cancelretire') { S.view = 'career'; render(); return; }
@@ -5546,7 +5601,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const career = (S.retire?.career?.id === id ? S.retire.career : null) || (S.viewCareer?.career) || await Store.loadCareer(id);
     const finals = (career?.finals || []).slice(0, 12).map(f => `${f.year} ${f.comp} ${f.won ? '우승' : '준우승'} vs ${f.oppNation ? f.opp : club(f.opp).name} ${f.a}-${f.b}${f.pens ? ' 승부차기' : ''} (${f.played ? f.g + '골 ' + f.as + '도움' : '결장'}${f.pkMiss ? ', PK 실축' : ''})`).join('\n');
     const story = (career?.seasons || []).map(s => [...s.events, ...(s.notes || [])].length || s.memo ? `${s.year} ${club(s.club).name}: ${[...s.events, ...(s.notes || [])].join(', ')}${s.memo ? ' / 메모: ' + s.memo : ''}` : '').filter(Boolean).slice(0, 40).join('\n');
-    const prompt = `가상의 축구 선수 커리어가 끝났다. 한국 축구 커뮤니티(에펨코리아 해외축구 게시판) 스타일로 은퇴 소식 게시글 하나와 댓글 8개를 써줘. 반말 커뮤 말투, 기록과 사건 기반 드립, 이모지 남발 금지, 실존 인물은 등장시키지 마.\n\n이름: ${sum.name}${sum.nickname ? ` (별명 ${sum.nickname})` : ''}\n국적: ${sum.nation} / 포지션: ${sum.pos} / 성격: ${E.TRAITS[sum.trait]?.name || ''} / ${sum.startYear}–${sum.endYear}, ${sum.retireAge}세 은퇴\n피크 OVR ${sum.peakOvr}, 발롱도르 ${sum.bdo}회\n${sum.temper ? `숨은 기질: ${sum.temper.big}${sum.temper.nat ? ', ' + sum.temper.nat : ''} (${[...(sum.temper.bigLines || []), ...(sum.temper.natLines || [])].join(' / ')})\n` : ''}${sum.apps}경기 ${sum.goals}골 ${sum.assists}도움${sum.pos === 'GK' ? `, 클린시트 ${sum.cs}` : ''}, 평균 평점 ${sum.avgRating}\n우승 ${sum.trophies}회, 개인상 ${sum.awards}회 (${Object.entries(sum.awardCount || {}).map(([k, v]) => k + ' ' + v).join(', ')})\n주요 구단: ${sum.topClubs.slice(0, 5).map(t => club(t.club).name + ' ' + t.n + '시즌').join(', ')}\n부상 ${sum.injuries}회 (장기 ${sum.majorInj})\n결승:\n${finals || '없음'}\n시즌별 사건:\n${story || '없음'}\n은퇴 후: ${sum.post === 'coach' ? '감독 데뷔 예정' : sum.post === 'legend' ? '구단 앰배서더' : '축구계 은퇴'}`;
+    const prompt = `가상의 축구 선수 커리어가 끝났다. 한국 축구 커뮤니티(에펨코리아 해외축구 게시판) 스타일로 은퇴 소식 게시글 하나와 댓글 8개를 써줘. 반말 커뮤 말투, 기록과 사건 기반 드립, 이모지 남발 금지, 실존 인물은 등장시키지 마.\n\n이름: ${sum.name}${sum.nickname ? ` (별명 ${nickT(sum)})` : ''}\n국적: ${sum.nation} / 포지션: ${sum.pos} / 성격: ${E.TRAITS[sum.trait]?.name || ''} / ${sum.startYear}–${sum.endYear}, ${sum.retireAge}세 은퇴\n피크 OVR ${sum.peakOvr}, 발롱도르 ${sum.bdo}회\n${sum.temper ? `숨은 기질: ${sum.temper.big}${sum.temper.nat ? ', ' + sum.temper.nat : ''} (${[...(sum.temper.bigLines || []), ...(sum.temper.natLines || [])].join(' / ')})\n` : ''}${sum.apps}경기 ${sum.goals}골 ${sum.assists}도움${sum.pos === 'GK' ? `, 클린시트 ${sum.cs}` : ''}, 평균 평점 ${sum.avgRating}\n우승 ${sum.trophies}회, 개인상 ${sum.awards}회 (${Object.entries(sum.awardCount || {}).map(([k, v]) => k + ' ' + v).join(', ')})\n주요 구단: ${sum.topClubs.slice(0, 5).map(t => club(t.club).name + ' ' + t.n + '시즌').join(', ')}\n부상 ${sum.injuries}회 (장기 ${sum.majorInj})\n결승:\n${finals || '없음'}\n시즌별 사건:\n${story || '없음'}\n은퇴 후: ${sum.post === 'coach' ? '감독 데뷔 예정' : sum.post === 'legend' ? '구단 앰배서더' : '축구계 은퇴'}`;
     btn.disabled = true; out.hidden = false; out.textContent = '쓰는 중…';
     try { await _sample(prompt, { onText: ({ text }) => { out.textContent = text; } }); }
     catch (e) { if (e?.code === 'not_granted' || e?.code === 'sampling_disabled') { out.textContent = ''; out.hidden = true; btn.hidden = true; } else { out.textContent = (e?.text || '') + (e?.code === 'rate_limited' ? '\n\n잠시 뒤에 다시 눌러 주세요.' : '\n\n만들지 못했어요. 다시 눌러 주세요.'); } }
