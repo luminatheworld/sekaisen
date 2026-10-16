@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v45'</script>
+<script>window.SK_VER='v46'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2523,15 +2523,17 @@ const ENGINE = (() => {
   function offers(p, world, extra = {}) {
     setClubMods(p.clubMods);
     const o = ovr(p); const year = p.year; const last = p.seasons[p.seasons.length - 1];
-    const form = last ? last.rating : 6.6; const out = []; const cur = p.club;
+    // 몇 경기 안 뛴 시즌의 평점은 믿을 게 못 된다: 경기 수만큼만 반영. 벤치에 묻힌 선수는 싸게 데려올 수 있다는 소문이 돈다
+    const la = last && !last.youthTeam ? (last.apps || 0) : 0; const form = last ? (last.rating * la + 6.85 * 8) / (la + 8) : 6.6; const out = []; const cur = p.club;
+    const benched = !!last && !last.youthTeam && (last.share ?? 1) < .2 && p.age >= 19;
     const big = (c) => clubStr(c.id, year) >= 84; const free = p.contract <= 0;
-    const fee = free ? 0 : transferValue(p);
+    const fee = free ? 0 : Math.round(transferValue(p) * (benched ? .6 : 1));
     for (const c of CLUBS) {
       if (c.id === cur || c.mil || recentlyLeft(p, c.id)) continue;
       const s = clubStr(c.id, year); const rel = o - s; let pr = 0;
       if (big(c)) { if (o >= 83) pr = .05 + (o - 83) * .03 + (form - 7) * .08 + p.rep / 800; else if (p.age <= 20 && o >= s - 13 && form >= 7.2) pr = .03; }
       else if (rel >= -6 && rel <= 14) pr = .025 + (6 - Math.abs(rel - 2)) * .006 + (form - 6.9) * .03;
-      if (p.wantOut || extra.boost) pr *= 1.8; if (free) pr *= 1.6; if (p.trait === 'amb' && big(c)) pr *= 1.4;
+      if (p.wantOut || extra.boost) pr *= 1.8; if (free) pr *= 1.6; if (benched && !big(c)) pr *= 1.5; if (p.trait === 'amb' && big(c)) pr *= 1.4;
       if (p.foot === 'L' && ['CB', 'LB', 'LWB'].includes(p.pos)) pr *= 1.25; if ((p.weak || 3) >= 5) pr *= 1.1;
       if (p.age >= 32) pr *= big(c) ? .3 : .7;
       if (p.flags.scandal && year <= p.flags.scandal.until) pr *= big(c) ? .45 : .75; // 스캔들 여파: 빅클럽부터 발을 뺀다
@@ -2543,7 +2545,7 @@ const ENGINE = (() => {
     }
     out.sort((a, b) => clubStr(b.club, year) - clubStr(a.club, year));
     let res = out.slice(0, (p.wantOut || free) ? 6 : 4);
-    if ((p.age <= 22 && last && (last.share ?? 1) < .4 && !last.youthTeam) || extra.loan) {
+    if ((p.age <= 22 && last && (last.share ?? 1) < .4 && !last.youthTeam) || (p.age <= 25 && benched) || extra.loan) {
       const cands = CLUBS.filter(c => c.id !== cur && !c.mil && Math.abs(clubStr(c.id, year) - (o + 1)) <= 4 && policyMul(p, c, o) >= .3);
       for (let i = 0; i < (extra.loan ? 3 : 2) && cands.length; i++) { const c = cands.splice(Math.floor(R() * cands.length), 1)[0]; res.push(offerTerms(p, { club: c.id, type: 'loan', expect: expectRole(o, clubStr(c.id, year)), years: 1 })); }
     }
