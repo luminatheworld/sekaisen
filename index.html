@@ -1489,7 +1489,7 @@ const ENGINE = (() => {
     if (!p.youth && !p.loanFrom) p.contract = Math.max(0, p.contract - 1);
     if (!p.youth) {
       const w = CLUB[p.club]?.mil ? .25 : ensureWage(p); p.earned = +((p.earned || 0) + w).toFixed(2); res.wage = w;
-      if ((p.trait === 'amb' || p.trait === 'show') && !CLUB[p.club]?.mil && w < marketWage(p, p.club) * .7) { bump(p, 'morale', -4); res.events.push('시장가보다 한참 적은 연봉에 불만'); }
+      if ((p.trait === 'amb' || p.trait === 'show') && !CLUB[p.club]?.mil && w < marketWage(p, p.club) * .7) { bump(p, 'morale', -4); const n = p.flags.wageGrumble = (p.flags.wageGrumble || 0) + 1; if (n === 1 || n % 3 === 0) res.events.push(n === 1 ? '시장가보다 한참 적은 연봉에 불만' : pick(['연봉 이야기만 나오면 표정이 굳는다', '에이전트에게 "이 돈으론 못 뛴다"고 했다는 소문', '동료들의 계약 소식에 또 속이 쓰렸다', '몇 년째 같은 연봉. 불만이 굳어 간다'])); } else if (p.flags.wageGrumble) p.flags.wageGrumble = 0;
     }
     res.ovrEnd = Math.round(ovr(p));
     res.meters = { morale: Math.round(p.morale), trust: Math.round(p.trust), fans: Math.round(p.fans[p.club] ?? 0), rep: Math.round(p.rep) };
@@ -1639,7 +1639,7 @@ const ENGINE = (() => {
     if (p.youth || res.youthTeam) return clamp((res.rating - 6.7) * .6, -.6, .6);
     const ref = Math.min(6.75, 6.2 + .06 * (p.age - 18)); // 나이대 평균 평점
     const a = res.rating - ref, b = res.rbase != null ? res.rating - res.rbase : a;
-    return clamp(.55 * a + .45 * b, -1.2, 1.2);
+    const n = res.apps || 0; return clamp((.55 * a + .45 * b) * n / (n + 8), -1.2, 1.2); // 몇 경기 안 뛴 시즌의 평점은 믿을 만하지 않다
   }
   function growth(p, res, share, choice, mgr, mods) {
     const age = p.age; const cv = p.curve || 'normal';
@@ -5038,7 +5038,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <div class="tblwrap"><table class="tbl"><tbody>${posRows}</tbody></table></div>
       <h2>성장</h2><ul>
         <li>나이별 성장 상한(16~18세 최대, 20대 중반까지 완만히 줄고 29세부터 하락)에 출전 비율(0.55~1.3배), 감독 능력, 사기, 사건 효과가 곱해져요.</li>
-        <li><b>활약이 성장을 가져간다.</b> 나이가 정하는 건 ‘이번 시즌에 클 수 있는 최대치’이고, 실제로 얼마나 가져가는지는 그 시즌 평점이 정해요. 활약 = 0.55 × (평점 − 나이대 평균 평점) + 0.45 × (평점 − 능력·팀으로 기대되는 평점). 회수율 = 1 + 2.2 × 활약(0.4~1.15배). 같은 스무 살이라도 평점 6.0대로 버틴 시즌은 상한의 절반쯤만 커요. 30세 이후 하락도 활약이 좋으면 최대 25% 느려져요.</li>
+        <li><b>활약이 성장을 가져간다.</b> 나이가 정하는 건 ‘이번 시즌에 클 수 있는 최대치’이고, 실제로 얼마나 가져가는지는 그 시즌 평점이 정해요. 활약 = 0.55 × (평점 − 나이대 평균 평점) + 0.45 × (평점 − 능력·팀으로 기대되는 평점). 활약은 출전 경기 수 ÷ (출전 + 8)만큼만 반영해요(몇 경기 안 뛴 시즌의 평점은 믿지 않아요). 회수율 = 1 + 2.2 × 활약(0.4~1.15배). 같은 스무 살이라도 평점 6.0대로 버틴 시즌은 상한의 절반쯤만 커요. 30세 이후 하락도 활약이 좋으면 최대 25% 느려져요.</li>
         <li><b>기대 이상이면 잠재력이 움직인다.</b> 19~29세에 15경기 이상 뛴 시즌, 평점이 기대 평점보다 뚜렷하게 높으면 천장이 최대 +0.8(대기만성형은 22세부터 1.4배, 조숙형은 24세부터 0.6배), 뚜렷하게 낮으면 최대 −0.5. 원래 잘하는 선수가 잘하는 건 잠재력의 증거로 치지 않아요. 기대 이상인 시즌엔 천장 근처에서도 조금 더 크고, 천장 위로 3까지 갈 수 있어요.</li>
         <li><b>18~25세 출전 보너스.</b> 출전 비율 65% 이상인 시즌마다 천장 +0.75(최대 +5), 30% 미만이면 −0.9.</li>
         <li><b>훈련 초점.</b> 고른 능력치는 1.7배, 나머지는 0.78배로 자라요. 능력치 창에서 막대 하나를 누르면 그 능력치만 2배로 집중해요(다시 누르면 포지션 맞춤으로).</li>
