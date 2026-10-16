@@ -233,6 +233,7 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .evopts { display: flex; flex-direction: column; gap: 8px; }
 .evopt { text-align: left; border: 0; background: var(--panel-2); border-radius: 14px; padding: 13px 16px; display: flex; flex-direction: column; gap: 2px; min-height: 52px; transition: background .15s; }
 .evopt b { font-weight: 700; }
+.cityl { display: block; color: var(--muted); margin-top: 3px; line-height: 1.45; } .cityl b { color: var(--ink); font-weight: 700; }
 .evcustom { display: flex; gap: 8px; order: 99; } .evcustom .inp { flex: 1; min-width: 0; }
 .evopt:hover { background: var(--panel-3); } .evopt .small { color: var(--muted); }
 .outcome { background: var(--gold-bg); border-radius: 14px; padding: 12px 16px; font-size: 14.5px; }
@@ -1245,7 +1246,21 @@ const ENGINE = (() => {
     const h = Math.round(clamp(mu + g() * sd, 158, 204));
     const pb = parent?.body?.b;
     const b = wpick(['lean', 'normal', 'stocky'], k => ({ lean: 1, normal: 1.6, stocky: 1 })[k] * (pb === k ? 1.8 : 1) * (k === 'stocky' && ['CB', 'ST', 'DM'].includes(pos) ? 1.3 : 1) * (k === 'lean' && ['LW', 'RW', 'AM'].includes(pos) ? 1.3 : 1) * (k === 'stocky' && h < 172 ? .7 : 1));
-    return { h, b, g: Math.round(2 + rng() * 6) }; // g: 16세 이후 더 클 키
+    // dev: 예상을 벗어난 성장(드묾). 17~18세 무렵 한 번에 드러난다
+    const u = rng(); const dev = u < .15 ? 4 + Math.floor(rng() * 4) : u < .3 ? -(3 + Math.floor(rng() * 3)) : 0;
+    return { h, b, g: Math.round(2 + rng() * 6), dev }; // g: 16세 이후 더 클 키
+  }
+  function applyDev(p) {
+    const b = p.body; if (!b || !b.dev || b.devDone) return 0; const d = b.dev; b.h = clamp(b.h + d, 156, 208); b.devDone = p.year; const a = p.attrs; const s = Math.sign(d);
+    if (a.AIR != null) a.AIR = clamp(a.AIR + s * 1.6, 10, 99); if (a.PAC != null) a.PAC = clamp(a.PAC - s * .8, 10, 99); if (a.DRI != null) a.DRI = clamp(a.DRI - s * 1, 10, 99);
+    if (a.GPO != null) a.GPO = clamp(a.GPO + s * 1.2, 10, 99);
+    return d;
+  }
+  // 성장기 예상 키: 다 자라기 전엔 범위로만 보인다
+  function bodyForecast(p) {
+    const b = p.body; if (!b?.h || p.age >= 19) return null;
+    const c = b.h; const lo = b.devDone ? 1 : ({ 16: 5, 17: 4 })[p.age] ?? 3, hi = b.devDone ? 1 : ({ 16: 6, 17: 5 })[p.age] ?? 4;
+    return [c - lo, c + hi];
   }
   const heightAt = (p, age = p.age) => p.body?.h ? Math.round(p.body.h - (p.body.g || 0) * clamp((19 - age) / 3, 0, 1)) : null;
   function bodyCap(p, k) {
@@ -2222,6 +2237,7 @@ const ENGINE = (() => {
 
   function endOfSeason(p, world) {
     const last = p.seasons[p.seasons.length - 1];
+    if (p.body?.dev && !p.body.devDone && p.age >= 18) applyDev(p); // 사건으로 드러나지 않았으면 조용히
     p.pendingEvents = p.pendingEvents || [];
     if (p.loanFrom) { p.pendingEvents.push('임대 복귀: ' + CLUB[p.loanFrom].name); p.club = p.loanFrom; p.loanFrom = null; const pn = (p.numbers || []).filter(n => n.club === p.club).pop(); if (pn) p.number = pn.num; else p.needNumber = true; }
     p.year++; p.age++;
@@ -2375,7 +2391,7 @@ const ENGINE = (() => {
     LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
     FOOT_NAME, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    summarize, rollBody, heightAt, inferBody, BUILD, hMean, legendLine, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -2454,7 +2470,7 @@ const AVATAR = (() => {
   const BANDC = ['#1b1b1f', '#f4f4f4', '#e2142d', '#1f45a0', '#f3cd1c'];
   const BOOTS = ['#1c1c20', '#f1f1f1', '#d5f53a', '#ff6230', '#2f8cff'];
   const GKKIT = [['#22a045', '#0b3d1d'], ['#f5d300', '#1b1b1b'], ['#2a2a2e', '#d4ff3a'], ['#ff7a00', '#1b1b1b'], ['#7d3cff', '#ffffff'], ['#e8e8e8', '#e2001a']];
-  const HAIR = { shaggy: { name: '더벅 앞머리' }, short: { name: '짧은 머리' }, side: { name: '가르마' }, buzz: { name: '스포츠' }, curly: { name: '곱슬' }, afro: { name: '아프로' }, twist: { name: '트위스트' }, long: { name: '장발' }, mohawk: { name: '투블럭' }, bun: { name: '맨번' }, bald: { name: '민머리' } };
+  const HAIR = { shaggy: { name: '더벅 앞머리' }, short: { name: '짧은 머리' }, side: { name: '가르마' }, buzz: { name: '스포츠' }, curly: { name: '곱슬' }, afro: { name: '아프로' }, twist: { name: '트위스트' }, long: { name: '레이어드 장발' }, wolf: { name: '울프컷' }, halfup: { name: '반묶음' }, slick: { name: '올백' }, curtain: { name: '가르마펌' }, quiff: { name: '포마드' }, flow: { name: '넘긴 미디엄' }, pony: { name: '묶은 장발' }, wavy: { name: '웨이브 장발' }, mohawk: { name: '투블럭' }, bun: { name: '맨번' }, bald: { name: '민머리' } };
   const BEARD = { none: { name: '없음' }, stubble: { name: '면도 자국' }, mustache: { name: '콧수염' }, beard: { name: '턱수염' } };
 
   // ---------- color ----------
@@ -2556,12 +2572,72 @@ const AVATAR = (() => {
         xs.forEach((x0, i) => g.fill(Rc(x0, 14, x0 + 2, ys[i]), (x, y) => ((y + i) % 3 === 0 ? R.sh : R.mid), 'hair'));
         return;
       }
-      case 'long':
-        H_(Or(And(El(24, 19.4, 13.3, 12.2, 2.2), (x, y) => y < 16.2), El(24, 9.4, 7.5, 2.6),
-          Pl([[12.6, 14], [23.4, 13.4], [21.4, 16.6], [17.2, 19.4], [14.6, 24.5], [12.6, 30], [11, 26]]),
-          Pl(mx([[12.6, 14], [23.4, 13.4], [21.4, 16.6], [17.2, 19.4], [14.6, 24.5], [12.6, 30], [11, 26]]))));
-        g.recolor((x, y, m) => m === 'hair' && x >= 23 && x <= 24 && y >= 9 && y <= 14, () => R.dk);
+      case 'long': { // 옆가르마, 얼굴선을 감싸는 레이어. 이마 일부를 사선으로 덮는다
+        const frameL = [[11.2, 14], [14.8, 14.6], [15, 19], [14.4, 24.5], [13.4, 29.5], [11.6, 31], [10.6, 25]];
+        H_(Or(And(El(24, 19.4, 13.3, 12.2, 2.2), (x, y) => y < 16), El(27, 9.6, 8, 2.9), El(19.5, 10.6, 5, 2.4),
+          Pl([[35.6, 13.4], [12.8, 13.6], [12.6, 16.4], [15.6, 18.2], [19.6, 17.6], [23.6, 16.2], [27.2, 15.2], [30.4, 15.6], [33.6, 17.4], [35.8, 16.6]]),
+          Pl(frameL), Pl(mx([[11.2, 14], [14.6, 14.6], [14.6, 19.5], [14, 24], [12.8, 27.5], [11.2, 26.5]]))));
+        g.recolor((x, y, m) => m === 'hair' && x >= 29 && x <= 30 && y >= 8 && y <= 12, () => R.dk);
+        g.recolor((x, y, m) => m === 'hair' && y >= 15 && y <= 30 && (x === 13 || x === 34) && y % 2 === 0, () => R.sh);
+        g.recolor((x, y, m) => m === 'hair' && y >= 8 && y <= 10 && x >= 20 && x <= 27 && x % 3 === 1, () => R.hi);
         return;
+      }
+      case 'wolf': { // 정수리 볼륨, 결 살린 앞머리, 목덜미로 가늘게 떨어지는 뒷머리
+        H_(Or(And(El(24, 19, 13.4, 12.4, 2.2), (x, y) => y < 16.5), El(19, 9.4, 4.6, 3.2), El(25.5, 8.4, 5, 3.4), El(31, 10, 3.8, 2.8),
+          spikes(14, [[13.4, 23], [16.4, 20.6], [19.6, 19.4], [22.6, 20.4], [25.6, 19], [28.6, 20.2], [31.6, 19.6], [34.6, 23]], 2.5),
+          Pl([[11.2, 15], [14.6, 15], [14.4, 22], [13, 26.5], [11.4, 24]]), Pl(mx([[11.2, 15], [14.6, 15], [14.4, 22], [13, 26.5], [11.4, 24]]))));
+        g.recolor((x, y, m) => m === 'hair' && y <= 12 && noise(x, y) % 4 === 0, () => R.sh);
+        g.recolor((x, y, m) => m === 'hair' && y >= 7 && y <= 9 && x >= 22 && x <= 28 && x % 2 === 0, () => R.hi);
+        return;
+      }
+      case 'halfup': // 윗머리만 뒤로 묶고, 나머지는 어깨로. 양옆에 한 가닥씩
+        H_(Or(And(El(24, 19.6, 13.2, 12.2, 2.2), (x, y) => y < 14.4), El(24, 9.6, 8.6, 2.6),
+          Pl([[11.4, 13.8], [14.4, 13.8], [14.2, 19], [13.6, 25.5], [12.2, 28], [11.2, 23]]), Pl(mx([[11.4, 13.8], [14.4, 13.8], [14.2, 19], [13.6, 25.5], [12.2, 28], [11.2, 23]])),
+          Pl([[15.6, 13.8], [17.2, 13.8], [16.6, 19.6], [15.4, 22.4], [15.2, 18]])));
+        g.recolor((x, y, m) => m === 'hair' && y >= 8 && y <= 13 && (x % 4 === 2), () => R.sh);
+        g.recolor((x, y, m) => m === 'hair' && y >= 8 && y <= 9 && x >= 19 && x <= 28 && x % 3 === 0, () => R.hi);
+        return;
+      case 'slick': // 이마를 다 드러내고 뒤로 빗어 넘긴 머리. 결이 사선으로 흐른다
+        H_(Or(And(El(24, 19.8, 13, 12, 2.2), (x, y) => y < 14.2), El(24, 9, 9, 3.1),
+          Pl([[11.4, 13.6], [14.2, 13.6], [14, 19.5], [12.4, 21], [11.2, 18.5]]), Pl(mx([[11.4, 13.6], [14.2, 13.6], [14, 19.5], [12.4, 21], [11.2, 18.5]]))));
+        g.recolor((x, y, m) => m === 'hair' && y <= 13 && (x * 2 + y) % 5 === 0, () => R.sh);
+        g.recolor((x, y, m) => m === 'hair' && y >= 6 && y <= 9 && x >= 18 && x <= 27 && (x + y) % 4 === 0, () => R.hi);
+        return;
+      case 'curtain': { // 가운데 살짝 비켜 가르고 양쪽으로 커튼처럼 흘러내린 앞머리
+        const wing = [[12.8, 13.6], [23, 13.4], [21.8, 15.6], [19.2, 18.6], [16.4, 21], [13.8, 22.8], [12.2, 19.4]];
+        H_(Or(And(El(24, 19.4, 13.2, 12.2, 2.2), (x, y) => y < 16), El(20, 9.8, 5.2, 2.8), El(28.4, 9.8, 5.2, 2.8),
+          Pl(wing), Pl(mx([[12.8, 13.6], [24.4, 13.4], [23.4, 15.4], [20.6, 18], [17.2, 20.4], [14, 22], [12.2, 19]])),
+          Pl([[11.2, 15], [14.4, 15], [14.2, 22], [12.8, 25], [11.2, 22.5]]), Pl(mx([[11.2, 15], [14.4, 15], [14.2, 22], [12.8, 25], [11.2, 22.5]]))));
+        g.recolor((x, y, m) => m === 'hair' && x === 23 && y >= 9 && y <= 15, () => R.dk);
+        g.recolor((x, y, m) => m === 'hair' && y >= 15 && y <= 21 && (x + y) % 3 === 0, () => R.sh);
+        g.recolor((x, y, m) => m === 'hair' && y >= 8 && y <= 10 && (x === 18 || x === 19 || x === 28 || x === 29), () => R.hi);
+        return;
+      }
+      case 'quiff': // 옆은 짧게 쳐내고 앞머리를 높이 세운 포마드
+        H_(Or(And(El(24, 18.6, 12.6, 11.8, 2.2), (x, y) => y < 15, Rc(15, 0, 33, 48)), El(22, 8, 6.8, 3.8), El(27.6, 8.8, 5.6, 3.2), El(18, 10.6, 3.6, 2.6)));
+        g.fill(And(head, Or(Rc(11, 13, 15, 21), Rc(33, 13, 37, 21))), (x, y) => mix(R.mid, '#9a8e88', .4), 'hair');
+        g.recolor((x, y, m) => m === 'hair' && y <= 11 && (x + y * 2) % 5 === 0, () => R.sh);
+        g.recolor((x, y, m) => m === 'hair' && y >= 5 && y <= 7 && x >= 18 && x <= 26 && x % 2 === 0, () => R.hi);
+        return;
+      case 'flow': // 이마를 드러내고 뒤로 넘긴 목덜미 길이. 정수리에 볼륨
+        H_(Or(And(El(24, 19.6, 13.3, 12.3, 2.2), (x, y) => y < 14.6), El(21.5, 9.2, 7.6, 3.4), El(28.5, 10, 6, 2.8),
+          Pl([[11.6, 14], [14.4, 14], [14, 18.5], [12.6, 21.5], [11.4, 20]]), Pl(mx([[11.6, 14], [14.4, 14], [14, 18.5], [12.6, 21.5], [11.4, 20]]))));
+        g.recolor((x, y, m) => m === 'hair' && y <= 13 && (x + y) % 4 === 0, () => R.sh);
+        g.recolor((x, y, m) => m === 'hair' && y >= 7 && y <= 9 && x >= 17 && x <= 25 && (x % 3 === 0), () => R.hi);
+        return;
+      case 'pony': // 매끈하게 넘겨 뒤로 묶음
+        H_(Or(And(El(24, 19.8, 13, 12, 2.2), (x, y) => y < 14.4), El(24, 9.6, 8.4, 2.4), side(19.5, 11.6, 14.2)));
+        g.recolor((x, y, m) => m === 'hair' && y >= 8 && y <= 13 && (x % 4 === 2), () => R.sh);
+        return;
+      case 'wavy': { // 한쪽으로 쓸어 넘긴 앞머리, 어깨에 닿는 웨이브
+        H_(Or(And(El(24, 19.4, 13.4, 12.3, 2.2), (x, y) => y < 15.2), El(27, 9.4, 7.4, 2.8),
+          Pl([[12.4, 13.6], [35.4, 13.6], [35.6, 16.4], [30, 15.8], [24.5, 16.6], [19.4, 18], [15.4, 20.2], [12.8, 25], [11.2, 22]]),
+          Pl([[33, 14], [36.6, 14], [36.4, 22.5], [34.6, 21], [33.4, 18]]),
+          El(12.6, 30.5, 1.9, 2.4), El(35.6, 25.5, 1.6, 2.2)));
+        g.recolor((x, y, m) => m === 'hair' && noise(x, y) % 7 === 0 && y > 12, () => R.sh);
+        g.recolor((x, y, m) => m === 'hair' && x >= 26 && x <= 31 && y >= 8 && y <= 10, () => R.hi);
+        return;
+      }
       case 'mohawk':
         H_(Or(And(El(24, 18.6, 12.4, 11.6, 2.2), (x, y) => y < 15.6, Rc(14.5, 0, 33.5, 48)), Pl([[17, 11], [20, 5.6], [23, 9]]), Pl([[22, 9.4], [25.4, 4.8], [28.4, 9.4]]), Pl([[27, 10], [31, 6.6], [31.6, 11.6]]),
           spikes(14.8, [[17.6, 20], [21, 20.8], [24.4, 20], [27.8, 20.6], [30.6, 19.4]], 2.2)));
@@ -2595,7 +2671,13 @@ const AVATAR = (() => {
 
     const head = El(24, 21.5, 11.6, 11.2, 2.3);
     // 뒷머리 (장발)
-    if (look.hair === 'long') g.fill(Pl([[10.6, 17], [37.4, 17], [38.2, 36.5], [33.5, 37.4], [14.5, 37.4], [9.8, 36.5]]), HR.sh, 'hairback');
+    if (look.hair === 'long') g.fill(Pl([[10.4, 17], [37.6, 17], [38.2, 28.5], [36.8, 32.6], [35, 31.2], [33.4, 33.2], [24, 33.6], [15, 33.2], [13.2, 31.2], [11.4, 32.6], [9.8, 28.5]]), HR.sh, 'hairback');
+    if (look.hair === 'wolf') g.fill(Pl([[11.6, 17], [36.4, 17], [36.8, 26.5], [35.2, 30.4], [33.4, 29], [30, 31.4], [24, 30.4], [18, 31.4], [14.6, 29], [12.8, 30.4], [11.2, 26.5]]), HR.sh, 'hairback');
+    if (look.hair === 'halfup') g.fill(Or(Pl([[10.6, 17], [37.4, 17], [38, 29.5], [36.4, 33], [24, 34], [11.6, 33], [10, 29.5]]), El(24, 6.6, 3.6, 2.8)), HR.sh, 'hairback');
+    if (look.hair === 'slick') g.fill(Pl([[12, 17], [36, 17], [36.4, 23.5], [33, 25], [15, 25], [11.6, 23.5]]), HR.sh, 'hairback');
+    if (look.hair === 'flow') g.fill(Pl([[11.2, 17], [36.8, 17], [37.6, 27], [36.4, 31], [34.6, 32], [13.4, 32], [11.6, 31], [10.4, 27]]), HR.sh, 'hairback');
+    if (look.hair === 'pony') g.fill(Or(El(37.2, 22.5, 2.6, 2.4), Pl([[36.2, 23.5], [39.2, 23.5], [39.6, 31], [37.8, 34], [36.2, 30.5]])), HR.sh, 'hairback');
+    if (look.hair === 'wavy') g.fill(Or(Pl([[10.4, 17], [37.6, 17], [38, 33.5], [13.2, 35], [10, 33.5]]), El(11.6, 34.2, 2.2, 2), El(36.8, 33, 2.1, 2), El(15.4, 35.2, 2, 1.7)), HR.sh, 'hairback');
     // 크루세이더 퀘스트풍 2등신: 머리는 그대로 크게, 몸은 짧고 동그랗게
     // 다리 · 양말 · 축구화
     g.fill(Or(Rc(17.5, 45.5, 22.5, 47), Rc(25.5, 45.5, 30.5, 47)), SK.mid, 'leg');
@@ -2689,7 +2771,7 @@ const AVATAR = (() => {
     const skin = wp([0, 1, 2, 3, 4, 5], i => skinW[i]);
     const darkHair = skin >= 3 || ['KR', 'JP', 'AR', 'IR', 'TR', 'BT', 'UZ'].includes(ng);
     const hairC = darkHair ? wp(['black', 'brown', 'blond', 'blue', 'pink', 'plat'], c => ({ black: 6, brown: 2, blond: .5, blue: .2, pink: .15, plat: .3 })[c]) : wp(Object.keys(HAIRC), c => ({ black: 1, brown: 3, light: 2.5, blond: 2, plat: .6, red: .7, blue: .1, pink: .1 })[c]);
-    const hair = wp(Object.keys(HAIR), h => ({ shaggy: 4, short: 3, side: 2.5, buzz: 1.5, curly: skin >= 3 ? 2.5 : 1.2, afro: skin >= 4 ? 2.5 : .15, twist: skin >= 4 ? 1.5 : .1, long: .9, mohawk: 1.2, bun: .5, bald: .3 })[h]);
+    const hair = wp(Object.keys(HAIR), h => ({ shaggy: 4, short: 3, side: 2.5, buzz: 1.5, curly: skin >= 3 ? 2.5 : 1.2, afro: skin >= 4 ? 2.5 : .15, twist: skin >= 4 ? 1.5 : .1, long: .5, flow: .9, pony: .45, wavy: .6, mohawk: 1.2, bun: .5, bald: .3, wolf: .8, halfup: .4, slick: .8, curtain: ['KR', 'JP'].includes(ng) ? 2.4 : .9, quiff: .9 })[h]);
     const eye = skin <= 1 && !darkHair ? wp(['brown', 'blue', 'green'], e => ({ brown: 2, blue: 2, green: 1 })[e]) : 'brown';
     return { skin, hair, hairC, eye, beard: wp(Object.keys(BEARD), b => ({ none: 6, stubble: 2, mustache: .5, beard: 1 })[b]), band: rnd() < .15 ? Math.floor(rnd() * BANDC.length) : -1, boots: Math.floor(rnd() * BOOTS.length) };
   }
@@ -2857,6 +2939,206 @@ const FLAGS = (() => {
 
 </script>
 <script>
+// ===== 연고 도시: 이적할 때 '어디서 살게 되는지' =====
+// 짧게: 위치 · 기후 · 생활감. 실제 도시의 일반적인 특징만 적는다.
+const CITIES = (() => {
+  const C = {
+    // 잉글랜드
+    맨체스터: '잉글랜드 북서부. 비가 잦고 흐린 날이 많다. 음악과 펍의 도시, 시내는 아담하고 물가는 런던보다 한결 낫다.',
+    런던: '거대한 수도. 동네마다 분위기가 다르고 집값은 유럽 최상위권. 어디서든 공항과 문화가 가깝다.',
+    리버풀: '머지강 하구의 항구도시. 바람이 세고 사람들이 다정하다. 비틀스의 고향, 축구가 곧 종교.',
+    뉴캐슬: '잉글랜드 북동쪽 끝. 춥고 바람이 많지만 밤 문화가 활발하다. 도시 전체가 한 구단을 응원한다.',
+    버밍엄: '잉글랜드 중부의 큰 도시. 운하와 다양한 이민자 음식 문화. 런던까지 기차로 한 시간 반.',
+    브라이턴: '남부 해안의 휴양 도시. 자갈 해변과 부두, 젊고 자유로운 분위기. 런던까지 기차로 한 시간.',
+    노팅엄: '잉글랜드 중부. 로빈 후드의 고장, 대학생이 많고 생활비가 저렴한 편.',
+    울버햄튼: '버밍엄 옆 웨스트미들랜즈의 소도시. 조용하고 소박하다. 큰 도시 생활은 차로 30분.',
+    셰필드: '언덕 많은 옛 철강 도시. 피크 디스트릭트 국립공원이 바로 옆이라 산책과 하이킹이 쉽다.',
+    리즈: '요크셔의 중심 도시. 쇼핑과 대학가가 활기차고, 요크셔 사람들은 무뚝뚝하지만 정이 많다.',
+    사우샘프턴: '남부 해안의 항구도시. 온화한 날씨, 와이트섬과 뉴포레스트가 가깝다.',
+    더비: '잉글랜드 중부의 조용한 소도시. 피크 디스트릭트 입구, 롤스로이스 공장이 있는 도시.',
+    왓퍼드: '런던 북서쪽 위성도시. 런던 중심까지 20분, 집값은 그보다 싸고 동네는 한적하다.',
+    노리치: '잉글랜드 동쪽 끝 이스트앵글리아. 중세 골목과 대성당, 느긋한 시골 도시.',
+    미들즈브러: '잉글랜드 북동부의 옛 공업도시. 소박하고 물가가 싸다. 바다와 노스요크무어가 가깝다.',
+    스토크온트렌트: '잉글랜드 중부의 도자기 도시. 겨울 원정 날씨로 유명할 만큼 춥고 바람이 세다.',
+    // 스코틀랜드
+    글래스고: '스코틀랜드 최대 도시. 비와 회색 하늘, 그리고 유럽에서 가장 뜨거운 더비. 음악과 펍 문화가 짙다.',
+    에든버러: '스코틀랜드의 수도. 언덕 위 성과 구시가지, 8월이면 세계 최대 축제로 붐빈다. 바람이 차다.',
+    애버딘: '스코틀랜드 북동쪽 끝 화강암 도시. 북해 석유로 부유하지만 겨울 해는 짧고 춥다.',
+    머더웰: '글래스고 근교의 작은 옛 철강 도시. 조용하고, 도시 생활은 기차로 20분.',
+    킬마녹: '글래스고 남서쪽의 작은 도시. 위스키 조니워커의 고향. 한적하다.',
+    던디: '스코틀랜드 동해안의 대학 도시. 강 건너편이 바로 해변 마을, 디자인 박물관이 명물.',
+    // 스페인
+    마드리드: '이베리아 반도 한복판의 수도. 여름은 덥고 건조하며 밤이 늦게 시작한다. 스페인 어디든 고속철로 닿는다.',
+    바르셀로나: '지중해 해변을 낀 카탈루냐의 중심. 가우디 건축과 해산물, 관광객이 많다. 카탈루냐어와 스페인어를 함께 쓴다.',
+    빌바오: '바스크 지방의 항구도시. 비가 잦고 초록이 짙다. 구겐하임 미술관과 핀초스, 바스크 정체성이 강하다.',
+    비야레알: '발렌시아 지방의 인구 5만 소도시. 오렌지 밭과 타일 공장, 구단이 곧 마을이다. 해변까지 20분.',
+    산세바스티안: '바스크 해안의 휴양 도시. 라 콘차 해변과 세계적인 미식, 비싸지만 아름답다.',
+    세비야: '안달루시아의 중심. 여름엔 40도를 넘는다. 플라멩코와 오렌지 나무, 축제의 도시.',
+    발렌시아: '지중해 해안의 스페인 3대 도시. 파에야의 고향, 해변과 공원, 1년 내내 온화하다.',
+    지로나: '바르셀로나 북쪽의 작은 중세 도시. 성벽과 강변 집들, 코스타 브라바 해변이 가깝다.',
+    비고: '갈리시아의 대서양 항구도시. 비가 잦고 해산물이 최고. 앞바다 시에스섬이 유명하다.',
+    팜플로나: '나바라의 소도시. 7월 산 페르민 소몰이 축제로 유명하고, 피레네산맥이 가깝다.',
+    말라가: '코스타 델 솔의 중심. 1년에 300일 해가 뜬다. 피카소의 고향, 은퇴자와 관광객이 많다.',
+    라코루냐: '갈리시아 북서쪽 끝의 항구도시. 바람과 비, 유리창 발코니 건물들. 해산물과 문어 요리.',
+    사라고사: '마드리드와 바르셀로나 사이 아라곤의 중심. 강바람이 세고 여름은 덥다. 성모 필라르 대성당.',
+    히혼: '아스투리아스의 해안 도시. 선선한 여름과 사과주(시드라), 초록 산과 바다가 같이 있다.',
+    // 이탈리아
+    밀라노: '이탈리아 경제와 패션의 수도. 바쁘고 세련됐다. 겨울엔 안개, 주말엔 코모 호수와 알프스로 빠진다.',
+    나폴리: '남부의 혼돈과 활기. 피자의 고향, 베수비오 화산과 바다. 축구가 도시의 신앙이다.',
+    토리노: '알프스 아래 피에몬테의 중심. 우아한 회랑 거리와 초콜릿·커피, 피아트의 도시. 겨울이 춥다.',
+    베르가모: '밀라노 근교. 성벽에 둘러싸인 언덕 위 구시가지가 아름답다. 차분하고 부유하다.',
+    로마: '영원한 도시. 유적 사이로 출근한다. 교통은 혼잡하고 두 구단 팬은 서로를 미워한다.',
+    피렌체: '르네상스의 도시. 관광객으로 붐비지만 아르노강 해 질 녘은 그만한 가치가 있다. 여름은 찐다.',
+    볼로냐: '에밀리아로마냐의 대학 도시. 붉은 지붕과 끝없는 회랑, 이탈리아 최고의 음식 도시로 꼽힌다.',
+    코모: '알프스 호수 마을. 조지 클루니의 별장이 있는 곳. 조용하고 비싸고 아름답다.',
+    제노바: '리구리아 해안의 옛 항구 공화국. 언덕과 좁은 골목, 페스토의 고향. 두 구단이 한 경기장을 쓴다.',
+    파르마: '에밀리아의 작은 미식 도시. 햄과 치즈, 오페라. 조용하고 자전거로 다닐 만하다.',
+    팔레르모: '시칠리아의 수도. 아랍·노르만 건축과 길거리 음식, 뜨거운 햇볕. 혼란스럽고 정이 많다.',
+    베네벤토: '나폴리 내륙의 작은 고대 도시. 로마 개선문과 마녀 전설. 조용한 남부 생활.',
+    바리: '아드리아해 남부 풀리아의 항구도시. 구시가지 골목에서 할머니들이 파스타를 빚는다. 해가 길다.',
+    시라쿠사: '시칠리아 남동쪽 고대 그리스 도시. 오르티자섬의 바다와 유적. 느리고 따뜻하다.',
+    // 독일
+    뮌헨: '바이에른의 수도. 부유하고 깨끗하며 알프스가 가깝다. 맥주 정원과 옥토버페스트, 집값은 독일 최고.',
+    레버쿠젠: '쾰른 옆의 화학 회사 도시. 작고 조용하다. 생활은 쾰른과 뒤셀도르프에서 한다.',
+    도르트문트: '루르 공업지대의 중심. 소박한 노동자 도시, 주말마다 노란 벽이 도시를 채운다.',
+    라이프치히: '옛 동독의 활기찬 도시. 바흐와 예술가들, 집값이 싸고 젊은이가 몰린다.',
+    프랑크푸르트: '독일 금융의 중심. 고층 빌딩과 사과 와인, 국제공항 덕에 어디든 가깝다.',
+    슈투트가르트: '남서부 자동차의 도시. 벤츠와 포르쉐 본사, 포도밭 언덕에 둘러싸인 분지.',
+    프라이부르크: '흑림 아래 독일에서 가장 따뜻한 도시. 자전거와 대학, 녹색 정치. 스위스·프랑스가 코앞.',
+    진스하임: '하이델베르크 근교의 인구 3만 소도시. 시골이다. 대부분 하이델베르크나 만하임에 산다.',
+    볼프스부르크: '폭스바겐이 만든 계획도시. 공장과 사옥이 도시의 중심. 조용하고, 할 게 많지 않다.',
+    묀헨글라트바흐: '라인강 서쪽의 중소도시. 뒤셀도르프까지 30분, 네덜란드 국경도 가깝다.',
+    마인츠: '라인강변의 와인 도시. 구텐베르크의 고향, 2월 카니발이 요란하다. 프랑크푸르트 공항이 가깝다.',
+    베를린: '독일의 수도. 싸고(예전만큼은 아니지만) 자유롭다. 클럽 문화와 역사, 겨울은 길고 회색이다.',
+    겔젠키르헨: '루르 지역의 옛 탄광 도시. 소박하고 거칠다. 경기가 있는 날만큼은 온 도시가 파랗다.',
+    함부르크: '독일 제2의 도시이자 항구. 운하와 홍등가 레퍼반, 비가 잦고 부유하다.',
+    뉘른베르크: '프랑켄의 중세 성곽 도시. 크리스마스 마켓과 소시지, 역사의 무게가 있는 도시.',
+    카이저슬라우테른: '팔츠 숲속의 작은 도시. 미군 기지가 있고 언덕 위 경기장이 유명하다. 한적하다.',
+    // 프랑스
+    파리: '프랑스의 수도. 아름답고 비싸고 바쁘다. 센강과 카페, 집은 좁다.',
+    마르세유: '지중해 항구도시. 거칠고 뜨겁고 다문화적이다. 칼랑크 절벽 해안과 부야베스.',
+    모나코: '지중해의 작은 공국. 세금이 낮고 요트와 카지노, 경기장은 텅 비어도 바다는 늘 파랗다.',
+    리옹: '론강과 손강이 만나는 미식의 도시. 프랑스 제2 도시권, 알프스까지 두 시간.',
+    릴: '벨기에 국경 옆 북부 도시. 플랑드르식 건물과 맥주, 파리·런던·브뤼셀까지 기차로 한두 시간.',
+    니스: '코트다쥐르의 중심. 1년 내내 햇볕, 자갈 해변과 프롬나드. 모나코와 이탈리아가 코앞.',
+    랑스: '북부의 옛 탄광 도시. 인구 3만에 경기장이 도시 인구보다 크다. 팬들의 열정이 유명하다.',
+    렌: '브르타뉴의 중심. 비가 잦고 크레프와 사과주, 대학생이 많은 젊은 도시. 해안까지 한 시간.',
+    스트라스부르: '독일 국경의 알자스 도시. 운하와 목조 가옥, 유럽 의회가 있다. 크리스마스 마켓으로 유명.',
+    툴루즈: '남서부의 장밋빛 도시. 항공 산업과 대학, 럭비 사랑이 축구보다 깊다. 피레네가 가깝다.',
+    낭트: '루아르강 하구의 도시. 기계 코끼리와 녹지, 살기 좋은 도시 순위에 자주 오른다.',
+    생테티엔: '리옹 근교의 옛 탄광·무기 산업 도시. 소박하고 언덕이 많다. 녹색 유니폼이 도시의 자부심.',
+    몽펠리에: '지중해 연안의 대학 도시. 햇볕과 젊음, 해변까지 트램으로 간다.',
+    보르도: '와인의 수도. 18세기 석조 건물과 강변 산책로, 대서양 해변이 한 시간 거리.',
+    메스: '로렌의 국경 도시. 노란 석회암 대성당, 룩셈부르크·독일이 가깝다. 조용하다.',
+    낭시: '로렌의 아르누보 도시. 스타니슬라스 광장이 아름답고, 대학생이 많다.',
+    // 포르투갈
+    리스본: '대서양을 바라보는 언덕의 수도. 노란 트램과 파두, 따뜻한 겨울. 관광객과 디지털 노마드가 많다.',
+    포르투: '도루강변의 항구도시. 포트와인과 타일 건물, 비가 잦지만 리스본보다 소박하고 싸다.',
+    브라가: '포르투갈 북부의 종교 도시. 오래된 성당과 대학, 조용하고 물가가 싸다.',
+    기마랑이스: '포르투갈이 시작된 곳. 중세 성곽의 작은 도시, 포르투까지 한 시간.',
+    빌라두콘드: '포르투 북쪽 해안의 어촌 마을. 대서양 해변과 바람, 조용한 생활.',
+    파말리캉: '포르투갈 북부 내륙의 작은 공업 도시. 포르투까지 40분, 한적하다.',
+    모레이라드코네구스: '기마랑이스 근교의 인구 수천 명 마을. 정말 시골이다. 생활은 기마랑이스에서.',
+    // 네덜란드
+    에인트호번: '네덜란드 남부의 기술 도시. 필립스가 만든 도시, 디자인 위크와 자전거. 작고 실용적이다.',
+    암스테르담: '운하와 자전거의 수도. 국제적이고 영어로 다 통한다. 집 구하기가 전쟁이다.',
+    로테르담: '전후 새로 지은 현대 건축의 항구도시. 거칠고 솔직한 노동자 기질, 유럽 최대 항구.',
+    알크마르: '암스테르담 북쪽 치즈 시장의 도시. 운하가 있는 작은 마을, 해변이 가깝다.',
+    엔스헤데: '독일 국경의 동부 대학 도시. 조용하고 녹지가 많다.',
+    위트레흐트: '네덜란드 한가운데의 대학 도시. 이중 운하와 돔 탑, 어디로든 기차가 빠르다.',
+    헤이렌베인: '프리슬란트의 작은 마을. 스케이트와 소, 프리슬란트어 간판. 아주 조용하다.',
+    네이메헌: '네덜란드에서 가장 오래된 도시. 발강변의 대학 도시, 독일 국경이 가깝다.',
+    // 튀르키예
+    이스탄불: '유럽과 아시아에 걸친 1,500만 도시. 보스포루스 해협, 끝없는 교통 체증, 밤새 꺼지지 않는 열기.',
+    트라브존: '흑해 연안의 동북부 도시. 비가 많고 초록 산이 바다에 닿는다. 차 밭과 멸치, 열성적인 팬.',
+    이즈미르: '에게해 연안의 튀르키예 제3 도시. 자유롭고 세속적인 분위기, 해안 산책로와 온화한 겨울.',
+    삼순: '흑해 연안 중부의 항구도시. 조용하고 소박하다. 앙카라까지 차로 다섯 시간.',
+    // 벨기에
+    브뤼허: '중세 운하 도시. 그림엽서 같은 골목과 관광객, 해변 도시 오스텐더가 20분.',
+    브뤼셀: '벨기에와 EU의 수도. 프랑스어와 네덜란드어, 수십 개 언어가 섞인다. 와플과 감자튀김, 비가 잦다.',
+    헹크: '벨기에 동부 림뷔르흐의 옛 탄광 도시. 이민자 출신 주민이 많고 조용하다.',
+    리에주: '뫼즈강변의 왈로니아 도시. 거칠고 열정적인 옛 철강 도시, 프랑스어권.',
+    앤트워프: '벨기에 제2 도시이자 다이아몬드 거리. 패션과 항구, 루벤스의 집.',
+    헨트: '중세 성채와 운하의 대학 도시. 브뤼허보다 덜 붐비고 더 젊다. 채식 식당이 많다.',
+    샤를루아: '왈로니아의 옛 탄광·철강 도시. 투박하고 물가가 싸다. 브뤼셀까지 한 시간.',
+    // 그리스
+    피레아스: '아테네의 항구. 섬으로 가는 배가 출발하는 곳, 뜨겁고 시끄럽다. 아테네 시내까지 지하철로 20분.',
+    아테네: '고대 유적 아래의 혼잡한 수도. 여름엔 40도, 밤늦게까지 사람들이 거리에 있다. 바다가 가깝다.',
+    테살로니키: '그리스 제2 도시. 해안 산책로와 대학생, 아테네보다 느긋하고 음식이 맛있다고들 한다.',
+    이라클리오: '크레타섬의 중심 도시. 미노아 유적과 해변, 섬 생활. 원정 경기는 늘 비행기다.',
+    볼로스: '테살리아의 해안 도시. 펠리온산과 해산물 술집 치푸라디카. 느긋하다.',
+    페리스테리: '아테네 서부의 서민 주거 지역. 소박하고 시끌벅적하다.',
+    // 브라질
+    리우데자네이루: '해변과 산이 맞닿은 도시. 코파카바나와 삼바, 그리고 빈부 격차. 덥고 아름답고 위험하다.',
+    상파울루: '남미 최대 도시. 끝없는 고층 빌딩과 교통 체증, 브라질 최고의 식당과 일자리가 몰린다.',
+    벨루오리존치: '미나스제라이스의 중심. 산으로 둘러싸인 분지, 브라질 최고의 술집 문화와 치즈빵.',
+    포르투알레그리: '브라질 최남단의 큰 도시. 겨울이 춥고 가우초 문화와 슈하스코의 고향.',
+    산투스: '상파울루 옆 대서양 항구도시. 긴 해변과 커피 무역의 역사, 펠레의 도시.',
+    // 아르헨티나
+    부에노스아이레스: '남미의 파리. 탱고와 스테이크, 밤 11시에 저녁을 먹는다. 경제는 늘 불안하고 축구는 늘 뜨겁다.',
+    아베야네다: '부에노스아이레스 바로 남쪽의 공업 도시. 두 구단 경기장이 걸어서 몇 분 거리.',
+    라플라타: '부에노스아이레스 남쪽의 계획도시이자 대학 도시. 대각선 대로와 가로수.',
+    // 사우디
+    리야드: '사막 한가운데의 수도. 여름은 45도를 넘는다. 빠르게 변하는 중이고, 생활은 실내와 차 안에서 한다.',
+    제다: '홍해 연안의 항구도시. 사우디에서 가장 개방적인 편, 습하고 덥다. 메카로 가는 관문.',
+    담맘: '페르시아만 연안 동부의 석유 도시. 바레인까지 다리로 연결돼 있다.',
+    부라이다: '사우디 중부 내륙의 농업 도시. 대추야자 시장이 유명하다. 보수적이고 조용하다.',
+    알아흐사: '동부의 거대한 오아시스. 대추야자 숲과 온천, 유네스코 문화유산.',
+    // 미국
+    마이애미: '플로리다 남단의 열대 도시. 해변과 라틴 문화, 스페인어가 영어만큼 들린다. 허리케인 철을 조심.',
+    로스앤젤레스: '햇볕과 고속도로의 도시. 할리우드와 해변, 차 없이는 못 산다.',
+    시애틀: '태평양 북서부의 커피와 기술 도시. 비가 잦고 녹지가 많다. 산과 바다가 가깝다.',
+    애틀랜타: '미국 남동부의 중심 도시. 공항 허브와 힙합, 덥고 습한 여름.',
+    콜럼버스: '오하이오의 주도. 대학 도시, 조용하고 생활비가 싸다.',
+    뉴욕: '세계의 도시. 바쁘고 비싸고 무엇이든 있다. 경기장은 강 건너 뉴저지에 있다.',
+    필라델피아: '미국 독립의 도시. 치즈스테이크와 거친 스포츠 팬, 뉴욕까지 기차로 한 시간 반.',
+    // 한국
+    울산: '동해안의 산업 도시. 조선소와 자동차 공장, 1인당 소득이 높다. 바다와 영남알프스가 가깝다.',
+    전주: '전라북도의 한옥 도시. 비빔밥과 막걸리 골목, 느리고 맛있다.',
+    서울: '대한민국의 수도. 빠르고 편리하고 비싸다. 무엇이든 배달된다.',
+    포항: '경북 동해안의 철강 도시. 영일만 바다와 과메기, 조용한 편.',
+    광주: '호남의 중심 도시. 민주화 운동의 기억과 음식 인심, 여름은 덥다.',
+    대전: '국토 한가운데의 과학 도시. 연구 단지와 성심당, 어디로든 KTX가 빠르다.',
+    강원: '춘천과 강릉을 오가는 강원도. 호수와 동해, 공기가 맑고 겨울이 길다.',
+    수원: '서울 남쪽의 경기도 중심. 화성 성곽과 왕갈비, 서울 출퇴근권.',
+    김천: '경북 내륙의 소도시. 국군체육부대가 있다. 할 건 적고 조용하다.',
+    // 일본
+    고베: '바다와 산 사이의 항구도시. 이국적인 옛 거류지와 고베규, 오사카까지 20분.',
+    가와사키: '도쿄와 요코하마 사이의 공업·주거 도시. 출퇴근하기 편하고, 화려하진 않다.',
+    요코하마: '도쿄 남쪽의 항구도시. 차이나타운과 미나토미라이 야경, 도쿄보다 여유롭다.',
+    도쿄: '거대하고 질서 정연한 수도. 깨끗하고 안전하며 어디든 지하철이 간다. 집은 좁다.',
+    가시마: '이바라키현 해안의 공업 소도시. 진짜 시골이다. 도쿄까지 버스로 두 시간.',
+    사이타마: '도쿄 바로 북쪽의 주거 도시. 일본에서 가장 뜨거운 서포터들의 홈.',
+    히로시마: '평화의 도시. 오코노미야키와 미야지마, 온화한 세토내해 기후.',
+    오사카: '일본 제2 도시. 먹다 망한다는 음식 천국, 사람들이 시끄럽고 다정하다.',
+  };
+  const BY_CLUB = {
+    mci: '맨체스터', mun: '맨체스터', ars: '런던', che: '런던', tot: '런던', whu: '런던', cry: '런던', ful: '런던', bre: '런던', liv: '리버풀', eve: '리버풀', new: '뉴캐슬', avl: '버밍엄', bha: '브라이턴', nfo: '노팅엄', wol: '울버햄튼',
+    swd: '셰필드', lee: '리즈', sou: '사우샘프턴', der: '더비', wat: '왓퍼드', nor: '노리치', mid: '미들즈브러', sto: '스토크온트렌트',
+    rma: '마드리드', atm: '마드리드', bar: '바르셀로나', ath: '빌바오', vil: '비야레알', rso: '산세바스티안', bet: '세비야', sev: '세비야', val: '발렌시아', lev: '발렌시아', gir: '지로나', cel: '비고', osa: '팜플로나', mal: '말라가', dep: '라코루냐', zar: '사라고사', spg: '히혼',
+    int: '밀라노', mil: '밀라노', nap: '나폴리', juv: '토리노', tor: '토리노', ata: '베르가모', rom: '로마', laz: '로마', fio: '피렌체', bol: '볼로냐', com: '코모', gen: '제노바', sam: '제노바', par: '파르마', pal: '팔레르모', ben: '베네벤토', bri: '바리', sir: '시라쿠사',
+    bay: '뮌헨', lev2: '레버쿠젠', bvb: '도르트문트', rbl: '라이프치히', sge: '프랑크푸르트', vfb: '슈투트가르트', scf: '프라이부르크', tsg: '진스하임', wob: '볼프스부르크', bmg: '묀헨글라트바흐', m05: '마인츠', fcu: '베를린', bsc: '베를린', s04: '겔젠키르헨', hsv: '함부르크', fcn: '뉘른베르크', fck: '카이저슬라우테른',
+    psg: '파리', om: '마르세유', asm: '모나코', ol: '리옹', losc: '릴', ogcn: '니스', rcl: '랑스', srfc: '렌', rcsa: '스트라스부르', tfc: '툴루즈', fcn2: '낭트', asse: '생테티엔', mhsc: '몽펠리에', fcgb: '보르도', fcm: '메스', asnl: '낭시',
+    slb: '리스본', scp: '리스본', fcp: '포르투', scb: '브라가', vsc: '기마랑이스', rio: '빌라두콘드', fam: '파말리캉', mor: '모레이라드코네구스',
+    psv: '에인트호번', aja: '암스테르담', fey: '로테르담', az: '알크마르', twe: '엔스헤데', utr: '위트레흐트', hee: '헤이렌베인', nec: '네이메헌',
+    gal: '이스탄불', fen: '이스탄불', bjk: '이스탄불', ist: '이스탄불', kas: '이스탄불', ts: '트라브존', goz: '이즈미르', sam2: '삼순',
+    bru: '브뤼허', and: '브뤼셀', usg: '브뤼셀', gnk: '헹크', stl: '리에주', ant: '앤트워프', gnt: '헨트', cha: '샤를루아',
+    cel2: '글래스고', ran: '글래스고', hea: '에든버러', hib: '에든버러', abe: '애버딘', mot: '머더웰', kil: '킬마녹', dun: '던디',
+    oly: '피레아스', pao: '아테네', aek: '아테네', paok: '테살로니키', ari: '테살로니키', ofi: '이라클리오', vol: '볼로스', atr: '페리스테리',
+    fla: '리우데자네이루', bot: '리우데자네이루', pal2: '상파울루', spfc: '상파울루', cor: '상파울루', cam: '벨루오리존치', gre: '포르투알레그리', san: '산투스',
+    riv: '부에노스아이레스', boc: '부에노스아이레스', arj: '부에노스아이레스', slo: '부에노스아이레스', vel: '부에노스아이레스', rac: '아베야네다', ind: '아베야네다', est: '라플라타',
+    hil: '리야드', nas: '리야드', sha: '리야드', itt: '제다', ahl: '제다', ett: '담맘', taa: '부라이다', fat: '알아흐사',
+    mia: '마이애미', lafc: '로스앤젤레스', lag: '로스앤젤레스', sea: '시애틀', atl: '애틀랜타', clb: '콜럼버스', nyr: '뉴욕', phi: '필라델피아',
+    uls: '울산', jbh: '전주', fcs: '서울', poh: '포항', gwj: '광주', dae: '대전', gwo: '강원', suw: '수원', gim: '김천',
+    kob: '고베', kaw: '가와사키', yok: '요코하마', fct: '도쿄', kas2: '가시마', ura: '사이타마', hir: '히로시마', gam: '오사카',
+  };
+  const of = (clubId) => { const c = BY_CLUB[clubId]; return c ? { city: c, line: C[c] || '' } : null; };
+  const same = (a, b) => !!BY_CLUB[a] && BY_CLUB[a] === BY_CLUB[b];
+  return { of, same, BY_CLUB, C };
+})();
+
+</script>
+<script>
 // ===== 현지 언론 (모두 가상의 매체) =====
 // 리그마다 말투와 평점 방식이 다르다. 이름 뒤에는 조사를 붙이지 않는다(외국 이름 받침 문제).
 const PRESS = (() => {
@@ -3007,6 +3289,8 @@ const PRESS = (() => {
     legend_vanish: { _: ['{comp} 결승의 미스터리. {s}는 어디 있었나', '대회 최고의 선수, 결승에서 사라지다'], tabloid: ['결승 전날 밤 무슨 일이? {s} 미스터리'], korhome: ["{comp} 결승서 침묵한 {s}… '그날 무슨 일이'"] },
     echo: { _: ['{s}, {y}년 {comp} 결승을 말하다', '"매일 밤 생각했다" {s}의 고백'], korhome: ["{s}, {y}년 그날을 처음 털어놓다… '이제는 조금 덜 아프다'"] },
     retiremyth: { _: ['{s} 은퇴. 사람들은 아직 {y}년 {comp}의 그 장면을 기억한다', '{s}, 축구화를 벗다. 영광과 그 하루'], korhome: ["{s} 은퇴… '{y}년 그날'도 함께 기억될 이름"] },
+    spurt: { _: ['{s}, 한 여름에 {d}cm. 다른 선수가 돼서 돌아왔다', '훌쩍 큰 {s}, 코치진의 고민'], korhome: ['{s}, 여름 사이 {d}cm 폭풍 성장… "이제 {h}cm"'] },
+    stall: { _: ['{s}의 키는 멈췄다. 대신 발이 빨라졌다'], korhome: ['{s}, "키는 다 컸다"… 작은 거인을 꿈꾼다'] },
     tsnub: { _: ['{y} {comp} 명단 발표. {s}의 이름은 없었다', '{s}, {comp} 최종 명단 탈락', '감독의 선택은 냉정했다. {s} 낙마'], france: ['{comp} 명단, {s} 제외. 이해할 수 없다', '{s} 없는 {comp}. 감독이 설명해야 한다'], tabloid: ['충격 낙마! {s}, {comp} 못 간다'], korhome: ["{s}, {comp} 최종 명단 탈락… '충격'", "'설마 했는데' {s}, {comp} 낙마"] },
     tourwin: { _: ['{nation}, {comp} 정상! 주역 {s}', '{comp}의 영웅 {s}'], korhome: ["{comp} 우승! 대한민국 축구 새 역사… {s} '울컥'", "'{comp} 정상' 태극전사들 금의환향, 중심엔 {s}"] },
     tourmedal: { _: ['{nation}, {comp} {stage}', '{s}, {stage} 들고 귀국'], korhome: ['{comp} {stage}! 태극전사들 시상대에', '{s}, {comp} {stage} 목에 걸었다'] },
@@ -4169,6 +4453,29 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       { label: '그 장면을 다큐멘터리로 만든다', hint: '명성 +4 · 해 봐야 안다', run(x) { const h = H(x); const r = [h.b('rep', 4)]; if (chance(.5)) r.push('다시 보는 건 생각보다 아팠다 · ' + h.b('morale', -3)); else r.push('보고 나니 이상하게 가벼워졌다 · ' + h.b('morale', 4)); return r.join(' · '); } },
     ] };
   } });
+  // ---------- 성장기: 예상보다 크거나, 덜 크거나 ----------
+  const SPURT_TO = { LW: ['ST', 'target'], RW: ['ST', 'target'], AM: ['ST', 'target'], LB: ['CB', 'stopper'], RB: ['CB', 'stopper'], LWB: ['CB', 'stopper'], RWB: ['CB', 'stopper'], CM: ['DM', 'anchor'], DM: ['CB', 'aerialcb'] };
+  const SPURT_ROLE = { LW: 'widetm', RW: 'widetm', ST: 'target', CB: 'aerialcb', LB: 'holdfb', RB: 'holdfb', GK: 'commandgk' };
+  const STALL_TO = { CB: [null, 'invfb'], ST: ['AM', 'shadow'], DM: ['CM', 'dlp'] };
+  const STALL_ROLE = { ST: 'poacher', CB: 'covercb', LW: 'iso', RW: 'iso', AM: 'treq', CM: 'mezzala', GK: 'sweeperk' };
+  def({ id: 'spurt', phase: 'pre', cd: 0, w: (c) => { const b = c.p.body; return b?.dev && !b.devDone && (c.p.age === 18 || (c.p.age === 17 && chance(.45))) ? 85 : 0; }, make(c) {
+    const p = c.p; const d = p.body.dev; const up = d > 0; const before = E.heightAt(p, 19);
+    let to = up ? SPURT_TO[p.pos] : STALL_TO[p.pos]; if (to && to[0] === null) to = [p.foot === 'L' ? 'LB' : 'RB', to[1]];
+    const roleIn = up ? SPURT_ROLE[p.pos] : STALL_ROLE[p.pos]; const rIn = roleIn && E.ROLE[roleIn] && E.rolesFor(p.pos).some(r => r.id === roleIn) && roleIn !== p.role ? E.ROLE[roleIn] : null;
+    const rTo = to ? E.ROLE[to[1]] : null;
+    const conv = (x, pos, roleId, why) => { const q = x.p; const from = q.pos; q.pos = pos; q.role = roleId; q.roleXp = q.roleXp || {}; q.roleXp[roleId] = Math.max(q.roleXp[roleId] || 0, 18); q.flags.converted = { year: q.year, from, to: pos, role: roleId, age: q.age, body: true }; q.tags.push('converted'); x.reset && x.reset(); H(x).note(`${from} → ${pos} 전향 (${why})`); };
+    const text = up
+      ? `여름 동안 ${d}cm가 더 컸다. 이제 ${before + d}cm. 바지 밑단이 짧아졌고, 첫 훈련에선 공이 자꾸 발에서 떨어진다. 코치는 다른 걸 봤다. 공중볼 경합에서 한 번도 지지 않았다.`
+      : `또래들은 다 컸는데 키가 거의 그대로다. 의사는 ${before + d}cm 근처에서 멈출 거라고 했다. 대신 방향 전환이 누구보다 빠르다.`;
+    const opts = [];
+    if (rTo) opts.push({ label: `${J(E.POS[to[0]]?.name || to[0], '로')} 전향해 ${J(rTo.name, '을')} 배운다`, hint: '첫 시즌은 적응기 · 감독 신뢰 +4', run(x) { conv(x, to[0], to[1], up ? '급성장' : '체격'); return `${E.POS[to[0]]?.name || to[0]} 훈련을 시작했다. ` + H(x).b('trust', 4); } });
+    if (rIn) opts.push({ label: `포지션은 지키고 ${J(rIn.name, '로')} 바꾼다`, hint: '감독 신뢰 +2', run(x) { x.p.role = rIn.id; x.setRole && x.setRole(rIn.id); x.p.roleXp = x.p.roleXp || {}; x.p.roleXp[rIn.id] = Math.max(x.p.roleXp[rIn.id] || 0, 12); return `몸에 맞는 역할을 찾기로 했다. ` + H(x).b('trust', 2); } });
+    if (!up && p.pos === 'GK') opts.push({ label: '반사신경과 발밑을 갈고닦는다', hint: '키 대신 반응 속도', run(x) { const h = H(x); h.attr('REF', 1.5); h.attr('KIC', 1); return '작은 키퍼는 더 빨라야 한다. ' + h.b('morale', 1); } });
+    if (!up && p.pos !== 'GK') opts.push({ label: '근력 훈련에 매달린다', hint: '피지컬 조금 ▲ · 몸에 무리', run(x) { const h = H(x); h.attr('STR', 2); return '체육관에서 살았다. ' + h.b('dur', -2); } });
+    opts.push({ label: '지금 하던 대로 간다', hint: up ? '이번 시즌 몸이 낯설다' : '사기 +1', run(x) { const h = H(x); if (up) { h.mod('form', -.03); return '하던 대로 하기로 했다. 몸이 따라오는 데 시간이 걸릴 것이다.'; } return '키는 키고, 축구는 축구다. ' + h.b('morale', 1); } });
+    E.applyDev(p); press(p, PR('both', up ? 'spurt' : 'stall', p, { d: Math.abs(d), h: E.heightAt(p, 19) }));
+    return { title: up ? `${d}cm가 컸다` : '더는 크지 않는다', tone: 'neutral', text, options: opts };
+  } });
   // ---------- 작은 일상들 ----------
   def({ id: 'turbulence', phase: 'mid', cd: 8, w: (c) => pro(c.p) ? 3 : 0, make(c) {
     return { title: '난기류', tone: 'life', text: '원정 비행기가 20분 동안 곤두박질쳤다. 착륙하고도 손이 떨렸다. 다음 원정은 열 시간 버스다.', options: [
@@ -4679,7 +4986,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <div class="ph-left">${ava(p.look, p.club, { gk: p.pos === 'GK', age: p.age, cls: 'md' })}<div class="ph-txt">
         <h1 class="pname">${esc(p.name)}${p.number ? ` <span class="pnum">${p.number}</span>` : ''}</h1>
         <p class="ph-sub">${crest(p.club, 'xs')} <b>${esc(c.name)}</b>${p.captain ? ' <span class="pill gold">C</span>' : ''} ${p.youth ? '<span class="muted small">유스</span>' : lgTag(p.club, p.year, p)}</p>
-        <p class="ph-sub muted">${sl(p.year)} · ${p.age}세 · ${p.pos} · ${flag(p.nation)}${p.body ? ` · ${E.heightAt(p)}cm · ${E.BUILD[p.body.b] || ''}` : ''}${p.foot ? ` · <span class="foot" title="약발 등급 ${p.weak || 3}/5">${E.FOOT_NAME[p.foot]} <span class="wstar">${wstars(p.weak || 3)}</span></span>` : ''}</p></div></div>
+        <p class="ph-sub muted">${sl(p.year)} · ${p.age}세 · ${p.pos} · ${flag(p.nation)}${p.body ? ` · ${E.heightAt(p)}cm${(() => { const f = E.bodyForecast(p); return f ? ` (다 크면 ${f[0]}~${f[1]})` : ''; })()} · ${E.BUILD[p.body.b] || ''}` : ''}${p.foot ? ` · <span class="foot" title="약발 등급 ${p.weak || 3}/5">${E.FOOT_NAME[p.foot]} <span class="wstar">${wstars(p.weak || 3)}</span></span>` : ''}</p></div></div>
       <div class="ph-ovr"><span class="big">${o}</span>${last && !last.youthTeam ? `<span class="delta ${last.growth >= 0 ? 'up' : 'down'}">${last.growth >= 0 ? '▲' : '▼'}</span>` : ''}</div>
     </section>
     <section class="meters">${meter('사기', p.morale)}${meter('신뢰', p.trust)}${meter('팬심', p.fans[p.club] ?? 0)}${meter('명성', p.rep)}${meter('몸', p.dur)}<span class="pill quiet">${ct}</span>${p.release && !p.youth ? `<span class="pill quiet">바이아웃 ${E.fmtFee(p.release)}</span>` : ''}</section>`;
@@ -4787,7 +5094,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const offers = p.pendingOffers || [];
     const pickedOffer = S.offerPick >= 0 ? offers[S.offerPick] : null;
     const numberTarget = pickedOffer ? pickedOffer.club : (p.needNumber || !p.number) && !p.youth ? p.club : null;
-    const offerRow = (i, cid, title, pills, sub, on, dis, of) => `<label class="offer ${on ? 'on' : ''} ${dis ? 'dis' : ''}"><input type="radio" name="offer" value="${i}" ${on ? 'checked' : ''} ${dis ? 'disabled' : ''}>${crest(cid, 'sm')}<span class="of-main"><span class="of-t"><b>${esc(title)}</b>${pills}</span><span class="small muted">${sub}</span>${outlookLine(p, cid, of)}</span></label>`;
+    const offerRow = (i, cid, title, pills, sub, on, dis, of) => `<label class="offer ${on ? 'on' : ''} ${dis ? 'dis' : ''}"><input type="radio" name="offer" value="${i}" ${on ? 'checked' : ''} ${dis ? 'disabled' : ''}>${crest(cid, 'sm')}<span class="of-main"><span class="of-t"><b>${esc(title)}</b>${pills}</span><span class="small muted">${sub}</span>${outlookLine(p, cid, of)}${i >= 0 ? cityLine(p, cid) : ''}</span></label>`;
     const market = p.youth ? '' : `<section class="panel"><div class="ptitle"><h2>이적 시장</h2>${p.released ? '<span class="pill red">방출</span>' : ''}${p.contract <= 0 && !p.loanFrom ? '<span class="pill gold">자유계약</span>' : ''}</div>
       <div class="offers">
         ${p.released ? '' : offerRow(-1, p.club, '잔류', '', `${lgTag(p.club, p.year, p)} · ${E.expectRole(o, E.clubStr(p.club, p.year))}${p.contract <= 0 && !p.loanFrom ? ` · 2년 재계약 · 연봉 ${E.fmtWon(p.renewOffer ?? E.renewWage(p))}` : p.wage ? ` · 연봉 ${E.fmtWon(p.wage)}` : ''}`, S.offerPick === -1, false, null)}
@@ -4889,6 +5196,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return `<div class="press">${heads.map(clip).join('')}${reviewRows(pr.review)}</div>`;
   }
   const nickT = (x) => x.nickLocal ? `${x.nickLocal} (${x.nickname})` : x.nickname;
+  // 연고 도시: 어디서 살게 되는지
+  const cityLine = (p, cid) => { try { const c = CITIES.of(cid); if (!c) return ''; if (CITIES.same(p.club, cid)) return `<span class="cityl small"><b>${esc(c.city)}</b> · 지금 사는 도시 그대로. 이사할 필요가 없다.</span>`; return `<span class="cityl small"><b>${esc(c.city)}</b> · ${esc(c.line)}</span>`; } catch { return ''; } };
   function eventCard(ev, i, n, label) {
     if (!ev) return '';
     const opts = ev.options.filter(o => !o.when || o.when(ctxFor(S.p)));
@@ -5129,6 +5438,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
         <li><b>시작 능력치</b>: 같은 국적·포지션 평균보다 클수록 공중볼·피지컬이 조금 높고 속도가 조금 낮아요. 탄탄하면 피지컬 +3·속도 −1.5, 날렵하면 피지컬 −3·속도 +2, 170cm 미만이면 드리블 +1.5.</li>
         <li><b>노화</b>: 172cm 미만은 30세 이후 속도가 1.15배, 189cm 이상은 1.1배 빨리 떨어져요. 탄탄하면 피지컬 하락이 0.8배, 날렵하면 힘이 1.1배 빨리 빠져요.</li>
         <li><b>부상</b>: 날렵하면 햄스트링·사타구니 1.3배, 탄탄하면 발목·무릎 1.15배(햄스트링은 0.85배), 190cm 이상이면 발목·무릎·십자인대 1.15배.</li>
+        <li><b>성장기 변수</b>: 열에 셋 정도는 예상과 다르게 자라요(15%는 4~7cm 더, 15%는 3~5cm 덜). 17~18세에 사건으로 드러나고, 포지션·역할을 바꿀지 고를 수 있어요. 19세 전까지는 화면에 '다 크면 몇~몇 cm' 범위가 보여요. 범위는 예상 밖 성장까지 대부분 담고 있지만, 가끔 그보다 더 크기도 해요.</li>
         <li>체격은 OVR을 직접 올리지 않아요. 최고 OVR 기준으로 ±1~2 정도의 차이를 만들고, 나머지는 별명·기사·후손 이야기로 남아요. 옛 세이브의 선수는 능력치에서 키를 거꾸로 짐작해요.</li></ul>
       <h2>사기·신뢰·팬심·명성·내구도</h2><ul>
         <li><b>사기</b>는 평점과 성장에, <b>감독 신뢰</b>는 출전 시간에 영향을 줘요. 이적하면 신뢰는 다시 쌓아야 해요.</li>
