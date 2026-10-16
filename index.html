@@ -3609,21 +3609,25 @@ const PRESS = (() => {
     seen.push(line); if (seen.length > 120) seen.splice(0, seen.length - 120);
     return fill(line, v);
   }
+  let P_ = null;
   function tierOf(res) {
     if (res.youthTeam) return null;
     if ((res.injuryWeeks || 0) >= 22 && res.apps < 18) return 'inj';
     if ((res.share ?? 1) < .3 && res.apps < 15) return 'bench';
-    const r = res.rating; const big = res.awards.some(a => ['득점왕', '리그 MVP', '발롱도르'].includes(a));
+    const r = effR(P_, res); const big = res.awards.some(a => ['득점왕', '리그 MVP', '발롱도르'].includes(a));
     return r >= 7.55 || big ? 'legend' : r >= 7.2 ? 'great' : r >= 6.92 ? 'good' : r >= 6.62 ? 'meh' : 'bad';
   }
+  // 평가는 평점만 보지 않는다: 포지션 기대치를 넘는 공격 포인트는 신문도 알아본다
+  const XPECT = { FW: .42, MF: .22, DF: .07, GK: 0 };
+  function effR(p, res) { const pos = res.pos || p?.pos; const grp = E.POS[pos]?.grp || 'MF'; const ga = ((res.goals || 0) + (res.assists || 0) * .7) / Math.max(8, res.apps || 0); const x = pos === 'AM' ? .32 : XPECT[grp] ?? .2; const d = ga - x; return res.rating + (d > 0 ? Math.min(.6, d * 1.1) : Math.max(-.08, d * .4)); }
   function rateWith(key, p, res, sc) {
-    const o = OUT[key]; let r = res.rating - (sc ? sc.w || .3 : 0);
+    const o = OUT[key]; let r = effR(p, res) - (sc ? sc.w || .3 : 0);
     if (o.bias?.includes(res.club)) r += .12; if (o.hate?.includes(res.club)) r -= .2;
     return SCALE[o.scale].f(r);
   }
   // 시즌 평가 (구단 리그 언론 + 해외파면 자국 언론)
   function review(p, res) {
-    const tier = tierOf(res); if (!tier) return [];
+    P_ = p; const tier = tierOf(res); if (!tier) return [];
     const v = { s: disp(p), club: clubN(res.club), g: res.goals, a: res.assists, apps: res.apps };
     const keys = [...localOutlets(res.club)]; const h = homeOutlet(p); if (h) keys.push(h);
     const sc = p.flags?.scandal && p.flags.scandal.year === res.year ? p.flags.scandal : null;
@@ -5788,8 +5792,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const p = S.p; if (S.numAsk) return; const of = (p.pendingOffers || []).find(o => o.club === clubId);
     const ok = Math.random() < E.numberAsk(p, clubId, n, of); const cn = club(clubId).name;
     let pr = null;
-    if (ok) { p.numGrant = clubId + '|' + n; S.pendingNumber = n; try { pr = PRESS.make('numgrant', p, { to: cn, n }); } catch { } S.numAsk = { club: clubId, n, ok, pr, msg: `${cn}: "${n}번, 네 거다. 원래 주인은 다른 번호를 단다."` }; }
-    else { E.bump(p, 'morale', -2); try { pr = PRESS.make('numdeny', p, { n }); } catch { } S.numAsk = { club: clubId, n, ok, pr, msg: `${cn}: "${n}번은 곤란하다." 사기 ▼` }; }
+    if (ok) { p.numGrant = clubId + '|' + n; S.pendingNumber = n; pr = { k: 'numgrant', v: { to: cn, n } }; S.numAsk = { club: clubId, n, ok, pr, msg: `${cn}: "${n}번, 네 거다. 원래 주인은 다른 번호를 단다."` }; }
+    else { E.bump(p, 'morale', -2); pr = { k: 'numdeny', v: { n } }; S.numAsk = { club: clubId, n, ok, pr, msg: `${cn}: "${n}번은 곤란하다." 사기 ▼` }; }
     [...S.open].filter(k => k.startsWith('num|')).forEach(k => S.open.delete(k)); if (!ok) S.open.add('num|' + clubId);
     keepMemo(); render();
   }
@@ -6710,7 +6714,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (of && !of.blocked && !of.withdrawn) { const from = p.club; E.applyMove(p, of); try { const kind = of.type === 'loan' ? 'loan' : of.buyout ? 'buyout' : E.isRival(from, of.club) ? 'rival' : 'transfer'; PRESS.queue(p, PRESS.both(kind, p, { to: club(of.club).name, from: club(from).name })); const ls = p.seasons[p.seasons.length - 1]; const stay = p.seasons.filter(x => x.club === from && !x.youthTeam).length; if (of.type !== 'loan' && ls && !ls.youthTeam && (stay >= 4 || ls.awards?.length || ls.rating >= 7.2)) { const fw = PRESS.make('farewell', p, { from: club(from).name, to: club(of.club).name, n: (p.numbers || []).filter(x => x.club === from).pop()?.num || '' }, PRESS.outletsFor(from)[0]); if (fw) PRESS.queue(p, [fw]); } } catch (e) { } }
     else if (!p.youth && p.contract <= 0 && !p.loanFrom) { p.contract = 2; p.wage = p.renewOffer ?? E.renewWage(p); p.wageHist = (p.wageHist || []).concat({ year: p.year, club: p.club, wage: p.wage, years: 2, renew: true }); p.pendingEvents = (p.pendingEvents || []).concat(`2년 재계약 · 연봉 ${E.fmtWon(p.wage)}`); }
     if (S.pendingNumber && (p.needNumber || of || !p.number)) E.setNumber(p, S.pendingNumber);
-    if (S.numAsk && of && of.club === S.numAsk.club && S.numAsk.pr) { try { PRESS.queue(p, S.numAsk.pr); } catch { } } S.numAsk = null;
+    if (S.numAsk && of && of.club === S.numAsk.club && S.numAsk.pr) { try { const q = S.numAsk.pr; PRESS.queue(p, q.k ? PRESS.make(q.k, p, q.v) : q); } catch { } } /* 새 구단에 온 뒤 그 동네 신문이 쓴다 */ S.numAsk = null;
     syncRole(p); p.role = S.choice.role; p.lastFocus = S.choice.focus;
     S.mods = Object.assign({}, p.nextMods || {}); p.nextMods = {};
     S.offerPick = -1; S.pendingNumber = null; S.windowQ = [];
