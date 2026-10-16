@@ -5970,7 +5970,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   const normName = (s) => String(s || '').normalize('NFC').toLowerCase().replace(/\.[a-z0-9]+$/i, '').replace(/[\s._\-()·'"]/g, '');
   function matchClub(filename) {
     const n = normName(filename); if (!n) return null;
-    const cl = E.CLUBS.filter(c => !c.mil);
+    const cl = E.CLUBS;
     return cl.find(c => c.id === n) || cl.find(c => normName(c.name) === n) || cl.find(c => normName(c.name).includes(n) && n.length >= 2) || cl.find(c => n.includes(normName(c.name)) && normName(c.name).length >= 2) || null;
   }
   function fileToCrest(file) {
@@ -5997,7 +5997,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function viewCrests() {
     const lgs = Object.keys(E.LEAGUES); const lg = S.crestLg || lgs[0];
     const n = Object.keys(S.crests).length;
-    const rows = E.leagueClubs(lg).filter(c => !c.mil).map(c => `<li class="crow">${crest(c.id, 'md')}<span class="grow"><b>${esc(c.name)}</b>${S.crests[c.id] ? ' <span class="pill gold">직접 넣음</span>' : ''}</span>
+    const rows = E.leagueClubs(lg).map(c => `<li class="crow">${crest(c.id, 'md')}<span class="grow"><b>${esc(c.name)}</b>${S.crests[c.id] ? ' <span class="pill gold">직접 넣음</span>' : ''}</span>
       <label class="btn sm">이미지<input type="file" accept="image/*" data-crestfor="${c.id}" hidden></label>${S.crests[c.id] ? `<button class="btn sm" data-crestreset="${c.id}">되돌리기</button>` : ''}</li>`).join('');
     return `<section class="panel"><div class="ptitle"><h1 class="h1">구단 엠블럼</h1><span class="muted small">${n}개 구단 직접 넣음</span></div>
       <p class="muted small">이미지를 넣은 구단은 게임 전체에서 그 이미지로 보여요. 안 넣은 구단은 기본 방패가 나와요. 이미지는 이 기기에만 저장되고, 세이브 파일을 내보내면 같이 들어가요.</p>
