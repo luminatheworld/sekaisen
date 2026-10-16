@@ -37,7 +37,7 @@
   --marker: var(--gold); --accent: var(--gold); --accent-ink: var(--gold-ink); --red-bg2: var(--red-bg);
 }
 * { box-sizing: border-box; }
-html { background: var(--bg); }
+html { background: var(--bg); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); background-image: repeating-linear-gradient(135deg, transparent 0 26px, var(--bg-line) 26px 52px); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; word-break: keep-all; overflow-wrap: anywhere; min-height: 100vh; }
 h1, h2, h3 { text-wrap: balance; margin: 0; }
 p { margin: 0; }
@@ -304,6 +304,8 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .careercard.force-wide .cc-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 26px; align-items: start; }
 .careercard.force-wide .cc-r { border-left: 1px solid var(--line); padding-left: 24px; }
 .careercard.force-wide .px.lg { width: 128px; height: 160px; } .careercard.force-wide .cc-ovr { font-size: 50px; }
+.shotin, .shotin * { -webkit-text-size-adjust: none !important; text-size-adjust: none !important; }
+.careercard.force-wide .cc-best { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } .careercard.force-wide .cc-best > div { text-align: left; }
 .shotrec { display: flex; flex-direction: column; gap: 12px; } .shotrec .panel { margin: 0; } .shotrec .tblwrap { overflow: visible; } .shotrec .tbl td.num, .shotrec .tbl th { white-space: nowrap; } .shotrec .tbl td { white-space: nowrap; } .shotrec .tbl td.ach { white-space: normal; }
 .savebar { margin-bottom: 10px; justify-content: flex-end; } .cc-l, .cc-r { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 @media (min-width: 760px) {
@@ -1679,7 +1681,7 @@ const ENGINE = (() => {
     res.race.mvp = [r, bk.mvp];
     // 골키퍼·수비수는 MVP 투표에서 손해를 본다
     const mr = res.branch ? null : led?.award['리그 MVP|' + res.lg + '|' + res.year];
-    const mvpBar = Math.max(bk.mvp, mr ? mr.v + .05 : 0) + (grp === 'GK' ? .3 : grp === 'DF' ? .08 : 0);
+    const mvpBar = Math.max(bk.mvp, 7.0, mr ? mr.v + .05 : 0) + (grp === 'GK' ? .3 : grp === 'DF' ? .08 : 0); // 평점 6점대 MVP는 어색하다
     if (r + wobble() > mvpBar && (rank <= 4 || lgG + lgA >= bk.goals)) { res.awards.push('리그 MVP'); if (mr) overturn(world, p, res.year, `${slY(res.year)} ${lg.name} MVP ${p.name} · 원래 ${mr.name}`, res); }
     if (mr) res.race.mvpName = mr.name;
     if ((grp === 'DF' || p.pos === 'DM') && r + wobble() > bk.def && rank <= 6) res.awards.push('최우수 수비수');
