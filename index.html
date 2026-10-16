@@ -4918,9 +4918,13 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   // 구단 엠블럼: 실제 로고 대신 구단 색과 무늬로 만든 방패
   const CREST = {};
   const SHAPES = { shield: 'M4 3H36V19C36 31 29 37.5 20 41.5C11 37.5 4 31 4 19Z', round: 'M20 2.5A19 19 0 1 1 19.99 2.5Z', heater: 'M2.5 4C9 6 14 3 20 1.5C26 3 31 6 37.5 4V20C37.5 31 30 38 20 42C10 38 2.5 31 2.5 20Z', badge: 'M11 2.5H29L37.5 11V31L29 41.5H11L2.5 31V11Z', peak: 'M3 8L20 2L37 8V22C37 32 29 38.5 20 42C11 38.5 3 32 3 22Z' };
+  // 기본 엠블럼 팩: 웹 배포판 옆에 둔 crests.json. 직접 넣은 엠블럼이 늘 먼저다
+  let PACK = {};
+  async function loadPack() { try { const r = await fetch('crests.json', { cache: 'no-cache' }); if (!r.ok) return; const d = await r.json(); const ok = {}; for (const [k, v] of Object.entries(d || {})) if (typeof v === 'string' && /^data:image\/(png|jpeg|webp);base64,/.test(v)) ok[k] = v; PACK = ok; Object.keys(CREST).forEach(k => delete CREST[k]); } catch { } }
   function crestURL(id) {
     if (CREST[id]) return CREST[id];
     if (S.crests && S.crests[id]) return (CREST[id] = S.crests[id]);
+    if (PACK[id]) return (CREST[id] = PACK[id]);
     const c = club(id); const h = E.hashStr(id || 'x'); const c1 = c.c1, c2 = c.c2;
     const path = SHAPES[['shield', 'round', 'heater', 'badge', 'peak', 'shield'][h % 6]];
     let pat = '';
@@ -6521,7 +6525,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     await worldReady(); if (S.p) afterLoad();
     S.ready = true; S.view = S.p ? 'career' : 'world'; render();
     if (S.migMsg) { toast(S.migMsg); S.migMsg = ''; }
-    await Store.init();
+    await Promise.all([Store.init(), loadPack()]);
     if (Store.cloud) {
       const w = await Store.loadWorld();
       if (w && (w.updatedAt || 0) > (S.world.updatedAt || 0)) {
