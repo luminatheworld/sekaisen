@@ -515,6 +515,8 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .cut.feat .cut-who { animation-delay: 2.4s; }
 @keyframes cutflash { 0% { opacity: .85; } 100% { opacity: 0; } }
 @keyframes beamin { from { opacity: 0; } }
+.cc-bloom.unbloom { color: #c9a6ff; } .cc-bloom.over { color: var(--gold); }
+.cc-bloomtxt { font-size: 13px; line-height: 1.6; color: var(--muted); font-style: italic; max-width: 440px; margin: 2px auto 0; text-align: center; }
 .cc-feat { display: inline-block; font-size: 11px; font-weight: 900; letter-spacing: .04em; color: var(--gold); margin-right: 2px; }
 .alm-top { display: flex; align-items: center; gap: 14px; margin: 6px 0 10px; }
 .alm-ringsvg { width: 92px; height: 92px; flex: none; color: var(--ink); }
@@ -2402,7 +2404,7 @@ const ENGINE = (() => {
       homeClub: p.homeClub, talent: p.talent, curve: p.curve, custom: !!p.custom, kids: (p.kids || []).slice(), numByClub, fans: { ...p.fans }, injuries: (p.injuries || []).length, majorInj: (p.injuries || []).filter(i => i.major).length, number: p.number, foot: p.foot, weak: p.weak,
       earned: Math.round(p.earned || 0), peakWage: Math.max(0, ...(p.wageHist || []).map(w => w.wage), p.wage || 0), early: p.flags.early || null, P: p.P,
       temper: temperament(p), tmp: { big: +T(p).big.toFixed(2), nat: +T(p).nat.toFixed(2) },
-      hist: histOf(p), line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
+      hist: histOf(p), scars: scarsOf(p), line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
     };
   }
   // ---------- 영구결번 · 구단 명예의 전당 ----------
@@ -2452,6 +2454,49 @@ const ENGINE = (() => {
     return { role: roleId, roleName: ROLE[roleId]?.name || '', fam: famLevel(famOf(p, roleId)), forming, share: +share.toFixed(2), race, rank: rk, mgr: mgr.name, style: mgr.style, legend: !!mgr.legend, hist: h ? { club: h.club, name: h.name } : null, mates: peopleAt(world, p, clubId, year).map(m => m.name) };
   }
   // 은퇴 카드: 최고의 시즌 · 최고의 폼(연속 3시즌) · 커리어 정점(OVR)
+  // 커리어의 상처: 큰 부상, 운명 사건, 임대. 카드의 '못다 핀 재능' 멘트가 읽는다
+  function scarsOf(p) {
+    const by = p.birthYear; const inj = (p.injuries || []).filter(i => i.major || (i.weeks || 0) >= 20).map(i => [i.year, i.name || '부상', i.weeks || 0, i.year - by]);
+    const fate = {}; Object.keys(p.flags || {}).forEach(k => { if (/^f_f_/.test(k) && typeof p.flags[k] === 'number') fate[k.slice(4)] = p.flags[k]; });
+    const loans = (p.seasons || []).filter(s => s.loan).length; const y23 = (p.seasons || []).filter(s => !s.youthTeam && s.age <= 22).reduce((a, s) => a + (s.apps || 0), 0);
+    return { inj, fate, loans, y23 };
+  }
+  // 재능과 실제 커리어의 거리. 실패/성공으로 자르지 않고, 생각할 거리를 남긴다
+  const FATE_W = { parent: '가족을 잃은 해', crash: '교통사고', heart: '심장 이상', ban: '도핑 징계', fixing: '승부조작 수사', robbery: '집에 든 강도', matefall: '동료에게 닥친 비극', fold: '구단의 붕괴', halt: '멈춰 버린 리그' };
+  const hashS = (t) => { let h = 7; for (const ch of String(t)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
+  function bloomNote(sum) {
+    if (!sum || sum.P == null || !sum.peakOvr) return null;
+    const gap = sum.P - sum.peakOvr; const sc = sum.scars || null; const pk = sum.best?.peak; const form = sum.best?.form;
+    const hs = hashS(sum.id || sum.name); const pickH = (L, k = 0) => L[(hs >> (k * 3)) % L.length];
+    const tal = TALENT[sum.talent]?.label || '';
+    if (gap >= 3 && !sum.bdo && sum.peakOvr < 88) {
+      const why = [];
+      const win = sc ? sc.inj.filter(i => i[3] >= 18 && i[3] <= 24).sort((a, b) => b[2] - a[2])[0] : null;
+      if (win) why.push(`${win[3]}세의 ${win[1]}(${win[2]}주). 가장 자라야 할 해가 재활로 지나갔다.`);
+      const fz = sc ? Object.entries(sc.fate).filter(([k]) => FATE_W[k]).sort((a, b) => a[1] - b[1])[0] : null;
+      if (fz) why.push(`${fz[1] - sum.birthYear}세, ${jo(FATE_W[fz[0]], '이', '가')} 길을 틀어 놓았다.`);
+      if (sum.early) why.push(`${sum.early.age ?? sum.retireAge}세에 스스로 멈췄다.`);
+      else if (sum.clubs >= 9 || (sc && sc.loans >= 3)) why.push(`${sum.seasons}시즌 동안 ${sum.clubs}개 구단${sc && sc.loans >= 3 ? `, 임대만 ${sc.loans}번` : ''}. 어디에도 오래 뿌리내리지 못했다.`);
+      if (!why.length && sc && sc.y23 < 40) why.push(`스물셋이 될 때까지 1군에서 뛴 경기는 ${sc.y23}경기. 기회는 늦게 왔다.`);
+      if (!why.length && sum.avgRating && sum.avgRating < 6.55) why.push(`커리어 평균 평점 ${sum.avgRating.toFixed(2)}. 경기는 많이 뛰었지만, 경기가 그를 키워 주지는 않았다.`);
+      if (!why.length) why.push(pickH(['무엇이 모자랐는지 하나로 말하기 어렵다. 어쩌면 모자란 건 없었는지도 모른다.', '큰 사고도, 큰 추문도 없었다. 그저 마지막 한 뼘이 자라지 않았다.', '누구도 그의 성실함을 의심하지 않았다. 재능이 늘 같은 속도로 자라는 건 아니다.'], 2));
+      const but = [];
+      if (form && pk && form.from <= pk.year && pk.year <= form.to + 1) but.push(`${CLUB[pk.club]?.name || ''}에서의 몇 해만큼은, 재능이 거짓말이 아니었다는 걸 보여 줬다.`);
+      else if (pk) but.push(`${pk.age}세, ${CLUB[pk.club]?.name || ''}에서 닿은 OVR ${pk.ovr}. 그게 그가 도착한 곳이었다.`);
+      if (sum.seasons >= 17) but.splice(but.length && /보여 줬다/.test(but[0]) ? 1 : 0, 0, `${sum.seasons}시즌, ${sum.apps}경기. 버틴 것도 재능이다.`);
+      else if (sum.trophies >= 3) but.push(`트로피 ${sum.trophies}개는 그대로 남았다.`);
+      const q = [...(win || fz ? ['만약 그 해가 없었다면. 세계선은 그 질문에 답하지 않는다.'] : []), '재능은 약속이었지, 계약은 아니었다.', '그를 실패라고 부를 수 있을까.', '사람들은 그가 될 수 있었던 선수를 이야기하고, 그는 자신이 된 선수로 은퇴했다.', '피지 못한 꽃에도 계절은 있었다.'];
+      return { kind: 'unbloom', badge: gap >= 6 ? '못다 핀 재능' : '조금 못다 핀 재능', text: [why.slice(0, 2).join(' '), but[0], pickH(q, 1)].filter(Boolean).join(' ') };
+    }
+    if (gap <= -6) {
+      const late = sc && sc.fate.late;
+      const a = late ? `${late - sum.birthYear}세, 아무도 기대하지 않던 때에 기적이 왔다.` : sum.talent === 'wonder' ? '원더키드라는 말로도 다 담지 못한 선수였다.' : `처음 그에게 붙은 이름은 '${tal}'였다. 그는 그보다 멀리 갔다.`;
+      const b = pk ? `${pk.age}세, ${CLUB[pk.club]?.name || ''}에서 OVR ${pk.ovr}.` : '';
+      const q = sum.talent === 'wonder' ? ['재능은 출발선이었을 뿐이다.', '타고난 것 위에, 스스로 더 쌓았다.'] : ['재능은 출발선이었을 뿐이다.', '아무도 그를 원더키드라 부르지 않았다. 그래서 더 오래 기억된다.', '스카우트의 보고서는 틀렸다. 기분 좋게.'];
+      return { kind: 'over', badge: '재능을 넘어선 커리어', text: [a, b, pickH(q, 1)].filter(Boolean).join(' ') };
+    }
+    return null;
+  }
   function bestOf(p) {
     const rs = (p.seasons || []).filter(x => !x.youthTeam && x.apps >= 10); if (!rs.length) return null;
     const isGK = p.pos === 'GK';
@@ -2507,7 +2552,7 @@ const ENGINE = (() => {
     LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
     FOOT_NAME, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -5681,7 +5726,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <h2 class="cc-name">${esc(sum.name)}</h2>${sum.nickname ? `<p class="cc-sub">‘${esc(nickT(sum))}’</p>` : ''}
       <p class="cc-sub">${sum.seasons}시즌 · ${sum.clubs}개 구단 · ${sum.retireAge}세 은퇴${sum.generation > 1 ? ` · ${esc(surname(sum.name))} 가문 ${sum.generation}대` : ''}</p>
       ${sum.early ? `<p class="cc-sub small">${sum.early.age}세 조기 은퇴 · ${esc(EARLY_NAME[sum.early.reason] || '')}</p>` : ''}
-      ${sum.talent && sum.curve ? `<p class="cc-sub small">숨겨져 있던 재능: <b>${esc(E.TALENT[sum.talent]?.label || '')}</b> · ${esc(E.CURVES[sum.curve] || '')}${sum.early && sum.P && sum.P - sum.peakOvr >= 5 ? ' · <b>못다 핀 재능</b>' : ''}</p>` : ''}
+      ${sum.talent && sum.curve ? (() => { const bn = E.bloomNote(sum); return `<p class="cc-sub small">숨겨져 있던 재능: <b>${esc(E.TALENT[sum.talent]?.label || '')}</b> · 성장 곡선: <b>${esc(({ early: '조숙형', normal: '보통형', late: '대기만성형' })[sum.curve] || '')}</b>${bn ? ` · <b class="cc-bloom ${bn.kind}">${esc(bn.badge)}</b>` : ''}</p>${bn ? `<p class="cc-bloomtxt">${esc(bn.text)}</p>` : ''}`; })() : ''}
       ${heirBlock}
       <div class="cc-stats"><div><b>${nf(sum.apps)}</b><span>출전</span></div>${isGK ? `<div><b>${nf(sum.saves)}</b><span>선방</span></div><div><b>${nf(sum.cs)}</b><span>클린시트</span></div>` : `<div><b>${nf(sum.goals)}</b><span>골</span></div><div><b>${nf(sum.assists)}</b><span>도움</span></div>`}<div><b>${sum.avgRating.toFixed(2)}</b><span>평균 평점</span></div><div><b>${sum.trophies}회</b><span>우승</span></div><div><b>${sum.awards}회</b><span>개인상</span></div></div>
       </div><div class="cc-r">
@@ -6509,6 +6554,10 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     for (const c of w.careers) {
       if (c.body) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
       c.body = doc?.body ? { h: doc.body.h, b: doc.body.b } : { h: E.hMean(c.nation, c.pos), b: 'normal' }; changed = true;
+    }
+    for (const c of w.careers) {
+      if (c.scars) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
+      try { c.scars = doc ? E.scarsOf(doc) : { inj: [], fate: {}, loans: 0, y23: 99 }; } catch { c.scars = { inj: [], fate: {}, loans: 0, y23: 99 }; } changed = true;
     }
     for (const c of w.careers) {
       if (c.v14) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
