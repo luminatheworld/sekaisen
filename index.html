@@ -309,7 +309,7 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .cc-stats b { display: block; font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
 .cc-stats span { font-size: 11.5px; font-weight: 700; color: var(--gold); }
 .cc-badges { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
-.cc-clubs { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+.cc-clubs { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; } .cc-clubs.many { gap: 10px 12px; } .cc-clubs.many > span { min-width: 44px; }
 .cc-clubs > span { display: flex; flex-direction: column; align-items: center; gap: 4px; } .cc-clubs small { font-size: 11px; color: var(--muted); font-weight: 700; }
 .cc-clubs img, .cc-clubs svg { filter: drop-shadow(0 0 .6px rgba(255,255,255,.75)) drop-shadow(0 0 3px rgba(255,255,255,.22)); }
 .careercard p { text-align: center; }
@@ -1076,7 +1076,7 @@ const ENGINE = (() => {
   // 이긴 큰 경기에서 결정적 장면이 나올 확률 (평범한 기질 기준). 강팀이라 결승을 많이 이긴 것만으로 승부사가 되지 않게 기대치를 뺀다
   const decQ = (pos) => pos === 'ST' ? .5 : ['LW', 'RW', 'AM'].includes(pos) ? .4 : pos === 'CM' ? .2 : pos === 'DM' ? .17 : .14;
   function recordBig(p, f, o) {
-    if (f.pk != null && o.autoPk) { p.pkLog = p.pkLog || []; p.pkLog.push({ y: o.ys, comp: f.comp, ok: f.pk }); if (f.pk) nudge(p, 'big', .05, 'pk'); else { nudge(p, 'big', -.12, 'pk'); bigLog(p, 'flop', `${f.comp} 결승전 승부차기 실축`, f.comp, o.y, o.ys); } }
+    if (f.pk != null && o.autoPk) { p.pkLog = p.pkLog || []; p.pkLog.push({ y: o.ys, comp: f.comp, ok: f.pk }); if (f.pk) nudge(p, 'big', .05, 'pk'); else { nudge(p, 'big', f.won ? -.05 : -.12, 'pk'); if (!f.won) bigLog(p, 'flop', `${f.comp} 결승전 승부차기 실축`, f.comp, o.y, o.ys); } }
     if (!f.played || f.rating == null) return null;
     const w = BIG_W[o.stage] ?? .35; const { dec, flop } = bigOutcome(f);
     const e = { y: o.y, ys: o.ys, comp: f.comp, st: o.stage, w, nat: !!o.nat, r: f.rating, sr: f.sr, exp: f.exp ?? null, won: !!f.won, dec, flop, g: f.g || 0, pk: f.pk ?? null, pd: +((f.pw ?? .5) * (f.gp != null ? (1 - Math.exp(-1.9 * f.gp)) * .85 + ({ GK: .06, DF: .07, MF: .12, FW: .1 })[POS[p.pos].grp] : decQ(p.pos))).toFixed(3) };
@@ -1152,7 +1152,7 @@ const ENGINE = (() => {
     const bigLines = []; const yl = (h) => `${h.ys || h.y} ${h.txt}`;
     const finNum = fin.length ? `결승 ${fin.length}경기 평균 평점 ${fmt(fAvg)} · 같은 시즌 평균 ${fmt(fsAvg)}` : null;
     const pkLine = pkl.length ? `승부차기 키커로 ${pkl.length}번 나서 ${pkOk}번 성공` : null;
-    if (big === '칠전팔기') { const f0 = flop[0], h1 = hero.filter(h => !f0 || h.y >= f0.y).slice(-1)[0]; bigLines.push(pickL(big)); if (f0 && h1) bigLines.push(`${yl(f0)} → ${yl(h1)}`); else if (p.flags.jinxMax) bigLines.push(`결승 ${p.flags.jinxMax}연패를 끊어냈다`); }
+    if (big === '칠전팔기') { const same = (a, b) => a.y === b.y && a.comp === b.comp; const f0 = flop.find(f => !hero.some(h => same(h, f))), h1 = f0 ? hero.filter(h => bl.indexOf(h) > bl.indexOf(f0) && !same(h, f0)).slice(-1)[0] : null; bigLines.push(pickL(big)); if (f0 && h1) bigLines.push(`${yl(f0)} → ${yl(h1)}`); else if (p.flags.jinxMax) bigLines.push(`결승 ${p.flags.jinxMax}연패를 끊어냈다`); }
     else if (big === '강심장') { bigLines.push(pickL(big)); bigLines.push(finNum || pkLine || ''); }
     else if (big === '승부사') { bigLines.push(pickL(big) + ` (결정적 장면 ${D}번)`); if (hero.length) bigLines.push(hero.slice(-2).map(yl).join(' · ')); }
     else if (big === '새가슴') { bigLines.push(pickL(big)); bigLines.push(flop.length ? flop.slice(-2).map(yl).join(' · ') : finNum || pkLine || ''); }
@@ -1614,35 +1614,58 @@ const ENGINE = (() => {
     const hi = fs.size === 1 ? 2.0 : 1.7, lo = .78; let s = 0, t = 0; for (const k in w) { s += w[k] * (fs.has(k) ? hi : lo); t += w[k]; } return s / t;
   }
 
+  // 나이별 성장 상한(1군 평균). 10대에 몰아 크지 않게 20대 초중반까지 고르게 편다
+  const AGE_BASE = { 16: 5.4, 17: 5.5, 18: 5.3, 19: 5.0, 20: 4.5, 21: 3.9, 22: 3.4, 23: 2.9, 24: 2.4, 25: 1.9, 26: 1.4, 27: .9, 28: .5, 29: .1, 30: -.6, 31: -1.1, 32: -1.7, 33: -2.4, 34: -3.1, 35: -3.9, 36: -4.8, 37: -5.6, 38: -6.4, 39: -7, 40: -7.5 };
+  const curveMul = (cv, age) => cv === 'early' ? (age <= 20 ? 1.3 : age <= 23 ? 1 : .55) : cv === 'late' ? (age <= 19 ? .72 : age <= 21 ? .92 : age <= 28 ? 1.75 : 1) : 1;
   // 화면용: 이번 시즌 능력치별 예상 성장(무작위 요소 제외). 숫자는 보여주지 않고 막대 끝의 옅은 연장선으로만 쓴다.
   function growthPreview(p, focus, roleId, mgr, share) {
     const age = p.age; const cv = p.curve || 'normal'; const out = {};
     const ba = cv === 'early' && age >= 26 ? age + 1 : cv === 'late' && age >= 27 ? age - 2 : age;
-    const base0 = { 16: 6.4, 17: 6.4, 18: 6.0, 19: 5.7, 20: 5.2, 21: 4.5, 22: 3.8, 23: 3.1, 24: 2.4, 25: 1.8, 26: 1.2, 27: .7, 28: .3 }[ba] ?? 0;
-    const cmul = cv === 'early' ? (age <= 20 ? 1.3 : age <= 23 ? 1 : .55) : cv === 'late' ? (age <= 19 ? .62 : age <= 21 ? .85 : age <= 28 ? 1.75 : 1) : 1;
+    const base0 = Math.max(0, AGE_BASE[ba] ?? 0);
+    const cmul = curveMul(cv, age);
     const sh = share ?? (p.seasons.length ? (p.seasons[p.seasons.length - 1].share ?? .6) : .6);
     const g = base0 * cmul * (.55 + .75 * clamp(sh, 0, 1)) * clamp((p.P + p.ceil - ovr(p)) / 6.5, 0, 1) * (1 + ((mgr?.q || 70) - 70) / 250);
     const fs = focusSet(p, focus, roleId); const hi = fs.size === 1 ? 2.0 : 1.7, lo = focus === 'weak' ? WEAK_COST : fs.size ? .78 : 1;
     for (const k of attrsFor(p.pos)) { let d = g > 0 ? g * (fs.has(k) ? hi : lo) : 0; if (d > 0 && p.attrs[k] > 88) d *= Math.max(.1, (99 - p.attrs[k]) / 11); if (MIND.has(k) && age >= 26 && age <= 32) d += .35; if (PHYS.has(k) && age >= 27) d -= .25; out[k] = +d.toFixed(2); }
     return out;
   }
+  const GROW = { r0: 1, rk: 2.2, rmin: .4, rmax: 1.15, up: .3, upK: 2.0, upMax: .8, dn: .3 };
+  // 그 시즌 활약: 절대 평점(6.75 기준)과 기대 평점(능력·팀 대비) 대비를 반씩
+  function perfOf(p, res) {
+    if (!res || res.rating == null) return 0;
+    if (p.youth || res.youthTeam) return clamp((res.rating - 6.7) * .6, -.6, .6);
+    const ref = Math.min(6.75, 6.2 + .06 * (p.age - 18)); // 나이대 평균 평점
+    const a = res.rating - ref, b = res.rbase != null ? res.rating - res.rbase : a;
+    return clamp(.55 * a + .45 * b, -1.2, 1.2);
+  }
   function growth(p, res, share, choice, mgr, mods) {
     const age = p.age; const cv = p.curve || 'normal';
     const ba = cv === 'early' && age >= 26 ? age + 1 : cv === 'late' && age >= 27 ? age - 2 : age;
-    const base0 = { 16: 6.4, 17: 6.4, 18: 6.0, 19: 5.7, 20: 5.2, 21: 4.5, 22: 3.8, 23: 3.1, 24: 2.4, 25: 1.8, 26: 1.2, 27: .7, 28: .3, 29: 0, 30: -.6, 31: -1.1, 32: -1.7, 33: -2.4, 34: -3.1, 35: -3.9, 36: -4.8, 37: -5.6, 38: -6.4, 39: -7, 40: -7.5 }[ba] ?? -8;
-    const cmul = base0 <= 0 ? 1 : cv === 'early' ? (age <= 20 ? 1.3 : age <= 23 ? 1 : .55) : cv === 'late' ? (age <= 19 ? .62 : age <= 21 ? .85 : age <= 28 ? 1.75 : 1) : 1;
+    const base0 = AGE_BASE[ba] ?? -8;
+    const cmul = base0 <= 0 ? 1 : curveMul(cv, age);
     const base = base0 * cmul;
     const o = ovr(p);
     if (age >= 18 && age <= 25 && !p.youth) { if (share >= .65) p.ceil = Math.min(5, p.ceil + .75); else if (share < .3) p.ceil = Math.max(-4, p.ceil - (cv === 'late' ? .45 : .9)); }
+    // 성과: 나이 곡선은 '얼마나 클 수 있나'의 상한이고, 실제로 얼마나 가져가나는 그 시즌 활약이 정한다
+    const perf = perfOf(p, res); res.perf = +perf.toFixed(2);
+    // 잠재력 자체를 움직이는 건 '기대 이상'만. 원래 잘하는 선수가 잘하는 건 잠재력 증거가 아니다
+    const over = p.youth || res.youthTeam || res.rbase == null ? 0 : clamp((res.rating - res.rbase) * 1.4, -1, 1); res.over = +over.toFixed(2);
+    if (!p.youth && age >= 19 && age <= 29 && (res.apps || 0) >= 15) {
+      const cf = cv === 'late' && age >= 22 ? 1.4 : cv === 'early' && age >= 24 ? .6 : 1;
+      const dc = over > GROW.up ? Math.min(GROW.upMax, (over - GROW.up) * GROW.upK) : over < -GROW.dn ? Math.max(-.5, (over + GROW.dn) * 1.2) : 0;
+      p.ceil = clamp(p.ceil + dc * (dc > 0 ? cf : 1), -6, 8); res.ceilD = +(dc * (dc > 0 ? cf : 1)).toFixed(2);
+    }
     p.ceil = clamp(p.ceil + (mods.ceil || 0), -6, 8);
     const ceiling = p.P + p.ceil;
+    const rho = clamp(GROW.r0 + GROW.rk * perf, GROW.rmin, GROW.rmax);
     let g;
     if (base > 0) {
       const mult = .55 + .75 * clamp(share, 0, 1);
-      const gap = clamp((ceiling - o) / 6.5, -.2, 1);
+      // 잠재력 근처에 와도, 잘하는 시즌엔 조금 더 간다(잠재력 위로 최대 4까지)
+      const gap = Math.max(clamp((ceiling - o) / 6.5, -.2, 1), over > 0 ? Math.min(.45, over * .8) * clamp((ceiling + 3 - o) / 3, 0, 1) : -1);
       const coach = 1 + (mgr.q - 70) / 250;
-      g = base * mult * gap * coach * (1 + gauss() * .15) * (mods.growth || 1) * (1 + (p.morale - 60) / 400);
-    } else g = base * (choice.attitude === 'manage' ? .8 : 1) * (1 + gauss() * .15) * (p.trait === 'pro' ? .9 : 1) * (mods.decay || 1);
+      g = base * mult * gap * coach * rho * (1 + gauss() * .15) * (mods.growth || 1) * (1 + (p.morale - 60) / 400);
+    } else g = base * (choice.attitude === 'manage' ? .8 : 1) * (1 + gauss() * .15) * (p.trait === 'pro' ? .9 : 1) * (mods.decay || 1) * clamp(1 - .35 * perf, .75, 1.25);
     const keys = attrsFor(p.pos); const fs = focusSet(p, choice.focus, choice.role);
     const weakT = choice.focus === 'weak' && p.pos !== 'GK';
     const hi = fs.size === 1 ? 2.0 : 1.7, lo = weakT ? WEAK_COST : fs.size ? .78 : 1;
@@ -2250,7 +2273,7 @@ const ENGINE = (() => {
     LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
     FOOT_NAME, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    summarize, arcOn, addArc, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    summarize, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -4897,7 +4920,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       ${heirBlock}
       <div class="cc-stats"><div><b>${nf(sum.apps)}</b><span>출전</span></div>${isGK ? `<div><b>${nf(sum.saves)}</b><span>선방</span></div><div><b>${nf(sum.cs)}</b><span>클린시트</span></div>` : `<div><b>${nf(sum.goals)}</b><span>골</span></div><div><b>${nf(sum.assists)}</b><span>도움</span></div>`}<div><b>${sum.avgRating.toFixed(2)}</b><span>평균 평점</span></div><div><b>${sum.trophies}회</b><span>우승</span></div><div><b>${sum.awards}회</b><span>개인상</span></div></div>
       <div class="cc-badges">${badges.map(([k, v]) => `<span class="pill gold">${esc(k)}${v > 1 ? ' ' + v : ''}</span>`).join('')}${retN.map(x => `<span class="pill">${esc(x)} 영구결번</span>`).join('')}${hofN.map(x => `<span class="pill">${esc(x)} 명예의 전당</span>`).join('')}</div>
-      <div class="cc-clubs">${sum.topClubs.slice(0, 5).map(t => `<span>${crest(t.club, 'md')}<small>${t.n}시즌</small></span>`).join('')}</div>${uf}${sum.earned ? `<p class="small">커리어 총수입 ${E.fmtWon(sum.earned)}${sum.peakWage ? ` · 최고 연봉 ${E.fmtWon(sum.peakWage)}` : ''}</p>` : ''}${coachLine}${bestBlock}${lineBlock}${tmBlock}
+      <div class="cc-clubs ${sum.topClubs.length > 5 ? 'many' : ''}">${sum.topClubs.map(t => `<span>${crest(t.club, 'md')}<small>${t.n}시즌</small></span>`).join('')}</div>${uf}${sum.earned ? `<p class="small">커리어 총수입 ${E.fmtWon(sum.earned)}${sum.peakWage ? ` · 최고 연봉 ${E.fmtWon(sum.peakWage)}` : ''}</p>` : ''}${coachLine}${bestBlock}${lineBlock}${tmBlock}
     </section>
     <section class="panel"><div class="row wrapgap">${fresh ? '<button class="btn primary" data-act="newafter">다음 커리어 시작</button>' : ''}<button class="btn" data-act="viewrec" data-id="${sum.id}">전체 기록 보기</button><button class="btn" data-act="sample" data-id="${sum.id}" id="samplebtn" hidden>커뮤 반응 만들기</button><button class="btn" data-go="world">세계선으로</button></div>
     <div id="sampleout" class="sampleout" hidden></div></section>`;
@@ -4926,7 +4949,9 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <h2>오버롤과 역할 적성</h2><p>오버롤은 포지션마다 다른 능력치 가중 평균이에요. 역할 적성은 그 역할의 핵심 능력치 평균이에요. 공격 포인트와 평점은 둘을 섞어서 계산하기 때문에, 같은 오버롤이라도 역할에 맞는 능력치를 가진 선수가 더 잘해요.</p>
       <div class="tblwrap"><table class="tbl"><tbody>${posRows}</tbody></table></div>
       <h2>성장</h2><ul>
-        <li>나이별 기본 성장치(16~17세 최대, 29세부터 하락)에 출전 비율(0.55~1.3배), 감독 능력, 사기, 사건 효과가 곱해져요.</li>
+        <li>나이별 성장 상한(16~18세 최대, 20대 중반까지 완만히 줄고 29세부터 하락)에 출전 비율(0.55~1.3배), 감독 능력, 사기, 사건 효과가 곱해져요.</li>
+        <li><b>활약이 성장을 가져간다.</b> 나이가 정하는 건 ‘이번 시즌에 클 수 있는 최대치’이고, 실제로 얼마나 가져가는지는 그 시즌 평점이 정해요. 활약 = 0.55 × (평점 − 나이대 평균 평점) + 0.45 × (평점 − 능력·팀으로 기대되는 평점). 회수율 = 1 + 2.2 × 활약(0.4~1.15배). 같은 스무 살이라도 평점 6.0대로 버틴 시즌은 상한의 절반쯤만 커요. 30세 이후 하락도 활약이 좋으면 최대 25% 느려져요.</li>
+        <li><b>기대 이상이면 잠재력이 움직인다.</b> 19~29세에 15경기 이상 뛴 시즌, 평점이 기대 평점보다 뚜렷하게 높으면 천장이 최대 +0.8(대기만성형은 22세부터 1.4배, 조숙형은 24세부터 0.6배), 뚜렷하게 낮으면 최대 −0.5. 원래 잘하는 선수가 잘하는 건 잠재력의 증거로 치지 않아요. 기대 이상인 시즌엔 천장 근처에서도 조금 더 크고, 천장 위로 3까지 갈 수 있어요.</li>
         <li><b>18~25세 출전 보너스.</b> 출전 비율 65% 이상인 시즌마다 천장 +0.75(최대 +5), 30% 미만이면 −0.9.</li>
         <li><b>훈련 초점.</b> 고른 능력치는 1.7배, 나머지는 0.78배로 자라요. 능력치 창에서 막대 하나를 누르면 그 능력치만 2배로 집중해요(다시 누르면 포지션 맞춤으로).</li>
         <li><b>주발과 약발.</b> 주발은 만들 때 고르고(랜덤이면 왼발 24%), 약발 등급 ★1~5는 운으로 정해져요(★2·★3이 대부분, ★5는 3%). 측면 포지션에서 역할이 원하는 발(정통 윙어·오버래핑 계열은 같은 쪽 발, 인버티드·인사이드 계열은 반대 발)이면 역할 적성 +1.2, 아니면 약발이 낮을수록 최대 −2.4. ★5는 어느 쪽이든 +1.2. 약발 등급 자체도 역할 적성에 (등급 − 3) × 0.2~0.6을 더해요. 왼발 센터백·풀백은 이적 제안이 1.25배.</li>
@@ -5555,7 +5580,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       const st = $('#r-style'); if (st) S.retire.style = st.value;
       if (p.stage === 'post') { const l = p.seasons[p.seasons.length - 1]; if (l?.pendingFinal) E.autoClubFinal(p, l, S.world); E.ballonLate(p, S.world); E.endOfSeason(p, S.world); }
       const early = p.age - 1 <= 31 && !p.forcedRetire; if (early) { if (!S.retire.reason) return; p.flags.early = { reason: S.retire.reason, age: p.age - 1 }; }
-      const sum = E.summarize(p); sum.post = S.retire.post; sum.line = p.line || 'L0'; sum.v10 = 1;
+      const sum = E.summarize(p); sum.post = S.retire.post; sum.line = p.line || 'L0'; sum.v10 = 1; sum.v14 = 1;
       const parS = p.parentId ? S.world.careers.find(c => c.id === p.parentId) : null; if (parS) sum.heirLines = E.heirContrast(sum, parS);
       if (S.retire.post === 'coach') sum.coach = E.makeCoach(sum, S.retire.style);
       const leg = E.clubLegacy(p, sum); const rn = leg.numbers; const hof = leg.hof;
@@ -5666,6 +5691,11 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       if (c.v10) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
       if (doc) { try { const n = E.summarize(doc); for (const k of ['apps', 'goals', 'assists', 'saves', 'cs', 'trophies', 'youthTrophies']) c[k] = n[k]; } catch { } }
       c.v10 = 1; changed = true;
+    }
+    for (const c of w.careers) {
+      if (c.v14) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
+      if (doc && c.temper) { try { c.temper = E.temperament(doc); } catch { } }
+      c.v14 = 1; changed = true;
     }
     const needs = w.careers.some(c => !c.line || !w.lines[c.line]) || (S.p && !(S.p.line && w.lines[S.p.line]));
     if (needs) { let out = []; try { out = E.migrateLines(w, S.p); } catch (e) { console.warn('lines', e); } changed = true; if (out.length) S.migMsg = `겹쳐 있던 커리어를 세계선 ${out.length}갈래로 정리했어요. 세계선 → 세계선 계보에서 볼 수 있어요.`; }
