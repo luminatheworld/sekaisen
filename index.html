@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v44'</script>
+<script>window.SK_VER='v45'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2817,7 +2817,8 @@ const NAMES = (() => {
     if (pool.mono && rnd() < .3) return pk(pool.mono, rnd);
     return pk(pool.f, rnd) + ' ' + pk(pool.l, rnd);
   }
-  const surnameOf = (name) => { const t = String(name).trim(); if (/^[가-힣]{2,4}$/.test(t)) return t[0]; const parts = t.split(/\s+/); if (parts.length > 2 && /^(de|van|der|da|di|del|dos|el|al)$/i.test(parts[parts.length - 2])) return parts.slice(-2).join(' '); return parts[parts.length - 1]; };
+  const SUFFIX = /^(jr\.?|sr\.?|ii|iii|iv|filho|neto|júnior|junior|hijo)$/i;
+  const surnameOf = (name) => { let t = String(name).trim(); { const ps = t.split(/\s+/); while (ps.length > 1 && SUFFIX.test(ps[ps.length - 1].replace(/,$/, ''))) ps.pop(); t = ps.join(' '); } if (/^[가-힣]{2,4}$/.test(t)) return t[0]; const parts = t.split(/\s+/); if (parts.length > 2 && /^(de|van|der|da|di|del|dos|el|al)$/i.test(parts[parts.length - 2])) return parts.slice(-2).join(' '); return parts[parts.length - 1]; };
   function childName(parentName, nation, rnd = Math.random) {
     const sn = surnameOf(parentName); const g = ENGINE.NATION[nation]?.ng || 'EN';
     if (/^[가-힣]$/.test(sn)) return sn + pk(KR.s1, rnd) + pk(KR.s2, rnd);
