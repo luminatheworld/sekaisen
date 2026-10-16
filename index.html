@@ -5614,7 +5614,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (!allowed.includes(f.line)) f.line = allowed.includes(parent?.line) ? parent.line : (allowed.includes(S.viewLine) ? S.viewLine : allowed[0] || 'L0');
     const ledN = E.lineView(S.world, f.line); const span = ledN && ledN.people.length ? [Math.min(...ledN.people.map(c => c.startYear)), Math.max(...ledN.people.map(c => Math.min(c.endYear, (ledN.cut[c.id] ?? Infinity) - 1)))] : null;
     const lineFld = retired.length ? `<div class="fld"><span>세계선</span>${lineIds.length > 1 ? `<select id="f-line" class="inp">${allowed.map(id => `<option value="${id}" ${id === f.line ? 'selected' : ''}>${esc(lineLabel(id))}</option>`).join('')}</select>` : ''}<p class="muted small">${span ? `이 세계선엔 ${span[0]}–${span[1]}년의 기록이 있어요. 기록이 있는 해에 뛰면 역사가 버티고, 기록된 우승·발롱도르를 뒤집으면 세계선이 갈라져요. 그때 뛰던 선배들도 동료나 상대로 나와요.` : '아직 기록이 없는 세계선이에요.'}</p></div>` : '';
-    const yearFld = `<label class="fld"><span>시작 연도 · 16세 시즌</span><div class="row wrapgap"><input id="f-year" class="inp grow" type="number" min="2026" max="2400" value="${f.startYear}" ${f.mode === 'heir' ? 'readonly' : ''}>${span && f.mode !== 'heir' ? `<button class="btn sm" data-yr="${Math.max(2026, span[0] - 2)}">선배들과 같은 시대</button><button class="btn sm" data-yr="${Math.max(2026, span[1] - 8)}">기록 끝 무렵</button><button class="btn sm" data-yr="${span[1] + 1}">기록 이후</button>` : ''}</div></label>`;
+    const yearFld = `<label class="fld"><span>시작 연도 · 16세 시즌</span><div class="row wrapgap"><input id="f-year" class="inp grow" type="number" min="${f.mode === 'heir' && parent && f.kid < 0 ? heirYearRange(parent)[0] : 2026}" max="${f.mode === 'heir' && parent && f.kid < 0 ? heirYearRange(parent)[1] : 2400}" value="${f.startYear}" ${f.mode === 'heir' && f.kid >= 0 ? 'readonly' : ''}>${span && f.mode !== 'heir' ? `<button class="btn sm" data-yr="${Math.max(2026, span[0] - 2)}">선배들과 같은 시대</button><button class="btn sm" data-yr="${Math.max(2026, span[1] - 8)}">기록 끝 무렵</button><button class="btn sm" data-yr="${span[1] + 1}">기록 이후</button>` : ''}</div>${f.mode === 'heir' && parent && f.kid < 0 ? `<p class="muted small">${f.startYear - 16}년생 · ${esc(parent.name)} ${f.startYear - 16 - parent.birthYear}세 때${parent.spouse?.married ? ` · ${parent.spouse.married}년 결혼` : ''}. 태어난 해는 연도를 바꿔 고를 수 있어요.</p>` : ''}</label>`;
     return `<section class="panel"><h1 class="h1">새 커리어</h1>
       ${retired.length ? `<div class="seg"><button data-mode="new" class="${f.mode === 'new' ? 'on' : ''}">새 선수</button><button data-mode="heir" class="${f.mode === 'heir' ? 'on' : ''}">가문 후손으로 시작</button></div>` : ''}
       ${f.mode === 'heir' ? `<label class="fld"><span>누구의 후손인가요</span><select id="f-parent" class="inp">${retired.map(c => `<option value="${c.id}" ${c.id === f.parentId ? 'selected' : ''}>${esc(c.name)} · ${c.pos} · ${c.startYear}–${c.endYear} · 피크 ${c.peakOvr}${(c.kids || []).length ? ` · 자녀 ${c.kids.length}` : ''}</option>`).join('')}</select></label>
@@ -6127,10 +6127,12 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const by = startYear - 16; const L = []; const pw = "부모";
     [par.nation, ...(par.nations || [])].forEach(n => L.push({ n, why: `${pw}의 국적` }));
     if (par.spouse?.nation) L.push({ n: par.spouse.nation, why: `${par.spouse.name || '배우자'}의 국적` });
-    const row = (par.hist?.s || []).find(r => r[0] === by - 1) || (par.hist?.s || []).find(r => r[0] === by);
+    const row = (par.hist?.s || []).find(r => r[0] === by) || (par.hist?.s || []).find(r => r[0] === by - 1);
     if (row && E.LEAGUES[row[2]]) L.push({ n: E.LEAGUES[row[2]].country, why: `출생지 · ${by}년, ${J(par.name, "이")} ${club(row[1]).name}에서 뛰던 해` });
     const seen = new Set(); return L.filter(x => x.n && E.NATION[x.n] && !seen.has(x.n) && seen.add(x.n));
   }
+  // 새 후손이 태어날 수 있는 해: 부모가 18~48세일 때, 그리고 부모가 은퇴한 뒤에 데뷔. 결혼한 해가 있으면 그 무렵이 기본값
+  function heirYearRange(par) { const lo = Math.max(par.birthYear + 18 + 16, par.endYear + 1, 2026); return [lo, Math.max(lo, par.birthYear + 48 + 16)]; }
   function heirNations(par, startYear) { return heirNationsWhy(par, startYear).map(x => x.n); }
   // 이미 끝난 커리어를 누군가의 자녀로 잇는다: 나이가 말이 되고, 부모가 이 세계선의 역사에 있어야 한다
   function linkCands(sum) {
@@ -6418,7 +6420,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   }
   function bindNew() {
     const f = S.newForm;
-    const upd = () => { f.name = $('#f-name').value; f.nation = $('#f-nation').value; const np = $('#f-pos').value; if (np !== f.pos) { f.pos = np; f.role = E.rolesFor(np)[0].id; } else f.role = $('#f-role').value; f.club = $('#f-club').value; if (f.mode !== 'heir') f.startYear = E.clamp(parseInt($('#f-year').value) || 2026, 2026, 2400); f.number = E.clamp(parseInt($('#f-num').value) || 10, 1, 99); };
+    const upd = () => { f.name = $('#f-name').value; f.nation = $('#f-nation').value; const np = $('#f-pos').value; if (np !== f.pos) { f.pos = np; f.role = E.rolesFor(np)[0].id; } else f.role = $('#f-role').value; f.club = $('#f-club').value; if (f.mode !== 'heir') f.startYear = E.clamp(parseInt($('#f-year').value) || 2026, 2026, 2400); else if (f.kid < 0) { const par = S.world.careers.find(c => c.id === f.parentId); if (par) { const [lo, hi] = heirYearRange(par); f.startYear = E.clamp(parseInt($('#f-year').value) || lo, lo, hi); } } f.number = E.clamp(parseInt($('#f-num').value) || 10, 1, 99); };
     { const n2 = $('#f-nat2'); if (n2) n2.onchange = () => { upd(); f.nat2 = n2.value; render(); }; }
     ['#f-nation', '#f-pos', '#f-role', '#f-club', '#f-year', '#f-num'].forEach(s => { const el = $(s); if (el) el.onchange = () => { upd(); render(); }; });
     $('#f-name').oninput = () => { f.name = $('#f-name').value; };
@@ -6444,7 +6446,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     f.kid = i; const k = (par.kids || [])[i];
     f.line = par.line || f.line;
     if (k) { f.name = k.name; f.startYear = Math.max(k.born + 16, 2026); }
-    else { f.name = NAMES.childName(par.name, par.nation); f.startYear = Math.max(par.birthYear + 28 + Math.floor(Math.random() * 7) + 16, par.endYear + 1); }
+    else { f.name = NAMES.childName(par.name, par.nation); const [lo, hi] = heirYearRange(par); const m = par.spouse?.married; const by = m ? m + Math.floor(Math.random() * 3) : par.birthYear + 28 + Math.floor(Math.random() * 7); f.startYear = E.clamp(by + 16, lo, hi); }
   }
   function autoNumber() {
     const p = S.p; const of = S.offerPick >= 0 ? p.pendingOffers[S.offerPick] : null;
@@ -7059,6 +7061,10 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     for (const c of w.careers) {
       if (c.body) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
       c.body = doc?.body ? { h: doc.body.h, b: doc.body.b } : { h: E.hMean(c.nation, c.pos), b: 'normal' }; changed = true;
+    }
+    for (const c of w.careers) {
+      if (c.spouse !== undefined) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
+      const F = doc?.flags || {}; c.spouse = F.partner ? { name: F.partnerName || '', job: F.partner, nation: F.partnerNation || null, married: F.married || null } : null; c.nations = c.nations || [c.nation]; changed = true;
     }
     for (const c of w.careers) {
       if (c.scars) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
