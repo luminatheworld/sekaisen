@@ -296,6 +296,13 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 /* career card */
 .careercard { --ink: #edf0f7; --muted: #8b95ae; --faint: #5e6884; --line: rgba(255, 255, 255, .1); --soft: rgba(255, 255, 255, .06); --panel-2: #1b2440; --panel-3: #232e50; --gold: #e9bc55; --gold-bg: rgba(233, 188, 85, .14); --gold-ink: #1c1406; --pos: #5ad59b; --red: #ff7a6d; background: #0c1222; color: var(--ink); border-radius: 22px; padding: 24px 22px; display: flex; flex-direction: column; gap: 12px; max-width: 480px; width: 100%; margin: 0 auto; box-shadow: inset 0 0 0 1.5px rgba(233, 188, 85, .6); background-image: repeating-linear-gradient(135deg, transparent 0 18px, rgba(255, 255, 255, .025) 18px 36px); }
 .careercard .eyebrow { color: var(--gold); }
+.cc-cols { display: flex; flex-direction: column; gap: 12px; } .cc-l, .cc-r { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+@media (min-width: 760px) {
+  .careercard { max-width: 940px; padding: 22px 26px; }
+  .cc-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 26px; align-items: start; }
+  .cc-r { border-left: 1px solid var(--line); padding-left: 24px; }
+}
+.lifebox { background: var(--panel-2); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; } .lifebox p { margin: 0; }
 .cc-top { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
 .cc-mid { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
 .cc-mid > div { display: flex; flex-direction: column; min-width: 0; } .cc-mid .right { align-items: flex-end; text-align: right; }
@@ -4461,7 +4468,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     else if (S.view === 'card') body = viewCardPage();
     else if (S.view === 'crests') body = viewCrests();
     else body = viewWorld();
-    app.innerHTML = nav + `<main class="wrap main ${['career', 'new', 'retire', 'card'].includes(S.view) ? 'narrow' : ''}">${body}</main>`;
+    app.innerHTML = nav + `<main class="wrap main ${['career', 'new'].includes(S.view) ? 'narrow' : ''}">${body}</main>`;
     bind(); showCuts();
   }
 
@@ -4926,8 +4933,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
 
   // ---------- RECORDS ----------
   function viewRecords(p, live) {
-    const tabs = [['season', '시즌'], ['finals', '결승'], ['trophies', '트로피'], ['awards', '개인상'], ['national', '대표팀'], ['press', '신문'], ['story', '사건 기록'], ['diary', '일기'], ['life', '부상·가족']];
-    const t = S.rtab; const isGK = p.pos === 'GK'; let inner = '';
+    const tabs = [['season', '시즌'], ['finals', '결승'], ['trophies', '트로피'], ['awards', '개인상'], ['national', '대표팀'], ['press', '신문'], ['story', '사건·생활'], ['diary', '일기']];
+    const t = S.rtab === 'life' ? 'story' : S.rtab; const isGK = p.pos === 'GK'; let inner = '';
     if (t === 'season') inner = `<div class="tblwrap"><table class="tbl"><thead><tr><th>시즌</th><th>나이</th><th>구단</th><th>#</th><th>포지션</th><th class="num">출전</th>${isGK ? '<th class="num">선방</th><th class="num">CS</th>' : '<th class="num">골</th><th class="num">도움</th>'}<th class="num">평점</th><th class="num">OVR</th><th class="num">연봉</th><th>성과</th></tr></thead><tbody>${p.seasons.map(r => `<tr><td class="num">${sl(r.year)}</td><td class="num">${r.age}</td><td>${crest(r.club, 'xs')} ${esc(club(r.club).name)}${r.youthTeam ? ' <span class="muted small">유스</span>' : r.loan ? ' <span class="muted small">임대</span>' : ''}</td><td class="num">${r.number || ''}</td><td>${r.pos || p.pos}</td><td class="num">${r.apps}${r.youthTeam ? `<span class="muted small">+${r.youthApps}</span>` : ''}</td>${isGK ? `<td class="num">${r.saves}${r.youthTeam && r.youthSaves != null ? `<span class="muted small">+${r.youthSaves}</span>` : ''}</td><td class="num">${r.cs}${r.youthTeam && r.youthCs != null ? `<span class="muted small">+${r.youthCs}</span>` : ''}</td>` : `<td class="num">${r.goals}${r.youthTeam && r.youthGoals != null ? `<span class="muted small">+${r.youthGoals}</span>` : ''}</td><td class="num">${r.assists}${r.youthTeam && r.youthAssists != null ? `<span class="muted small">+${r.youthAssists}</span>` : ''}</td>`}<td class="num">${r.rating.toFixed(2)}</td><td class="num">${r.ovrEnd} <span class="${r.growth >= 0 ? 'pos' : 'neg'} small">${r.growth >= 0 ? '+' : ''}${r.growth}</span></td><td class="num small">${r.wage ? E.fmtWon(r.wage) : ''}</td><td class="ach">${r.trophies.map(x => `<span class="achi tr">${esc(x.comp)}</span>`).join('')}${r.awards.map(x => `<span class="achi">${esc(x)}</span>`).join('')}${r.weakUp ? `<span class="achi up">약발 ★${r.weakUp}</span>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
     else if (t === 'finals') {
       const ucl = p.finals.filter(f => f.comp === 'UEFA 챔피언스리그');
@@ -4951,7 +4958,9 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       inner = rows.length ? `<ul class="diary">${rows.map(s => `<li><span class="dd"><b>${sl(s.year)}</b>${s.age}세<br>${esc(club(s.club).name)}</span><div>${s.memoQ ? `<p class="dq">${esc(s.memoQ)}</p>` : ''}<p class="dt">${esc(s.memo)}</p></div></li>`).join('')}</ul>` : '<p class="muted">아직 쓴 일기가 없어요. 시즌을 시작하기 전에 ‘일기’를 펼쳐 한 줄 남겨 보세요.</p>';
     } else if (t === 'story') {
       const rows = p.seasons.filter(s => (s.notes || []).length || s.events.length || s.memo || s.branch);
-      inner = rows.length ? `<ul class="memos">${rows.map(s => `<li><span class="num">${sl(s.year)}</span> <span class="muted small">${esc(club(s.club).name)} · ${s.age}세</span><p>${[...(s.branch ? ['세계선 분기: ' + s.branch.what] : []), ...s.events, ...(s.notes || [])].map(esc).join(' · ')}</p>${s.memo ? `<p class="memo">${esc(s.memo)}</p>` : ''}</li>`).join('')}</ul>` : '<p class="muted">아직 기록된 사건이 없어요.</p>';
+      const inj = p.injuries || []; const wh = p.wageHist || []; const majorN = inj.filter(i => i.major).length;
+      const life = `<div class="lifebox"><p><b>가족</b> ${p.flags.partner ? `${p.flags.married ? '배우자' : '연인'} ${p.flags.partnerName ? `${esc(p.flags.partnerName)} (${esc(p.flags.partner)})` : esc(p.flags.partner)}${p.flags.married ? ` · ${p.flags.married}년 결혼` : ''}` : '공개된 연인 없음'}${(p.kids || []).length ? ` · 자녀 ${p.kids.map(k => `${esc(k.name)}(${k.born})`).join(', ')}` : ''}${p.flags.pet ? ` · 반려동물 ${esc(p.flags.pet)}` : ''}</p>${wh.length ? `<p><b>계약</b> ${wh.map(w => `${esc(club(w.club).name)} ${E.fmtWon(w.wage)}(${w.year} ${w.renew ? '재계약' : '입단'} ${w.years}년${w.release ? ' · 바이아웃 ' + E.fmtFee(w.release) : ''})`).join(' → ')}</p>` : ''}<p class="muted small">커리어 총수입 ${E.fmtWon(p.earned || 0)} · 부상 ${inj.length}회${majorN ? ` (장기 ${majorN})` : ''}${(p.kids || []).length ? ' · 아이로 은퇴 후 후손 커리어를 시작할 수 있어요' : ''}</p></div>`;
+      inner = life + (rows.length ? `<ul class="memos">${rows.map(s => `<li><span class="num">${sl(s.year)}</span> <span class="muted small">${esc(club(s.club).name)} · ${s.age}세</span><p>${[...(s.branch ? ['세계선 분기: ' + s.branch.what] : []), ...s.events, ...(s.notes || [])].map(esc).join(' · ')}</p>${s.memo ? `<p class="memo">${esc(s.memo)}</p>` : ''}</li>`).join('')}</ul>` : '<p class="muted">아직 기록된 사건이 없어요.</p>');
     } else {
       const inj = p.injuries || []; const wh = p.wageHist || [];
       inner = `${wh.length || p.earned ? `<h3 class="h3">계약</h3><ul class="trophies">${wh.map(w => `<li><b>${esc(club(w.club).name)}</b><span class="num">${E.fmtWon(w.wage)}</span><span class="muted small">${w.year}년 ${w.renew ? '재계약' : '입단'} · ${w.years}년${w.release ? ' · 바이아웃 ' + E.fmtFee(w.release) : ''}</span></li>`).join('')}</ul><p class="muted small">커리어 총수입 ${E.fmtWon(p.earned || 0)}</p>` : ''}<h3 class="h3">부상 ${inj.length}회</h3>${inj.length ? `<ul class="trophies">${inj.map(i => `<li><b>${esc(i.name)}</b><span class="num">${i.weeks}주</span><span class="muted small">${sl(i.year)}${i.major ? ' · 장기 부상' : ''}</span></li>`).join('')}</ul>` : '<p class="muted">큰 부상 없이 보내고 있어요.</p>'}
@@ -4997,6 +5006,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const tmBlock = tm ? `<div class="tmp"><span class="tmp-l">숨겨져 있던 기질</span><div class="tmp-n"><b>${esc(tm.big)}</b>${tm.nat ? `<b>${esc(tm.nat)}</b>` : ''}</div><span class="tmp-d">${esc(TMP_DESC[tm.big] || '')}${tm.nat ? ' · ' + esc(TMP_DESC[tm.nat] || '') : ''}</span>${[...(tm.bigLines || []), ...(tm.natLines || [])].map(l => `<p class="tmp-e">${esc(l)}</p>`).join('')}</div>` : '';
     return `<section class="careercard">
       <div class="cc-top"><span class="eyebrow">세계선 커리어${Object.keys(S.world.lines || {}).length > 1 && S.world.lines[sum.line] ? ' · ' + esc(S.world.lines[sum.line].name) : ''}</span><span class="num">${sl(sum.startYear)}–${sl(sum.endYear)}</span></div>
+      <div class="cc-cols"><div class="cc-l">
       <div class="cc-mid"><div><span class="cc-ovr">${sum.peakOvr}</span><span class="cc-lbl">PEAK OVR</span><span class="cc-pos">${sum.pos}</span><span class="small">${natTag(sum.nation)}</span>${sum.foot ? `<span class="small muted">${E.FOOT_NAME[sum.foot]} · 약발 ${sum.weak || 3}</span>` : ''}</div>
         <div class="cc-ava">${ava(sum.look, sum.topClubs[0]?.club, { gk: isGK, age: 28, cls: 'lg' })}</div>
         <div class="right">${sum.bdo ? `<span class="cc-ovr">${sum.bdo}</span><span class="cc-lbl">BALLON D'OR</span>` : ''}</div></div>
@@ -5006,9 +5016,11 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       ${sum.talent && sum.curve ? `<p class="cc-sub small">숨겨져 있던 재능: <b>${esc(E.TALENT[sum.talent]?.label || '')}</b> · ${esc(E.CURVES[sum.curve] || '')}${sum.early && sum.P && sum.P - sum.peakOvr >= 5 ? ' · <b>못다 핀 재능</b>' : ''}</p>` : ''}
       ${heirBlock}
       <div class="cc-stats"><div><b>${nf(sum.apps)}</b><span>출전</span></div>${isGK ? `<div><b>${nf(sum.saves)}</b><span>선방</span></div><div><b>${nf(sum.cs)}</b><span>클린시트</span></div>` : `<div><b>${nf(sum.goals)}</b><span>골</span></div><div><b>${nf(sum.assists)}</b><span>도움</span></div>`}<div><b>${sum.avgRating.toFixed(2)}</b><span>평균 평점</span></div><div><b>${sum.trophies}회</b><span>우승</span></div><div><b>${sum.awards}회</b><span>개인상</span></div></div>
+      </div><div class="cc-r">
       <div class="cc-badges">${badges.map(([k, v]) => `<span class="pill gold">${esc(k)}${v > 1 ? ' ' + v : ''}</span>`).join('')}${retN.map(x => `<span class="pill">${esc(x)} 영구결번</span>`).join('')}${hofN.map(x => `<span class="pill">${esc(x)} 명예의 전당</span>`).join('')}</div>
       ${(sum.legends || []).length ? `<div class="cc-legend"><span>사람들이 기억하는 장면</span>${sum.legends.map(e => `<p>${esc(e.line || E.legendLine(e))}</p>`).join('')}</div>` : ''}
       <div class="cc-clubs ${sum.topClubs.length > 5 ? 'many' : ''}">${sum.topClubs.map(t => `<span>${crest(t.club, 'md')}<small>${t.n}시즌</small></span>`).join('')}</div>${uf}${sum.earned ? `<p class="small">커리어 총수입 ${E.fmtWon(sum.earned)}${sum.peakWage ? ` · 최고 연봉 ${E.fmtWon(sum.peakWage)}` : ''}</p>` : ''}${coachLine}${bestBlock}${lineBlock}${tmBlock}
+      </div></div>
     </section>
     <section class="panel"><div class="row wrapgap">${fresh ? '<button class="btn primary" data-act="newafter">다음 커리어 시작</button>' : ''}<button class="btn" data-act="viewrec" data-id="${sum.id}">전체 기록 보기</button><button class="btn" data-act="sample" data-id="${sum.id}" id="samplebtn" hidden>커뮤 반응 만들기</button><button class="btn" data-go="world">세계선으로</button></div>
     <div id="sampleout" class="sampleout" hidden></div></section>`;
