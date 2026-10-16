@@ -5623,7 +5623,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <div class="newtop">${ava(L, f.club, { gk: f.pos === 'GK', cls: 'lg' })}<div class="grow">
         <label class="fld"><span>이름</span><div class="row"><input id="f-name" class="inp grow" maxlength="40" value="${esc(f.name)}" placeholder="이름" ${f.mode === 'heir' && f.kid >= 0 ? 'readonly' : ''}><button class="btn" data-act="rname" title="국적에 맞는 이름 무작위">무작위</button></div></label>
         <label class="fld"><span>국적</span><div class="row">${flag(f.nation, 'md')}<select id="f-nation" class="inp grow">${nationOpts}</select><button class="btn" data-act="rnation">무작위</button></div></label>
-        <label class="fld"><span>두 번째 국적 <span class="muted">(선택)</span></span><select id="f-nat2" class="inp">${nat2Opts}</select>${heirNats.length ? `<p class="muted small">물려받는 국적: ${heirNats.map(x => `${flag(x.n)} ${esc(x.n)} <span class="muted">(${esc(x.why)})</span>`).join(' · ')}</p>` : ''}</label>
+        <label class="fld"><span>${heirNats.length ? '추가 국적' : '두 번째 국적'} <span class="muted">(선택)</span></span><select id="f-nat2" class="inp">${nat2Opts}</select>${heirNats.length ? `<p class="muted small">자동으로 물려받는 국적: ${heirNats.map(x => `${flag(x.n)} ${esc(x.n)} <span class="muted">(${esc(x.why)})</span>`).join(' · ')}</p>` : ''}${(() => { const all = [...new Set([f.nation, ...heirNats.map(x => x.n), f.nat2].filter(Boolean))]; return all.length > 1 ? `<p class="small natsum">이 선수의 국적: ${all.map(n => `${flag(n)} ${esc(n)}`).join(' · ')} <span class="muted">— 대표팀은 나중에 고를 수 있어요</span></p>` : ''; })()}</label>
       </div></div>
       <div class="grid2">
         <label class="fld"><span>포지션</span><select id="f-pos" class="inp">${posOpts}</select></label>
