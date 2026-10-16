@@ -5618,10 +5618,10 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return `<section class="panel"><h1 class="h1">새 커리어</h1>
       ${retired.length ? `<div class="seg"><button data-mode="new" class="${f.mode === 'new' ? 'on' : ''}">새 선수</button><button data-mode="heir" class="${f.mode === 'heir' ? 'on' : ''}">가문 후손으로 시작</button></div>` : ''}
       ${f.mode === 'heir' ? `<label class="fld"><span>누구의 후손인가요</span><select id="f-parent" class="inp">${retired.map(c => `<option value="${c.id}" ${c.id === f.parentId ? 'selected' : ''}>${esc(c.name)} · ${c.pos} · ${c.startYear}–${c.endYear} · 피크 ${c.peakOvr}${(c.kids || []).length ? ` · 자녀 ${c.kids.length}` : ''}</option>`).join('')}</select></label>
-        ${kids.length ? `<div class="fld"><span>어느 아이로 시작할까요</span><div class="seg">${kids.map((k, i) => `<button data-kid="${i}" class="${f.kid === i ? 'on' : ''}">${esc(k.name)} (${k.born}년생)</button>`).join('')}<button data-kid="-1" class="${f.kid === -1 ? 'on' : ''}">새 후손</button></div></div>` : ''}
+        ${kids.length ? `<div class="fld"><span>어느 아이로 시작할까요</span><div class="seg">${kids.map((k, i) => `<button data-kid="${i}" class="${f.kid === i ? 'on' : ''}" ${k.used ? 'disabled title="이미 커리어가 있어요"' : ''}>${esc(k.name)} (${k.born}년생)${k.used ? ' · 뛰었음' : ''}</button>`).join('')}<button data-kid="-1" class="${f.kid === -1 ? 'on' : ''}">기록에 없는 아이</button></div><p class="muted small">${f.kid >= 0 ? '커리어 중에 태어난 아이예요. 이름과 태어난 해는 기록 그대로예요.' : '부모의 커리어 기록에 없는 아이로 시작해요. 시작하면 부모의 자녀 목록에 올라가요.'}</p></div>` : ''}
         ${parent ? `<p class="note">${esc(parent.name)}의 ${parent.generation === 1 ? '자식' : '후손'}(${(parent.generation || 1) + 1}대)으로 ${f.startYear}년에 16세로 시작해요. 재능 일부, 외모, 가문 클럽(${esc(club(parent.topClubs[0]?.club).name)})이 이어지고, 가문 출신 감독 아래서는 기회를 더 받아요.</p>` : ''}` : ''}
       <div class="newtop">${ava(L, f.club, { gk: f.pos === 'GK', cls: 'lg' })}<div class="grow">
-        <label class="fld"><span>이름</span><div class="row"><input id="f-name" class="inp grow" maxlength="40" value="${esc(f.name)}" placeholder="이름"><button class="btn" data-act="rname" title="국적에 맞는 이름 무작위">무작위</button></div></label>
+        <label class="fld"><span>이름</span><div class="row"><input id="f-name" class="inp grow" maxlength="40" value="${esc(f.name)}" placeholder="이름" ${f.mode === 'heir' && f.kid >= 0 ? 'readonly' : ''}><button class="btn" data-act="rname" title="국적에 맞는 이름 무작위">무작위</button></div></label>
         <label class="fld"><span>국적</span><div class="row">${flag(f.nation, 'md')}<select id="f-nation" class="inp grow">${nationOpts}</select><button class="btn" data-act="rnation">무작위</button></div></label>
         <label class="fld"><span>두 번째 국적 <span class="muted">(선택)</span></span><select id="f-nat2" class="inp">${nat2Opts}</select>${heirNats.length ? `<p class="muted small">물려받는 국적: ${heirNats.map(x => `${flag(x.n)} ${esc(x.n)} <span class="muted">(${esc(x.why)})</span>`).join(' · ')}</p>` : ''}</label>
       </div></div>
@@ -6132,7 +6132,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const seen = new Set(); return L.filter(x => x.n && E.NATION[x.n] && !seen.has(x.n) && seen.add(x.n));
   }
   // 새 후손이 태어날 수 있는 해: 부모가 18~48세일 때, 그리고 부모가 은퇴한 뒤에 데뷔. 결혼한 해가 있으면 그 무렵이 기본값
-  function heirYearRange(par) { const lo = Math.max(par.birthYear + 18 + 16, par.endYear + 1, 2026); return [lo, Math.max(lo, par.birthYear + 48 + 16)]; }
+  // 기록에 없는 아이는 부모의 마지막 시즌 이후에 태어난다 (커리어 중 아이는 출산 이벤트로 이름과 함께 기록되니까)
+  function heirYearRange(par) { const lo = Math.max(par.birthYear + 18 + 16, par.endYear + 16, 2026); return [lo, Math.max(lo, par.birthYear + 48 + 16)]; }
   function heirNations(par, startYear) { return heirNationsWhy(par, startYear).map(x => x.n); }
   // 이미 끝난 커리어를 누군가의 자녀로 잇는다: 나이가 말이 되고, 부모가 이 세계선의 역사에 있어야 한다
   function linkCands(sum) {
@@ -6439,14 +6440,14 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function setParent(id) {
     const f = S.newForm; const par = S.world.careers.find(c => c.id === id); if (!par) return;
     f.parentId = id; if (par.line && (S.world.lines || {})[par.line]) f.line = par.line; f.nation = par.nation; f.club = par.topClubs[0]?.club || par.homeClub || f.club; f.look = AVATAR.inherit(par.look, Math.random, par.nation);
-    setKid((par.kids || []).length ? 0 : -1);
+    { const i = (par.kids || []).findIndex(k => !k.used); setKid(i); }
   }
   function setKid(i) {
     const f = S.newForm; const par = S.world.careers.find(c => c.id === f.parentId); if (!par) return;
     f.kid = i; const k = (par.kids || [])[i];
     f.line = par.line || f.line;
     if (k) { f.name = k.name; f.startYear = Math.max(k.born + 16, 2026); }
-    else { f.name = NAMES.childName(par.name, par.nation); const [lo, hi] = heirYearRange(par); const m = par.spouse?.married; const by = m ? m + Math.floor(Math.random() * 3) : par.birthYear + 28 + Math.floor(Math.random() * 7); f.startYear = E.clamp(by + 16, lo, hi); }
+    else { f.name = NAMES.childName(par.name, par.nation); const [lo, hi] = heirYearRange(par); const m = par.spouse?.married; const by = m ? Math.max(m, par.endYear) + Math.floor(Math.random() * 3) : par.endYear + Math.floor(Math.random() * 4); f.startYear = E.clamp(by + 16, lo, hi); }
   }
   function autoNumber() {
     const p = S.p; const of = S.offerPick >= 0 ? p.pendingOffers[S.offerPick] : null;
@@ -6896,6 +6897,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       const np = E.createPlayer({ nations: [f.nat2, ...(parent ? heirNations(parent, f.startYear) : [])].filter(n => n && n !== f.nation), name: f.name, nation: f.nation, pos: f.pos, role: f.role, talent: f.talent || undefined, startYear: f.startYear, club: f.club, parent, trait: f.trait, look: f.look, number: f.number, foot: f.foot || undefined });
       np.severity = E.SEVERITY[f.severity] ? f.severity : 'real';
       if (parent && f.kid >= 0) { const k = parent.kids[f.kid]; if (k) k.used = true; }
+      if (parent && f.kid < 0) { parent.kids = (parent.kids || []).concat({ name: f.name, born: f.startYear - 16, used: true, later: true }); Store.loadCareer(parent.id).then(d => { if (d) { d.kids = parent.kids.slice(); Store.save('career', d); } }).catch(() => { }); }
       if (S.p && S.p.status !== 'retired' && S.p.id !== np.id) pauseActive();
       np.line = f.line && (S.world.lines || {})[f.line] ? f.line : 'L0'; E.useLine(S.world, np.line); S.viewLine = np.line;
       S.p = np; S.world.activeId = np.id; S.choice = defaultChoice(np); S.offerPick = -1; S.lastRes = null; S.phase = 'prep'; S.windowQ = []; S.pendingNumber = null;
