@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v46'</script>
+<script>window.SK_VER='v47'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -956,17 +956,19 @@ const ENGINE = (() => {
   function econSeed(world) { if (!world.econSeed) world.econSeed = Math.floor(R() * 1e9).toString(36); return world.econSeed; }
   function econCur() {
     const w = CUR?.world; if (!w || !w.lines) return null; const n = (w.careers || []).length, nl = Object.keys(w.lines).length;
-    if (EC_LAST && EC_LAST.w === w && EC_LAST.line === CUR.line && EC_LAST.n === n && EC_LAST.nl === nl) return EC_LAST.ec;
-    const ec = econOf(w, CUR.line); EC_LAST = { w, line: CUR.line, n, nl, ec }; return ec;
+    const nf = (w.folds || []).length;
+    if (EC_LAST && EC_LAST.w === w && EC_LAST.line === CUR.line && EC_LAST.n === n && EC_LAST.nl === nl && EC_LAST.nf === nf) return EC_LAST.ec;
+    const ec = econOf(w, CUR.line); EC_LAST = { w, line: CUR.line, n, nl, nf, ec }; return ec;
   }
   function econOf(world, lineId) {
     if (!world || !world.lines) return null; const id = lineId || 'L0';
-    const key = id + '|' + (world.careers || []).length + '|' + Object.keys(world.lines).length + '|' + econSeed(world);
+    const key = id + '|' + (world.careers || []).length + '|' + Object.keys(world.lines).length + '|' + econSeed(world) + '|' + (world.folds || []).length;
     let m = ECON.get(world); if (!m) { m = new Map(); ECON.set(world, m); } if (m.has(key)) return m.get(key);
-    const ec = buildEcon(lineView(world, id), econSeed(world)); m.set(key, ec); if (m.size > 12) m.delete(m.keys().next().value); return ec;
+    const chain = lineChain(world, id); const folds = (world.folds || []).filter(f => chain.some(x => x.id === f.line && f.year < Math.min(x.cut, x.only?.[f.by] ?? Infinity)));
+    const ec = buildEcon(lineView(world, id), econSeed(world), folds); m.set(key, ec); if (m.size > 12) m.delete(m.keys().next().value); return ec;
   }
   const LG_BOOM = { KSA: .02, USA: .018 };
-  function buildEcon(led, seed) {
+  function buildEcon(led, seed, folds = []) {
     const rng = seeded('econ|' + seed); const gn = () => (rng() + rng() + rng() - 1.5) * 1.41;
     const NY = ECON_Y1 - ECON_Y0 + 1; const pow = {}, fame = {}, raw = {}, fiO = {}, boost = {}, crisis = {}, tk = {};
     const lm = {}, trend = {}, lgM = {}, lgIdx = {}; const ev = []; const st = {};
@@ -990,7 +992,8 @@ const ENGINE = (() => {
           if (a < pT && boost[id] < 3 && crisis[id] === 0) { boost[id] += 6 + b * 5; kind = 'takeover'; tk[id] = y; }
           else if (cc < .008 + (fiO[id] < -2 ? .01 : 0) && crisis[id] === 0) { fiO[id] -= 3 + d * 3; crisis[id] = 2; kind = e < .3 ? 'deduct' : 'crisis'; }
           else if (crisis[id] > 0 && fiO[id] < -5 && g2 < .06) { fame[id] -= 4; fiO[id] = -8; raw[id] -= 6; boost[id] = 0; kind = 'fold'; }
-          if (kind) ev.push({ y, club: id, kind });
+          const fr = folds.find(f => f.club === id && f.year === y); if (fr) { fame[id] -= 6; fiO[id] = -8; raw[id] -= 10; boost[id] = 0; crisis[id] = 2; kind = 'fold'; }
+          if (kind) ev.push({ y, club: id, kind, ...(fr ? { rec: true, by: fr.name } : {}) });
           fiO[id] = fiO[id] * .85 + nf * .5; boost[id] *= .93;
           const T = LG_BASE[c.lg] + lm[c.lg] + w0 * (c.str - LG_BASE[c.lg]) + (1 - w0) * fame[id] + fiO[id] + boost[id];
           raw[id] += (T - raw[id]) * .35 + nz * .8;
@@ -1020,6 +1023,8 @@ const ENGINE = (() => {
     const tag = recent('fold', 2) ? '재건 중' : (recent('crisis', 1) || recent('deduct', 1)) ? '재정난' : recent('takeover', 3) ? '신흥 부자' : c.str - pw >= 7 ? '몰락한 명문' : pw - c.str >= 7 ? '떠오르는 구단' : pw - p10 >= 6 ? '상승세' : p10 - pw >= 6 ? '하락세' : null;
     return { kind, pow: pw, base: c.str, tag, takeover: recent('takeover', 4), crisis: recent('crisis', 1) || recent('deduct', 1), deduct: S[i] === 'deduct', fold: S[i] === 'fold' };
   }
+  // 주인공이 겪은 구단 해체는 세계의 사건이 된다: 그 세계선의 축구사에 남고, 구단은 바닥에서 다시 시작한다
+  function recordFold(world, p, club, year) { const w = world || CUR?.world; if (!w) return; w.folds = w.folds || []; if (w.folds.some(f => f.club === club && f.year === year && f.line === (p.line || 'L0'))) return; w.folds.push({ club, year, line: p.line || 'L0', by: p.id, name: p.name }); EC_LAST = null; }
   const lgMoney = (lg, year) => { const ec = econCur(); if (!ec || year < ECON_Y0 || !ec.lgM[lg]) return 0; return ec.lgM[lg][Math.min(year, ECON_Y1) - ECON_Y0] || 0; };
   function seasonPower(id, year) { return clubStr(id, year) + gauss(seeded('pow|' + id + '|' + year)) * 2.4; }
   const leagueClubs = (lg) => CLUBS.filter(c => c.lg === lg);
@@ -2768,7 +2773,7 @@ const ENGINE = (() => {
     LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
     FOOT_NAME, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, hasJong, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -5078,10 +5083,10 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     ] };
   } });
   def({ id: 'f_fold', phase: 'mid', cd: 99, w: (c) => fateOK(c, 20) && !c.p.flags.f_f_fold && E.clubStr(c.p.club, c.p.year) < 79 && !E.CLUB[c.p.club].mil ? FW * .8 : 0, make(c) {
-    const p = c.p; fate(p, 'f_fold'); press(p, PR('both', 'clubfold', p, { club: club(p.club) }));
-    return { title: `${J(club(p.club), '가')} 무너진다`, tone: 'bad', major: true, text: `구단주가 잠적했다. 석 달째 월급이 없다. 리그는 시즌이 끝나면 ${club(p.club)}의 등록을 취소하겠다고 발표했다.`, options: [
-      { label: '마지막 경기까지 남는다', hint: '팬심 ▲▲ · 시즌 후 자유계약', run(x) { const q = x.p; E.bump(q, 'fans', 22); q.flags.fateMove = { year: q.year, why: `${J(club(q.club), '가')} 사라졌다`, fold: q.club }; const h = H(x); h.note(`${club(q.club)} 마지막 시즌까지 잔류`); return '서포터들이 경기장 밖에서 노래를 불렀다. 마지막 홈경기는 매진이었다. ' + h.b('morale', -3); } },
-      { label: '겨울에 바로 떠난다', hint: '팬심 ▼ · 시즌 후 자유계약', run(x) { const q = x.p; E.bump(q, 'fans', -10); q.flags.fateMove = { year: q.year, why: `${J(club(q.club), '가')} 사라졌다`, fold: q.club }; const h = H(x); h.mod('share', -.35); return '계약 해지를 신청했다. 남은 반 시즌은 훈련만 했다.'; } },
+    const p = c.p; fate(p, 'f_fold'); press(p, PR('both', 'clubfold', p, { club: club(p.club) })); try { E.recordFold(c.world, p, p.club, p.year); } catch { }
+    return { title: `${J(club(p.club), '가')} 무너진다`, tone: 'bad', major: true, text: `구단주가 잠적했다. 석 달째 월급이 없다. 리그는 시즌이 끝나면 ${club(p.club)}의 법인을 해체하겠다고 발표했다. 팬들과 시가 같은 이름의 새 구단을 세워 리그 자격을 잇겠다고 하지만, 남는 건 이름과 엠블럼뿐이다. 선수단도, 예산도 바닥에서 다시 시작한다.`, options: [
+      { label: '마지막 경기까지 남는다', hint: '팬심 ▲▲ · 시즌 후 자유계약', run(x) { const q = x.p; E.bump(q, 'fans', 22); q.flags.fateMove = { year: q.year, why: `${J(club(q.club), '가')} 해체됐다`, fold: q.club }; const h = H(x); h.note(`${club(q.club)} 해체 전 마지막 시즌까지 잔류`); return '서포터들이 경기장 밖에서 노래를 불렀다. 마지막 홈경기는 매진이었다. ' + h.b('morale', -3); } },
+      { label: '겨울에 바로 떠난다', hint: '팬심 ▼ · 시즌 후 자유계약', run(x) { const q = x.p; E.bump(q, 'fans', -10); q.flags.fateMove = { year: q.year, why: `${J(club(q.club), '가')} 해체됐다`, fold: q.club }; const h = H(x); h.mod('share', -.35); return '계약 해지를 신청했다. 남은 반 시즌은 훈련만 했다.'; } },
     ] };
   } });
   def({ id: 'f_halt', phase: 'mid', cd: 99, w: (c) => fateOK(c, 20) && !c.p.flags.f_f_halt && E.isAbroad(c.p) && ['TUR', 'GRE', 'BRA', 'ARG', 'KSA'].includes(E.CLUB[c.p.club].lg) ? FW * .8 : 0, make(c) {
@@ -5541,7 +5546,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     let ec = null; try { ec = E.econOf(w, VL); } catch { } if (!ec || Y < E.ECON_Y0) return ''; const i = Y - E.ECON_Y0;
     const lgs = Object.keys(ec.lgIdx).filter(k => (E.LEAGUES[k].tier || 9) <= 3).sort((a, b) => ec.lgIdx[b][i] - ec.lgIdx[a][i]);
     const clubs = Object.keys(ec.pow).filter(k => !E.CLUB[k].mil).sort((a, b) => ec.pow[b][i] - ec.pow[a][i]).slice(0, 3);
-    const evs = ec.ev.filter(e => e.y === Y && ((e.club && (E.CLUB[e.club].str >= 79 || e.kind === 'fold')) || e.lg)).slice(0, 4).map(e => e.lg ? `${LGN(e.lg)} ${e.kind === 'boom' ? '투자 붐 시작' : '침체 시작'}` : `${club(e.club).name} ${EVW[e.kind]}`);
+    const evs = ec.ev.filter(e => e.y === Y && ((e.club && (E.CLUB[e.club].str >= 79 || e.kind === 'fold')) || e.lg)).slice(0, 4).map(e => e.lg ? `${LGN(e.lg)} ${e.kind === 'boom' ? '투자 붐 시작' : '침체 시작'}` : `${club(e.club).name} ${e.rec ? '해체·재창단' : EVW[e.kind]}`);
     return `<div class="alm-fb"><span>그해의 축구계</span><p>가장 강한 리그 <b>${esc(LGN(lgs[0]))}</b> · 그다음 ${esc(LGN(lgs[1]))}, ${esc(LGN(lgs[2]))}</p><p>정상의 구단 ${clubs.map(k => `${crest(k, 'xs')} ${esc(club(k).name)}`).join(' · ')}</p>${evs.length ? `<p class="small">${esc(evs.join(' · '))}</p>` : ''}</div>`;
   }
   function viewHistory(w, VL, led) {
@@ -5560,7 +5565,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const decs = []; for (let d = Math.floor(Y0 / 10) * 10; d <= Y1; d += 10) {
       const a = Math.max(Y0, d), b = Math.min(Y1, d + 9); if (a > b) continue; const ia = a - Y0, ib = b - Y0;
       const lgE = ec.ev.filter(e => e.lg && e.y >= a && e.y <= b && (E.LEAGUES[e.lg].tier || 9) <= 3).map(e => `${e.y} ${LGN(e.lg)} ${e.kind === 'boom' ? '투자 붐' : '침체'}`);
-      const clE = ec.ev.filter(e => e.club && e.y >= a && e.y <= b && (E.CLUB[e.club].str >= 80 || e.kind === 'fold')).slice(0, 6).map(e => `${e.y} ${club(e.club).name} ${EVW[e.kind]}`);
+      const clE = ec.ev.filter(e => e.club && e.y >= a && e.y <= b && (E.CLUB[e.club].str >= 80 || e.kind === 'fold')).slice(0, 6).map(e => `${e.y} ${club(e.club).name} ${e.rec ? `해체·재창단${e.by ? ` (${e.by} 시절)` : ''}` : EVW[e.kind]}`);
       const del = Object.keys(ec.pow).filter(k => !E.CLUB[k].mil).map(k => ({ k, d: ec.pow[k][ib] - ec.pow[k][Math.max(0, ia - 1)] })).sort((x, y) => y.d - x.d);
       const up = del.filter(x => x.d >= 5).slice(0, 3), dn = del.filter(x => x.d <= -5).slice(-3).reverse();
       const top = Object.keys(ec.pow).filter(k => !E.CLUB[k].mil).sort((x, y) => ec.pow[y][ib] - ec.pow[x][ib]).slice(0, 3);
@@ -7070,6 +7075,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       if (c.body) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
       c.body = doc?.body ? { h: doc.body.h, b: doc.body.b } : { h: E.hMean(c.nation, c.pos), b: 'normal' }; changed = true;
     }
+    // 예전에 겪은 구단 해체를 세계의 축구사에 올린다
+    for (const c of w.careers) { const fy = c.scars?.fate?.fold; if (fy == null) continue; const row = (c.hist?.s || []).find(r => r[0] === fy); if (!row) continue; w.folds = w.folds || []; if (!w.folds.some(f => f.club === row[1] && f.year === fy)) { w.folds.push({ club: row[1], year: fy, line: c.line || 'L0', by: c.id, name: c.name }); changed = true; } }
     for (const c of w.careers) {
       if (c.spouse !== undefined) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
       const F = doc?.flags || {}; c.spouse = F.partner ? { name: F.partnerName || '', job: F.partner, nation: F.partnerNation || null, married: F.married || null } : null; c.nations = c.nations || [c.nation]; changed = true;
