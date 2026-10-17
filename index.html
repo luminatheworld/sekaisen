@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v60'</script>
+<script>window.SK_VER='v61'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5955,7 +5955,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const mustPick = p.released && offers.length && S.offerPick < 0;
     const blockers = [mustPick ? '방출됐어요. 제안 하나를 골라 주세요.' : '', needsNum ? '등번호를 골라 주세요.' : '', pickedOffer?.blocked ? '구단이 거절한 제안이에요.' : '', pickedOffer?.withdrawn ? '철회된 제안이에요.' : ''].filter(Boolean);
     const disabled = blockers.length > 0;
-    const actions = `<section class="panel go ${!canRetire && !p.forcedRetire && !blockers.length ? 'only-start' : ''}"><div class="row wrapgap">${p.forcedRetire ? '<p class="note">이제 은퇴할 때예요.</p>' : `<button class="btn primary big" data-act="start" ${disabled ? 'disabled' : ''}>${sl(p.year)} 시즌 시작</button>`}${canRetire ? `<button class="btn" data-act="retire">은퇴 선언</button>` : ''}</div>
+    const actions = `<section class="panel go ${!canRetire && !p.forcedRetire && !blockers.length && p.seasons.length ? 'only-start' : ''}"><div class="row wrapgap">${p.forcedRetire ? '<p class="note">이제 은퇴할 때예요.</p>' : `<button class="btn primary big" data-act="start" ${disabled ? 'disabled' : ''}>${sl(p.year)} 시즌 시작</button>`}${canRetire ? `<button class="btn" data-act="retire">은퇴 선언</button>` : ''}${!p.seasons.length ? `<button class="btn" data-act="discard">이 커리어 취소</button>` : ''}</div>
       ${blockers.length ? `<p class="muted small">${blockers.join(' ')}</p>` : ''}</section>`;
     const simbar = !p.forcedRetire ? `<div class="simbar"><button class="btn primary big" data-act="start" ${disabled ? 'disabled' : ''}>${disabled ? esc(blockers[0]) : sl(p.year) + ' 시즌 시작'}</button></div>` : '';
     return header(p) + wiBanner(p) + omenLine(p) + chgPanel(p) + lastFold + market + terms + numberPicker + plan + attrs + decide + actions + simbar;
@@ -7050,6 +7050,16 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       const g = S.ghosts?.[el.dataset.g]; if (!g) return; const nat = g.nation;
       S.newForm = { mode: 'ghost', ghost: g, name: g.name, nation: nat, pos: g.pos, role: E.rolesFor(g.pos)[0].id, talent: '', club: randomClub(nat), startYear: g.birthYear + 16, parentId: null, kid: -1, trait: 'pro', severity: 'real', number: g.pos === 'GK' ? 1 : g.pos === 'ST' ? 9 : 10, look: g.look || AVATAR.randomLook(Math.random, nat), line: g.line };
       S.view = 'new'; render(); window.scrollTo(0, 0); return;
+    }
+    // 한 시즌도 뛰지 않은 커리어만 지울 수 있다. 기록이 생긴 커리어는 숨기기만 한다
+    if (a === 'discard') {
+      if (!p || p.seasons.length) return; if (!confirm(`${p.name}의 커리어를 취소할까요? 아직 한 시즌도 뛰지 않아서 기록은 남지 않아요.`)) return;
+      const par = p.parentId ? S.world.careers.find(c => c.id === p.parentId) : null;
+      if (par) { const i = (par.kids || []).findIndex(k => k.name === p.name && k.used); if (i >= 0) { if (par.kids[i].later) par.kids.splice(i, 1); else par.kids[i].used = false; Store.loadCareer(par.id).then(d => { if (d) { d.kids = par.kids.slice(); Store.save('career', d); } }).catch(() => { }); } }
+      try { localStorage.removeItem('sk_career_' + p.id); } catch { } if (Store.cloud) { try { Store.cref(p.id).delete().catch(() => { }); } catch { } }
+      { const ln = S.world.lines?.[p.line]; if (ln && ln.by === p.id && ln.whatIf && !S.world.careers.some(c => c.line === p.line)) { delete S.world.lines[p.line]; S.viewLine = ln.parent || 'L0'; } }
+      S.world.paused = (S.world.paused || []).filter(x => x.id !== p.id); S.world.activeId = null; S.p = null; Store.save('world', S.world);
+      toast('커리어를 취소했어요.'); S.view = 'world'; render(); window.scrollTo(0, 0); return;
     }
     if (a === 'whatif') return openWhatIf(el.dataset.id);
     if (a === 'linkopen') { S.linkFor = el.dataset.id; render(); const lp = $('.linkp'); if (lp) lp.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
