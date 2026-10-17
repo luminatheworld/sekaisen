@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v53'</script>
+<script>window.SK_VER='v54'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2467,17 +2467,10 @@ const ENGINE = (() => {
   }
 
   // ---------- BALLON D'OR (여름 대회 이후 계산) ----------
-  function ballonLate(p, world) {
-    const res = p.seasons[p.seasons.length - 1]; if (!res || res.youthTeam || res.bdoDone) return null;
-    res.bdoDone = true;
-    const o = ovr(p);
-    if (o < 84 || res.apps < 25) {
-      // 기록 속 선수가 그 해 후보에도 오르지 못했다: 세계선이 기억하던 발롱도르는 다른 사람에게 간다
-      const y0 = res.year + 1; if (p.ghost && p.ghost.Y === y0 && !res.branch) { const r0 = ledOf(world, p)?.bdo[y0]; if (r0 && r0.by === p.ghost.id) { const branch = overturn(world, p, res.year, `${y0} 발롱도르 · 원래 ${p.name}`, res); const g2 = ghostOf(y0, p.line, p.club); res.bdoGhost = g2; res.bdoRival = g2.name; res.notes = (res.notes || []).concat(`세계선이 기억하던 그의 발롱도르는, 이번에는 ${g2.name}에게 갔다.`); return { won: false, branch }; } }
-      return null;
-    }
-    let s = (o - 82) * 2.1 + (res.rating - 7) * 14 + (res.goals + res.assists) / 9 + p.rep / 25;
-    const t = res.trophies.map(x => x.type);
+  // 발롱도르 점수: 시즌 기록만으로 다시 계산할 수 있다(옛 세이브 보정에도 쓴다)
+  function bdoScore(res, o, rep, nPrev) {
+    let s = (o - 82) * 2.1 + (res.rating - 7) * 14 + (res.goals + res.assists) / 9 + rep / 25;
+    const t = (res.trophies || []).map(x => x.type);
     if (t.includes('ucl')) s += 11; else if (res.cont?.reached === '준우승' && res.cont.comp.includes('챔피언스')) s += 5; else if (res.cont?.reached === '4강' && res.cont.comp.includes('챔피언스')) s += 2;
     if (t.includes('league')) s += 4 * (LEAGUES[res.lg].tier === 1 ? 1 : .5);
     const tn = res.tournament;
@@ -2486,9 +2479,22 @@ const ENGINE = (() => {
       s += ({ 우승: wc ? 13 : 6, 준우승: wc ? 6 : 3, '4강': wc ? 3 : 1 })[tn.stage] || (wc && tn.stage === '조별리그' ? -2 : 0);
       s += tn.g * .5 + ((tn.awards || []).includes('골든볼') ? 2.5 : 0);
     }
-    if (res.awards.includes('리그 MVP')) s += 3;
-    s -= ({ 1: 0, 2: 7, 3: 14, 4: 20 })[LEAGUES[res.lg].tier]; s -= p.bdoYears.length * 1.2;
-    const yr = res.year + 1; const rival = 44.5 + gauss(seeded('bdo|' + yr)) * 3;
+    if ((res.awards || []).includes('리그 MVP')) s += 3;
+    s -= ({ 1: 0, 2: 7, 3: 14, 4: 20 })[LEAGUES[res.lg]?.tier] ?? 20; s -= nPrev * 1.2;
+    return s;
+  }
+  const bdoRivalOf = (yr) => 44.5 + gauss(seeded('bdo|' + yr)) * 3;
+  function ballonLate(p, world) {
+    const res = p.seasons[p.seasons.length - 1]; if (!res || res.youthTeam || res.bdoDone) return null;
+    res.bdoDone = true;
+    const o = ovr(p);
+    if (o < 80 || res.apps < 25) {
+      // 기록 속 선수가 그 해 후보에도 오르지 못했다: 세계선이 기억하던 발롱도르는 다른 사람에게 간다
+      const y0 = res.year + 1; if (p.ghost && p.ghost.Y === y0 && !res.branch) { const r0 = ledOf(world, p)?.bdo[y0]; if (r0 && r0.by === p.ghost.id) { const branch = overturn(world, p, res.year, `${y0} 발롱도르 · 원래 ${p.name}`, res); const g2 = ghostOf(y0, p.line, p.club); res.bdoGhost = g2; res.bdoRival = g2.name; res.notes = (res.notes || []).concat(`세계선이 기억하던 그의 발롱도르는, 이번에는 ${g2.name}에게 갔다.`); return { won: false, branch }; } }
+      return null;
+    }
+    let s = bdoScore(res, o, p.rep, p.bdoYears.length);
+    const yr = res.year + 1; const rival = bdoRivalOf(yr);
     const led = res.branch ? null : ledOf(world, p); const rec = led ? led.bdo[yr] : (!world?.lines && world?.bdo?.[yr] ? { name: world.bdo[yr] } : null);
     // 기록 속 선수로 사는 커리어: 세계선이 기억하는 그 해의 발롱도르는 원래 나의 것이다
     if (rec && p.ghost && rec.by === p.ghost.id) {
@@ -2679,7 +2685,7 @@ const ENGINE = (() => {
       homeClub: p.homeClub, talent: p.talent, curve: p.curve, custom: !!p.custom, kids: (p.kids || []).slice(), numByClub, fans: { ...p.fans }, injuries: (p.injuries || []).length, majorInj: (p.injuries || []).filter(i => i.major).length, number: p.number, foot: p.foot, weak: p.weak, ambi: !!p.ambi,
       earned: Math.round(p.earned || 0), peakWage: Math.max(0, ...(p.wageHist || []).map(w => w.wage), p.wage || 0), early: p.flags.early || null, P: p.P,
       temper: temperament(p), tmp: { big: +T(p).big.toFixed(2), nat: +T(p).nat.toFixed(2) },
-      hist: histOf(p), scars: scarsOf(p), nations: nationsOf(p), natTeam: natT(p), natPick: p.flags.natPick || null, ghosts: p.seasons.filter(x => x.bdoGhost).map(x => x.bdoGhost), gv: 1, ghost: p.ghost ? { ...p.ghost, kept: (p.bdoYears || []).includes(p.ghost.Y) } : null, spouse: p.flags.partner ? { name: p.flags.partnerName || '', job: p.flags.partner, nation: p.flags.partnerNation || null, married: p.flags.married || null } : null, severity: p.severity || 'normal', medEnd: p.flags.medEnd || null, deceased: p.flags.deceased || null, whatIf: p.whatIf ? { of: p.whatIf.of, y: p.whatIf.y, kind: p.whatIf.kind, label: p.whatIf.label } : null, line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
+      hist: histOf(p), scars: scarsOf(p), nations: nationsOf(p), natTeam: natT(p), natPick: p.flags.natPick || null, ghosts: p.seasons.filter(x => x.bdoGhost).map(x => x.bdoGhost), gv: 2, ghost: p.ghost ? { ...p.ghost, kept: (p.bdoYears || []).includes(p.ghost.Y) } : null, spouse: p.flags.partner ? { name: p.flags.partnerName || '', job: p.flags.partner, nation: p.flags.partnerNation || null, married: p.flags.married || null } : null, severity: p.severity || 'normal', medEnd: p.flags.medEnd || null, deceased: p.flags.deceased || null, whatIf: p.whatIf ? { of: p.whatIf.of, y: p.whatIf.y, kind: p.whatIf.kind, label: p.whatIf.label } : null, line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
     };
   }
   // ---------- 영구결번 · 구단 명예의 전당 ----------
@@ -2827,7 +2833,7 @@ const ENGINE = (() => {
     LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    ghostOf, ghostStat, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, hasJong, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -7171,13 +7177,15 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     }
     // 아깝게 놓친 발롱도르: 그 상을 가져간 사람을 세계선에 이름으로 남긴다
     const lineAt = (d, y) => { const B = d.branches || []; let ln = B.length ? B[0].from : (d.line || 'L0'); for (const b of B) if (b.year <= y) ln = b.line; return ln; };
-    const ghostFill = (d, selfId) => { let n = 0; for (const r of d.seasons || []) { if (!r.bdoRank || r.bdoRank > 3 || r.bdoGhost || r.bdoRival || (r.awards || []).includes('발롱도르')) continue; const Y = r.year + 1; const ln = lineAt(d, r.year); let rec = null; try { rec = E.lineView(w, ln)?.bdo[Y]; } catch { } if (rec && rec.by !== selfId) { r.bdoRival = rec.name; n++; continue; } const g = E.ghostOf(Y, ln, r.club); r.bdoGhost = g; r.bdoRival = g.name; n++; } return n; };
+    // 예전엔 OVR 84 미만이면 후보에도 못 올랐다: 남은 시즌 기록으로 그해 순위를 다시 매긴다
+    const bdoRe = (d) => { let n = 0; for (const r of d.seasons || []) { if (r.youthTeam || r.bdoRank || r.bdo || (r.awards || []).includes('발롱도르') || (r.apps || 0) < 25 || (r.ovrEnd || 0) < 80 || (r.ovrEnd || 0) >= 85) continue; const Y = r.year + 1; let sc = null; try { sc = E.bdoScore(r, r.ovrEnd, r.meters?.rep ?? 50, (d.bdoYears || []).filter(y => y < Y).length); } catch { continue; } const rv = E.bdoRivalOf(Y); const rk = sc > rv ? 2 : E.clamp(2 + Math.floor((rv - sc) / 2.2), 2, 40); if (rk <= 30) { r.bdoRank = rk; n++; } } return n; };
+    const ghostFill = (d, selfId) => { let n = bdoRe(d); for (const r of d.seasons || []) { if (!r.bdoRank || r.bdoRank > 3 || r.bdoGhost || r.bdoRival || (r.awards || []).includes('발롱도르')) continue; const Y = r.year + 1; const ln = lineAt(d, r.year); let rec = null; try { rec = E.lineView(w, ln)?.bdo[Y]; } catch { } if (rec && rec.by !== selfId) { r.bdoRival = rec.name; n++; continue; } const g = E.ghostOf(Y, ln, r.club); r.bdoGhost = g; r.bdoRival = g.name; n++; } return n; };
     for (const c of w.careers) {
-      if (c.gv) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
+      if ((c.gv || 0) >= 2) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
       if (doc) { try { if (ghostFill(doc, c.id)) Store.save('career', doc); c.ghosts = (doc.seasons || []).filter(r => r.bdoGhost).map(r => r.bdoGhost); } catch (e) { console.warn('ghost', e); } }
-      c.gv = 1; changed = true;
+      c.gv = 2; changed = true;
     }
-    if (S.p && !S.p.gv) { try { ghostFill(S.p, S.p.id); } catch { } S.p.gv = 1; changed = true; }
+    if (S.p && (S.p.gv || 0) < 2) { try { ghostFill(S.p, S.p.id); } catch { } S.p.gv = 2; changed = true; }
     const needs = w.careers.some(c => !c.line || !w.lines[c.line]) || (S.p && !(S.p.line && w.lines[S.p.line]));
     if (needs) { let out = []; try { out = E.migrateLines(w, S.p); } catch (e) { console.warn('lines', e); } changed = true; if (out.length) S.migMsg = `겹쳐 있던 커리어를 세계선 ${out.length}갈래로 정리했어요. 세계선 → 세계선 계보에서 볼 수 있어요.`; }
     if (changed) { Store.save('world', w); if (S.p) Store.save('career', S.p); }
