@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v51'</script>
+<script>window.SK_VER='v52'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4227,6 +4227,14 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       { label: '밤새 영상을 돌려본다', hint: '천장 +2 · 성장 ↑', run(x) { x.p.tags.push('click'); const h = H(x); h.mod('ceil', 2); h.mod('growth', 1.05); return '천장 +2'; } },
     ] };
   } });
+  def({ id: 'ambi', phase: 'pre', cd: 99, w: (c) => c.p.ambi && !c.p.flags.ambiSeen && c.p.age >= 15 ? (c.p.age >= 17 ? 500 : 8) : 0, make(c) {
+    const p = c.p; const nm = E.FOOT_NAME[p.foot]; const ot = p.foot === 'L' ? '오른발' : '왼발';
+    const seen = (x) => { x.p.flags.ambiSeen = x.p.year; H(x).note('타고난 양발잡이'); };
+    return { title: '주발이 어느 쪽이야?', tone: 'legacy', text: `킥 훈련이 끝나고 코치가 기록지를 들고 왔다. 오늘 찬 공의 절반은 ${nm}, 절반은 ${ot}이었다. "너 주발이 어느 쪽이야?" 대답하려다 말문이 막혔다. 한 번도 생각해 본 적이 없었다.`, options: [
+      { label: '"모르겠어요. 그냥 차요."', hint: '감독 신뢰 +2', run(x) { seen(x); const h = H(x); return `코치는 기록지에 '양발'이라고 적고 두 줄을 그었다. 주발 칸이 비었다. ${h.b('trust', 2)}`; } },
+      { label: `"${nm}…이요?"`, hint: '사기 +2', run(x) { seen(x); const h = H(x); return `코치가 웃으며 공을 ${ot} 쪽에 놓았다. 똑같이 감겼다. "${nm}잡이는 그렇게 못 차." ${h.b('morale', 2)}`; } },
+    ] };
+  } });
   def({ id: 'weakcoach', phase: 'mid', cd: 4, w: (c) => c.p.pos !== 'GK' && (c.p.weak || 3) <= 3 && c.p.age <= 25 ? 3 : 0, make(c) {
     const p = c.p; const other = p.foot === 'L' ? '오른발' : '왼발';
     return { title: `${other} 전담 코치`, tone: 'good', text: `개인 기술 코치가 훈련이 끝나고 ${other}만 쓰는 특별 프로그램을 제안했다. "지금 고치지 않으면 평생 이대로다."`, options: [
@@ -5297,7 +5305,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   }
   const crest = (id, cls = '') => `<img class="crest ${cls}" src="${crestURL(id)}" alt="" title="${esc(club(id).name)}">`;
   const wstars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
-  const footTag = (p) => p.ambi ? '양발' : p.foot ? `${E.FOOT_NAME[p.foot]} · 약발 ${wstars(p.weak || 3)}` : '';
+  const footTag = (p) => p.ambi && p.flags?.ambiSeen ? '양발' : p.foot ? `${E.FOOT_NAME[p.foot]} · 약발 ${wstars(p.weak || 3)}` : '';
   function footHint(f) {
     const base = '약발 등급(★1~5)은 시작할 때 운으로 정해지고, 시즌 계획의 약발 훈련으로 올릴 수 있어요. 아주 드물게 주발이 없는 양발잡이로 태어나기도 해요.';
     if (f.pos === 'GK') return base;
@@ -5668,7 +5676,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <div class="ph-left">${ava(p.look, p.club, { gk: p.pos === 'GK', age: p.age, cls: 'md' })}<div class="ph-txt">
         <h1 class="pname">${esc(p.name)}${p.number ? ` <span class="pnum">${p.number}</span>` : ''}</h1>
         <p class="ph-sub">${crest(p.club, 'xs')} <b>${esc(c.name)}</b>${p.captain ? ' <span class="pill gold">C</span>' : ''} ${p.youth ? '<span class="muted small">유스</span>' : lgTag(p.club, p.year, p)}</p>
-        <p class="ph-sub muted">${sl(p.year)} · ${p.age}세 · ${p.pos} · ${flag(E.natT(p))}${p.body ? ` · ${E.heightAt(p)}cm${(() => { const f = E.bodyForecast(p); return f ? ` (다 크면 ${f[0]}~${f[1]})` : ''; })()} · ${E.BUILD[p.body.b] || ''}` : ''}${p.ambi ? ` · <span class="foot" title="타고난 양발잡이"><b>양발</b></span>` : p.foot ? ` · <span class="foot" title="약발 등급 ${p.weak || 3}/5">${E.FOOT_NAME[p.foot]} <span class="wstar">${wstars(p.weak || 3)}</span></span>` : ''}</p></div></div>
+        <p class="ph-sub muted">${sl(p.year)} · ${p.age}세 · ${p.pos} · ${flag(E.natT(p))}${p.body ? ` · ${E.heightAt(p)}cm${(() => { const f = E.bodyForecast(p); return f ? ` (다 크면 ${f[0]}~${f[1]})` : ''; })()} · ${E.BUILD[p.body.b] || ''}` : ''}${p.ambi && p.flags.ambiSeen ? ` · <span class="foot" title="타고난 양발잡이"><b>양발</b></span>` : p.foot ? ` · <span class="foot" title="약발 등급 ${p.weak || 3}/5">${E.FOOT_NAME[p.foot]} <span class="wstar">${wstars(p.weak || 3)}</span></span>` : ''}</p></div></div>
       <div class="ph-ovr"><span class="big">${o}</span>${last && !last.youthTeam ? `<span class="delta ${last.growth >= 0 ? 'up' : 'down'}">${last.growth >= 0 ? '▲' : '▼'}</span>` : ''}</div>
     </section>
     <section class="meters">${meter('사기', p.morale)}${meter('신뢰', p.trust)}${meter('팬심', p.fans[p.club] ?? 0)}${meter('명성', p.rep)}${meter('몸', p.dur)}<span class="pill quiet">${ct}</span>${p.release && !p.youth ? `<span class="pill quiet">바이아웃 ${E.fmtFee(p.release)}</span>` : ''}</section>`;
@@ -6275,7 +6283,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
         <li><b>18~25세 출전 보너스.</b> 출전 비율 65% 이상인 시즌마다 천장 +0.75(최대 +5), 30% 미만이면 −0.9.</li>
         <li><b>훈련 초점.</b> 고른 능력치는 1.7배, 나머지는 0.78배로 자라요. 능력치 창에서 막대 하나를 누르면 그 능력치만 2배로 집중해요(다시 누르면 포지션 맞춤으로).</li>
         <li><b>주발과 약발.</b> 주발은 만들 때 고르고(랜덤이면 왼발 24%), 약발 등급 ★1~5는 운으로 정해져요(★2·★3이 대부분, ★5는 3%). 측면 포지션에서 역할이 원하는 발(정통 윙어·오버래핑 계열은 같은 쪽 발, 인버티드·인사이드 계열은 반대 발)이면 역할 적성 +1.2, 아니면 약발이 낮을수록 최대 −2.4. ★5는 어느 쪽이든 +1.2. 약발 등급 자체도 역할 적성에 (등급 − 3) × 0.2~0.6을 더해요. 왼발 센터백·풀백은 이적 제안이 1.25배.</li>
-        <li><b>타고난 양발잡이.</b> 새로 만든 선수의 약 1%(부모가 양발잡이면 15%)는 주발이 따로 없는 양발잡이로 태어나요. 고를 수 없고, 약발 등급을 직접 정해 만든 선수에게는 나오지 않아요. 약발 ★5와 같고, 역할 적성에 포지션별 약발 계수 × 0.4가 더해져요(AM +0.24 · 윙어·ST +0.2). 이적 관심은 ★5의 ×1.1 대신 ×1.15, 프리킥 키커 자리를 놓고 경쟁할 때 성공률은 60% 대신 75%예요.</li><li><b>약발 훈련.</b> 훈련 초점에서 고르면 다른 능력치는 모두 0.8배로 자라고, 시즌 끝에 약발이 한 등급 오를 확률이 생겨요. 17세 이하 60% · 19세 이하 50% · 21세 이하 40% · 23세 이하 26% · 25세 이하 15% · 28세 이하 7% · 그 위 2%에, 다음 등급이 ★3 이하면 ×1.05~1.15, ★4면 ×0.85, ★5면 ×0.5. 감독 능력에 따라 조금 달라져요. 훈련하지 않으면 약발은 오르지 않아요.</li>
+        <li><b>타고난 양발잡이.</b> 새로 만든 선수의 약 1%(부모가 양발잡이면 15%)는 주발이 따로 없는 양발잡이로 태어나요. 고를 수 없고, 약발 등급을 직접 정해 만든 선수에게는 나오지 않아요. 처음엔 주발 ★5로 보이다가, 15~17세에 코치가 주발을 묻는 이벤트로 드러나요(17세가 넘어서 시작하면 첫 시즌에). 약발 ★5와 같고, 역할 적성에 포지션별 약발 계수 × 0.4가 더해져요(AM +0.24 · 윙어·ST +0.2). 이적 관심은 ★5의 ×1.1 대신 ×1.15, 프리킥 키커 자리를 놓고 경쟁할 때 성공률은 60% 대신 75%예요.</li><li><b>약발 훈련.</b> 훈련 초점에서 고르면 다른 능력치는 모두 0.8배로 자라고, 시즌 끝에 약발이 한 등급 오를 확률이 생겨요. 17세 이하 60% · 19세 이하 50% · 21세 이하 40% · 23세 이하 26% · 25세 이하 15% · 28세 이하 7% · 그 위 2%에, 다음 등급이 ★3 이하면 ×1.05~1.15, ★4면 ×0.85, ★5면 ×0.5. 감독 능력에 따라 조금 달라져요. 훈련하지 않으면 약발은 오르지 않아요.</li>
         <li>시야·침투·수비 지능·위치선정 같은 두뇌 능력치는 26~32세에도 조금씩 오르고, 속도·피지컬은 27세부터 정체되다가 30세 이후 1.5배로 떨어져요.</li></ul>
       <h2>신체</h2><ul>
         <li><b>키</b>는 국적 평균에 포지션 보정(골키퍼 +8, 센터백 +6, 윙어 −3 등)을 더한 값을 중심으로 표준편차 6cm로 정해져요. 후손은 부모 키와 국적 평균의 중간쯤에서 표준편차 4.5cm. 16세 뒤로 2~8cm 더 자라서 19세에 다 커요.</li>
