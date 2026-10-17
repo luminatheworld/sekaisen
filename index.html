@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v57'</script>
+<script>window.SK_VER='v58'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1060,13 +1060,25 @@ const ENGINE = (() => {
     while (id && !seen.has(id)) { seen.add(id); out.push({ id, cut, only: { ...only } }); const ln = L[id]; if (!ln || !ln.parent) break; if (ln.whatIf) only[ln.whatIf.of] = Math.min(only[ln.whatIf.of] ?? Infinity, ln.split); else cut = Math.min(cut, ln.split); id = ln.parent; }
     return out;
   }
+  // 그 사람이 직접 가른 세계선들을 거슬러 올라가며, 갈라지기 전에 있던 세계선과 그 상한(갈라진 해)을 돌려준다. 가장 가까운 것부터
+  function sharedPast(world, c) {
+    const L = world?.lines || {}; const out = []; let ln = c.line; let upper = Infinity; const seen = new Set();
+    while (ln && L[ln] && !seen.has(ln)) { seen.add(ln); const l = L[ln]; if (l.by !== c.id || !l.parent || l.whatIf || l.split == null) break; upper = Math.min(upper, l.split); out.push({ line: l.parent, upper, via: ln }); ln = l.parent; }
+    return out;
+  }
+  // 여름 대회·발롱도르로 갈라진 세계선: 그 시즌의 클럽 생활(출생 등)은 갈라지기 전의 일이다
+  const splitSummer = (line) => !!line && /^\d{4} /.test(line.what || '');
   // 이 세계선에서 사실로 남은 기록. 기록 연도는 시즌 연도(여름 대회·발롱도르는 그 시즌)로 비교한다
   function buildLedger(world, lineId, exclude) {
     const chain = lineChain(world, lineId); const cutOf = new Map(chain.map(c => [c.id, c.cut])); const onlyOf = new Map(chain.map(c => [c.id, c.only || {}]));
-    const led = { world, line: lineId || 'L0', chain, lg: {}, cont: {}, nat: {}, bdo: {}, award: {}, seasons: [], people: [], cut: {}, retired: {}, hof: {}, coaches: [] }; const gh = [];
+    const led = { world, line: lineId || 'L0', chain, lg: {}, cont: {}, nat: {}, bdo: {}, award: {}, seasons: [], people: [], cut: {}, via: {}, retired: {}, hof: {}, coaches: [] }; const gh = [];
     for (const c of world?.careers || []) {
       if (!c.line || (exclude && c.id === exclude)) continue;
-      let k = cutOf.get(c.line); if (k == null) continue; const ok = onlyOf.get(c.line)?.[c.id]; if (ok != null) k = Math.min(k, ok);
+      let k = cutOf.get(c.line); let via = null;
+      // 세계선을 가른 사람: 갈라지기 전까지는 원래 세계선에도 함께 있었다. 과거는 공유하고, 갈라진 뒤의 행방은 기록되지 않는다
+      if (k == null) { const a = sharedPast(world, c).find(x => cutOf.has(x.line)); if (a) { k = Math.min(cutOf.get(a.line), a.upper); via = a.via; } }
+      if (k == null) continue; const ok = onlyOf.get(c.line)?.[c.id]; if (ok != null) k = Math.min(k, ok);
+      if (via) led.via[c.id] = via;
       if (c.startYear >= k) continue; // 갈라진 뒤에 데뷔한 선수는 이 세계선에 없다
       led.cut[c.id] = k; led.people.push(c); if (c.coach) led.coaches.push(c);
       // '만약' 커리어: 갈라지기 전의 기록은 원래 인생의 것이다. 겹쳐 세지 않는다
@@ -1285,12 +1297,12 @@ const ENGINE = (() => {
   const notMe = (p, c) => c.id !== p?.id && !(p?.whatIf && (c.id === p.whatIf.of || c.whatIf?.of === p.whatIf.of));
   function peopleAt(world, p, clubId, year) {
     const led = ledOf(world, p); if (!led) return [];
-    return led.people.filter(c => notMe(p, c) && (c.stints || []).some(s => s.club === clubId && year >= s.from && year <= s.to) && year - c.birthYear >= 17)
+    return led.people.filter(c => notMe(p, c) && year < (led.cut[c.id] ?? Infinity) && (c.stints || []).some(s => s.club === clubId && year >= s.from && year <= s.to) && year - c.birthYear >= 17)
       .map(c => ({ id: c.id, name: c.name, pos: c.pos, age: year - c.birthYear, look: c.look, nation: c.nation, peak: c.peakOvr, bound: year < (led.cut[c.id] ?? Infinity) }));
   }
   function nationStar(world, p, nation, Y) {
     const led = ledOf(world, p); if (!led) return null;
-    return led.people.filter(c => notMe(p, c) && (c.natTeam || c.nation) === nation && (c.caps || 0) >= 10 && Y - c.birthYear >= 19 && Y - c.birthYear <= 35 && Y >= c.startYear + 2 && Y <= c.endYear + 1).sort((a, b) => b.peakOvr - a.peakOvr)[0] || null;
+    return led.people.filter(c => notMe(p, c) && (c.natTeam || c.nation) === nation && Y - 1 < (led.cut[c.id] ?? Infinity) && (c.caps || 0) >= 10 && Y - c.birthYear >= 19 && Y - c.birthYear <= 35 && Y >= c.startYear + 2 && Y <= c.endYear + 1).sort((a, b) => b.peakOvr - a.peakOvr)[0] || null;
   }
   // 구단 연대기: 주인공이 뛴 해는 그 기록, 나머지는 세계의 기본 흐름으로 순위를 잡고 시대 이름을 붙인다
   function clubChronicle(world, lineId, clubId, extra) {
@@ -2836,7 +2848,7 @@ const ENGINE = (() => {
     ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
-    INERTIA, hasJong, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
+    INERTIA, hasJong, sharedPast, splitSummer, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
   };
 })();
 
@@ -5515,15 +5527,39 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function almPeople(VL, led) {
     const L = led.people.map(c => ({ c, cut: led.cut[c.id], live: false, from: c.whatIf ? c.whatIf.y : null, re: led.people.some(q => q.whatIf?.of === c.id) }));
     if (S.p && (S.p.line || 'L0') === VL && S.p.seasons.length) { if (S.p.whatIf) L.forEach(x => { if (x.c.id === S.p.whatIf.of) x.re = true; }); } if (S.p && (S.p.line || 'L0') === VL && S.p.seasons.length) L.push({ from: S.p.whatIf ? S.p.whatIf.y : null, c: { id: S.p.id, name: S.p.name, pos: S.p.pos, nation: S.p.nation, natTeam: E.natT(S.p), look: S.p.look, birthYear: S.p.birthYear, startYear: S.p.startYear, endYear: S.p.year - 1, parentId: S.p.parentId, whatIf: S.p.whatIf || null, hist: E.histOf(S.p) }, cut: null, live: true, doc: S.p });
+    // 갈라지기 전에 태어난 아이: 이 세계선에도 태어났다는 기록은 남는다. 어떤 선수로 자랐는지는 모른다
+    for (const x of L.slice()) {
+      if (x.live || x.re || x.cut == null || !isFinite(x.cut)) continue;
+      const via = led.via?.[x.c.id]; const sl0 = via ? S.world.lines?.[via] : (led.chain || []).map(q => S.world.lines?.[q.id]).find(l => l && l.split === x.cut); const summer = E.splitSummer(sl0);
+      for (const k of S.world.careers) {
+        if (k.parentId !== x.c.id || led.people.includes(k) || L.some(q => q.c.id === k.id)) continue;
+        const kr = (x.c.kids || []).find(q => q.name === k.name); const born = kr?.born ?? k.birthYear; const bs = born - 1;
+        if (!(bs < x.cut || (summer && bs === x.cut))) continue;
+        L.push({ c: k, cut: k.startYear, live: false, from: null, re: false, kidOf: x.c, born });
+      }
+    }
     return L;
+  }
+  // 다른 세계선에서 그가 살아간 모습 한 줄: 갈라진 뒤의 일만
+  function otherLife(c, cut) {
+    const P = []; const nat = c.natTeam || c.nation;
+    const wins = (c.hist?.nat || []).filter(t => t[0] - 1 >= cut).map(t => `${t[0]} ${E.TOUR[t[1]]?.comp || t[1]}`);
+    const kids = S.world.careers.filter(k => k.parentId === c.id); const kb = kids.find(k => k.bdo) || kids[0];
+    // 고르는 순서(중요한 것)와 읽는 순서(삶의 순서)는 다르다
+    if (wins.length) P.push([1, 0, `${J(nat, '을')} ${wins.slice(0, 2).join('·')} 우승으로 이끌었`]);
+    if (kb) P.push([2, 3, kb.bdo ? '훗날 발롱도르 수상자가 되는 아들의 아버지가 되었' : '훗날 축구선수가 되는 아들의 아버지가 되었']);
+    if (c.bdo) P.push([3, 2, `발롱도르를 ${c.bdo > 1 ? c.bdo + '번 ' : ''}받았`]);
+    if (!wins.length && (c.caps || 0) >= 10) P.push([4, 1, `${nat} 국가대표로 뛰었`]);
+    if (!P.length) P.push([9, 9, `${c.retireAge || ''}세까지 뛰고 은퇴했`]);
+    const ps = P.sort((a, b) => a[0] - b[0]).slice(0, 2).sort((a, b) => a[1] - b[1]).map(x => x[2]); return ps.map((x, i) => x + (i < ps.length - 1 ? '고' : '다.')).join(', ');
   }
   const almOn = (x, y) => x.c.startYear <= y && y <= x.c.endYear && (x.cut == null || y < x.cut) && (x.from == null || y >= x.from);
   // 갈라지기 전 세계선의 주인공: 갈라진 뒤에도 원래 세계선에선 뛰었지만, 이 세계선에는 그 뒤가 없다
-  const almGhost = (x, y) => !x.re && x.cut != null && isFinite(x.cut) && y >= x.cut && x.c.startYear <= y && y <= x.c.endYear;
+  const almGhost = (x, y) => x.kidOf ? (y === x.born - 1 || (x.c.startYear <= y && y <= x.c.endYear)) : !x.re && x.cut != null && isFinite(x.cut) && y >= x.cut && x.c.startYear <= y && y <= x.c.endYear;
   function almSplits(w, led) { return (led.chain || []).map(c => w.lines?.[c.id]).filter(l => l && l.parent && l.split != null).map(l => ({ y: l.split, what: l.what || '', by: l.byName || '', name: l.name })); }
   function almGhostEntry(x, Y, w) {
-    const c = x.c; const age = Y - c.birthYear; const h = (c.hist?.s || []).find(s => s[0] === Y); const home = w.lines?.[c.line]?.name || '원래 세계선';
-    return `<li class="alm-p ghost"><div class="alm-h">${ava(c.look, h ? h[1] : c.topClubs?.[0]?.club || c.homeClub, { gk: c.pos === 'GK', age, cls: 'sm' })}<div><b><button class="link" data-card="${c.id}">${esc(c.name)}</button></b><small>${flag(c.natTeam || c.nation)} ${age}세 · ${esc(E.POS[c.pos]?.name || c.pos)}</small></div></div><p class="small">${sl(x.cut)} 시즌에 세계선이 갈라진 뒤, 이 세계선에서 그의 행방은 기록되지 않았다.</p>${h ? `<p class="small muted">${esc(home)}에서는 이 해 ${esc(club(h[1]).name)}에서 뛰고 있었다.</p>` : ''}</li>`;
+    const c = x.c; const age = Y - c.birthYear; const baby = x.kidOf && Y < c.startYear; const h = (c.hist?.s || []).find(s => s[0] === Y); const home = w.lines?.[c.line]?.name || '원래 세계선';
+    return `<li class="alm-p ghost"><div class="alm-h">${ava(c.look, h ? h[1] : c.topClubs?.[0]?.club || c.homeClub, { gk: c.pos === 'GK', age: baby ? 16 : age, cls: 'sm' })}<div><b><button class="link" data-card="${c.id}">${esc(c.name)}</button></b><small>${baby ? `${flag(c.nation)} ${x.born}년생` : `${flag(c.natTeam || c.nation)} ${age}세 · ${esc(E.POS[c.pos]?.name || c.pos)}`}</small></div></div>${x.kidOf ? `<p class="small">이 세계선에서 그는 ${x.born}년, ${esc(x.kidOf.name)}의 아들로 태어났다. 어떤 선수로 자랐는지는 기록되지 않았다.</p>` : `<p class="small">${sl(x.cut)} 시즌에 세계선이 갈라진 뒤, 이 세계선에서 그의 행방은 기록되지 않았다.</p>`}${h ? `<p class="small muted">${esc(home)}에서는 이 해 ${esc(club(h[1]).name)}에서 뛰고 있었다.</p>` : ''}<p class="small muted">${h ? '그곳에서 그는 ' : `${esc(home)}에서 그는 `}${baby ? '훗날 ' : ''}${esc(otherLife(c, x.kidOf ? -Infinity : x.cut))}</p></li>`;
   }
   function almDoc(x) { if (x.doc) return x.doc; const d = ALM.docs[x.c.id]; return d === undefined ? undefined : d; }
   function almLoad(list) {
