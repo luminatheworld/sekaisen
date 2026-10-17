@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v52'</script>
+<script>window.SK_VER='v53'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -528,8 +528,13 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .alm-strip .ay.on { background: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
 .alm-world, .alm-cross { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 12px; display: flex; flex-direction: column; gap: 3px; }
 .alm-world { border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
-.alm-world span, .alm-cross span { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: var(--gold); }
-.alm-cross span { color: #8f84e8; } .alm-world p, .alm-cross p { margin: 0; font-size: 13.5px; line-height: 1.5; }
+.alm-world > span, .alm-cross > span { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: var(--gold); }
+.ghostp { display: flex; gap: 10px; align-items: flex-start; margin-top: 6px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.alm-world .ghostp p { margin: 0 0 3px; }
+.ghostp .btn { margin-top: 4px; }
+.ghostnote p { margin: 0 0 4px; }
+.ghostnote .btn { margin-top: 4px; }
+.alm-cross > span { color: #8f84e8; } .alm-world p, .alm-cross p { margin: 0; font-size: 13.5px; line-height: 1.5; }
 .alm-list { list-style: none; padding: 0; margin: 14px 0 10px; display: grid; gap: 10px; }
 @media (min-width: 760px) { .alm-list { grid-template-columns: 1fr 1fr; } }
 .alm-p { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -1058,7 +1063,7 @@ const ENGINE = (() => {
   // 이 세계선에서 사실로 남은 기록. 기록 연도는 시즌 연도(여름 대회·발롱도르는 그 시즌)로 비교한다
   function buildLedger(world, lineId, exclude) {
     const chain = lineChain(world, lineId); const cutOf = new Map(chain.map(c => [c.id, c.cut])); const onlyOf = new Map(chain.map(c => [c.id, c.only || {}]));
-    const led = { world, line: lineId || 'L0', chain, lg: {}, cont: {}, nat: {}, bdo: {}, award: {}, seasons: [], people: [], cut: {}, retired: {}, hof: {}, coaches: [] };
+    const led = { world, line: lineId || 'L0', chain, lg: {}, cont: {}, nat: {}, bdo: {}, award: {}, seasons: [], people: [], cut: {}, retired: {}, hof: {}, coaches: [] }; const gh = [];
     for (const c of world?.careers || []) {
       if (!c.line || (exclude && c.id === exclude)) continue;
       let k = cutOf.get(c.line); if (k == null) continue; const ok = onlyOf.get(c.line)?.[c.id]; if (ok != null) k = Math.min(k, ok);
@@ -1071,9 +1076,12 @@ const ENGINE = (() => {
       (h.cont || []).forEach(([y, comp, club]) => { if (inR(y)) led.cont[comp + '|' + y] = { club, ...who }; });
       (h.nat || []).forEach(([Y, kind, nation]) => { if (inR(Y - 1)) led.nat[kind + '|' + Y] = { nation, ...who }; });
       (c.bdoYears || []).forEach(Y => { if (inR(Y - 1)) led.bdo[Y] = who; });
+      (c.ghosts || []).forEach(g => { if (inR(g.Y - 1)) gh.push(g); });
       (h.aw || []).forEach(([y, lg, a, v]) => { if (inR(y)) led.award[a + '|' + lg + '|' + y] = { v, ...who }; });
       (h.s || []).forEach(s => { if (inR(s[0])) led.seasons.push({ c, s }); });
     }
+    // 기록 속 선수의 발롱도르: 주인공의 기록이 먼저다. 그 사람을 직접 산 커리어가 이 세계선에 있으면 그 기록을 따른다
+    for (const g of gh) if (!led.bdo[g.Y] && !led.people.some(c => c.ghost?.id === g.id)) led.bdo[g.Y] = { by: g.id, name: g.name, ghost: g };
     // 영구결번·명예의 전당은 그 일이 일어난 해부터, 그 세계선에서만
     for (const [cid, list] of Object.entries(world?.retired || {})) for (const r of list) { const k = led.cut[r.careerId]; if (k != null && r.year < k) (led.retired[cid] = led.retired[cid] || []).push(r); }
     for (const [cid, list] of Object.entries(world?.hof || {})) for (const r of list) { const k = led.cut[r.careerId]; if (k != null && r.year < k) (led.hof[cid] = led.hof[cid] || []).push(r); }
@@ -1082,7 +1090,7 @@ const ENGINE = (() => {
   const VIEWS = new WeakMap(); let CUR = null;
   function lineView(world, lineId) {
     if (!world) return null; const id = lineId || 'L0';
-    const key = id + '|' + (world.careers || []).length + '|' + Object.keys(world.lines || {}).length + '|' + (world.careers || []).reduce((a, c) => a + (c.line || '').length, 0);
+    const key = id + '|' + (world.careers || []).length + '|' + Object.keys(world.lines || {}).length + '|' + (world.careers || []).reduce((a, c) => a + (c.line || '').length, 0) + '|' + (world.careers || []).reduce((a, c) => a + (c.ghosts || []).length, 0);
     let m = VIEWS.get(world); if (!m) { m = new Map(); VIEWS.set(world, m); }
     if (m.has(key)) return m.get(key);
     const v = buildLedger(world, id); m.set(key, v); if (m.size > 40) m.delete(m.keys().next().value); return v;
@@ -1189,6 +1197,32 @@ const ENGINE = (() => {
     if (CUR && CUR.world === w) CUR.line = id;
     const b = { line: id, from: parent, year, what }; if (res) res.branch = b; return b;
   }
+  // ---------- 기록 속 선수 ----------
+  // 주인공이 발롱도르를 아깝게 놓친 해, 그 상을 가져간 사람. 이름 없는 누군가가 아니라 세계선에 이름이 남는다.
+  // 같은 해·같은 세계선이면 늘 같은 사람이다. 나중에 그 사람으로 직접 살아볼 수 있다
+  const GHOST_NAT = { 프랑스: 9, 브라질: 9, 아르헨티나: 7, 잉글랜드: 7, 스페인: 7, 독일: 6, 포르투갈: 5, 네덜란드: 4, 벨기에: 3, 이탈리아: 4, 노르웨이: 2, 세네갈: 2, 나이지리아: 2, 모로코: 2, 우루과이: 2, 콜롬비아: 2, 크로아티아: 2, '코트디부아르': 2, 미국: 1.5, 일본: 1.5, 대한민국: 1, 이집트: 1, 덴마크: 1.5, 스웨덴: 1, 가나: 1, 카메룬: 1, 에콰도르: 1 };
+  function ghostOf(Y, line, exclClub) {
+    const ln = line || 'L0'; const rng = seeded('ghost|bdo|' + Y + '|' + ln);
+    const nats = Object.keys(GHOST_NAT).filter(n => NATION[n]); const nation = wpick(nats, n => GHOST_NAT[n], rng);
+    const pos = wpick(['ST', 'LW', 'RW', 'AM', 'CM', 'CB', 'GK', 'DM'], k => ({ ST: 34, LW: 14, RW: 14, AM: 18, CM: 10, CB: 4, GK: 3, DM: 3 })[k], rng);
+    const age = clamp(Math.round(27 + gauss(rng) * 2.2), 22, 32); const birthYear = Y - 1 - age;
+    const sy = Y - 1; const top = CLUBS.filter(c => !c.mil && LEAGUES[c.lg]?.tier === 1 && c.id !== exclClub).map(c => ({ c, s: clubStr(c.id, sy) })).sort((a, b) => b.s - a.s).slice(0, 8);
+    const club = (wpick(top, (x, i) => 1, rng) || top[0])?.c.id || null;
+    const G = { ST: [26, 38, 4, 10], LW: [17, 26, 9, 16], RW: [17, 26, 9, 16], AM: [12, 20, 14, 22], CM: [7, 13, 11, 18], DM: [3, 7, 5, 10], CB: [3, 7, 1, 4], GK: [0, 0, 0, 0] }[pos];
+    const r = (lo, hi) => lo + Math.floor(rng() * (hi - lo + 1));
+    const g = r(G[0], G[1]), a = r(G[2], G[3]); const cs = pos === 'GK' ? r(17, 24) : null;
+    let name = null, look = null;
+    try { if (typeof NAMES !== 'undefined') name = NAMES.gen(nation, rng); } catch { }
+    try { if (typeof AVATAR !== 'undefined') look = AVATAR.randomLook(rng, nation); } catch { }
+    return { id: 'g' + Y + '-' + (hashStr(ln) % 1296).toString(36), Y, line: ln, name: name || ('Player ' + Y), nation, pos, birthYear, club, lg: club ? CLUB[club].lg : null, g, a, cs, look };
+  }
+  const ghostStat = (g) => g.pos === 'GK' ? `리그 클린시트 ${g.cs}` : `리그 ${g.g}골 ${g.a}도움`;
+  // 기록 속 선수로 사는 커리어: 그 해에 그가 어디 있었는지 스치는 문장
+  function ghostEcho(p, res) {
+    const G = p.ghost; if (!G) return; const cn = (id) => CLUB[id]?.name || id;
+    if (res.year === p.startYear) res.notes = (res.notes || []).concat(`세계선은 이 소년의 이름을 이미 알고 있다. ${G.Y}년 발롱도르, ${p.name}.`);
+    if (res.year === G.Y - 1 && G.club) res.notes = (res.notes || []).concat(res.club === G.club ? `세계선이 기억하는 그 시즌, 그는 정말로 ${cn(G.club)}에 있었다.` : `세계선이 기억하는 그는 이 시즌 ${cn(G.club)}의 유니폼을 입고 있었다. 이번에는 ${cn(res.club)}${hasJong(cn(res.club)) ? '이다' : '다'}.`);
+  }
   // 리그 순위표를 역사 쪽으로 기울인다. 다른 구단은 기록을 바꾸지 못하고, 주인공의 구단만 관성을 넘어서면 뒤집을 수 있다
   function bendTable(rows, X, me) {
     const x = rows.find(r => r.id === X), m = rows.find(r => r.id === me); if (!x || !m) return;
@@ -1223,7 +1257,7 @@ const ENGINE = (() => {
     for (const [key, r] of Object.entries(led.cont)) { const [comp, ys] = key.split('|'); const y = +ys; if ((h.s || []).some(s => s[0] === y && s[1] === r.club) && !(h.cont || []).some(t => t[0] === y && t[1] === comp)) hit(y, `${slY(y)} ${comp} · 원래 ${cn(r.club)} 우승 (${r.name})`); }
     for (const [Y, kind, nation] of h.nat || []) { const r = led.nat[kind + '|' + Y]; if (r && r.nation !== nation) hit(Y - 1, `${Y} ${TOUR[kind]?.comp || kind} 우승 ${nation} · 원래 ${r.nation} (${r.name})`); }
     for (const [Y, kind, won] of h.nt || []) { const r = led.nat[kind + '|' + Y]; if (r && r.nation === sum.nation && !won) hit(Y - 1, `${Y} ${TOUR[kind]?.comp || kind} · 원래 ${sum.nation} 우승 (${r.name})`); }
-    for (const Y of sum.bdoYears || []) { const r = led.bdo[Y]; if (r && r.by !== sum.id) hit(Y - 1, `${Y} 발롱도르 ${sum.name} · 원래 ${r.name}`); }
+    for (const Y of sum.bdoYears || []) { const r = led.bdo[Y]; if (r && r.by !== sum.id && r.by !== sum.ghost?.id) hit(Y - 1, `${Y} 발롱도르 ${sum.name} · 원래 ${r.name}`); }
     for (const [y, lg, a] of h.aw || []) { const r = led.award[a + '|' + lg + '|' + y]; if (r && r.by !== sum.id) hit(y, `${slY(y)} ${LEAGUES[lg]?.name || lg} ${a} ${sum.name} · 원래 ${r.name}`); }
     // 반대 방향: 같은 해 같은 구단(같은 나라)에 있던 사람의 기록엔 그 우승이 없다
     for (const [y, lg, club] of h.lg || []) for (const { c, s } of led.seasons) if (s[0] === y && s[1] === club && s[2] === lg && !(c.hist?.lg || []).some(t => t[0] === y && t[1] === lg)) hit(y, `${slY(y)} ${LEAGUES[lg]?.name || lg} 우승 ${cn(club)} · 원래 ${s[7] || '?'}위 (${c.name})`);
@@ -1496,6 +1530,7 @@ const ENGINE = (() => {
     const custom = !!TALENT[opt.talent];
     let P = custom ? TALENT[opt.talent].mu + gauss() * TALENT[opt.talent].sd : rollPotential();
     if (opt.parent) P = .65 * P + .35 * (opt.parent.peakOvr + 2) + 1.5;
+    if (opt.ghost && !custom) P = 87.5 + gauss() * 2.4; // 세계선이 발롱도르를 기억하는 사람
     P = clamp(P, 62, 99);
     const keys = attrsFor(opt.pos); const pw = POS[opt.pos].w; const rw = (ROLE[opt.role] || rolesFor(opt.pos)[0]).w;
     const attrs = {};
@@ -1510,6 +1545,7 @@ const ENGINE = (() => {
       familyId: opt.parent ? (opt.parent.familyId || opt.parent.id) : null, parentId: opt.parent?.id || null,
       generation: opt.parent ? (opt.parent.generation || 1) + 1 : 1, homeClub: opt.club,
       morale: 62, trust: 50, fans: { [opt.club]: 40 }, rep: 5, dur: 72, contract: 3, captain: false, nickname: '',
+      ghost: opt.ghost ? { id: opt.ghost.id, Y: opt.ghost.Y, name: opt.ghost.name, club: opt.ghost.club, line: opt.ghost.line, g: opt.ghost.g, a: opt.ghost.a, cs: opt.ghost.cs, pos: opt.ghost.pos } : null,
       flags: {}, kids: [], tags: [], clubMods: [], mgrOverride: {}, numbers: [],
       seasons: [], finals: [], national: [], trophies: [], awards: [], caps: 0, intlGoals: 0, injuries: [],
       status: 'active', pendingOffers: [], wantOut: false, released: false, peakOvr: 0, bdoYears: [], pendingEvents: [],
@@ -1863,6 +1899,7 @@ const ENGINE = (() => {
     res.meters = { morale: Math.round(p.morale), trust: Math.round(p.trust), fans: Math.round(p.fans[p.club] ?? 0), rep: Math.round(p.rep) };
     p.peakOvr = Math.max(p.peakOvr, res.ovrEnd);
     try { wiEcho(p, res); } catch { }
+    try { ghostEcho(p, res); } catch { }
     p.seasons.push(res);
     res.trophies.forEach(t => p.trophies.push({ ...t, year, club: p.club }));
     res.awards.forEach(a => p.awards.push({ name: a, year }));
@@ -2433,7 +2470,12 @@ const ENGINE = (() => {
   function ballonLate(p, world) {
     const res = p.seasons[p.seasons.length - 1]; if (!res || res.youthTeam || res.bdoDone) return null;
     res.bdoDone = true;
-    const o = ovr(p); if (o < 84 || res.apps < 25) return null;
+    const o = ovr(p);
+    if (o < 84 || res.apps < 25) {
+      // 기록 속 선수가 그 해 후보에도 오르지 못했다: 세계선이 기억하던 발롱도르는 다른 사람에게 간다
+      const y0 = res.year + 1; if (p.ghost && p.ghost.Y === y0 && !res.branch) { const r0 = ledOf(world, p)?.bdo[y0]; if (r0 && r0.by === p.ghost.id) { const branch = overturn(world, p, res.year, `${y0} 발롱도르 · 원래 ${p.name}`, res); const g2 = ghostOf(y0, p.line, p.club); res.bdoGhost = g2; res.bdoRival = g2.name; res.notes = (res.notes || []).concat(`세계선이 기억하던 그의 발롱도르는, 이번에는 ${g2.name}에게 갔다.`); return { won: false, branch }; } }
+      return null;
+    }
     let s = (o - 82) * 2.1 + (res.rating - 7) * 14 + (res.goals + res.assists) / 9 + p.rep / 25;
     const t = res.trophies.map(x => x.type);
     if (t.includes('ucl')) s += 11; else if (res.cont?.reached === '준우승' && res.cont.comp.includes('챔피언스')) s += 5; else if (res.cont?.reached === '4강' && res.cont.comp.includes('챔피언스')) s += 2;
@@ -2448,9 +2490,18 @@ const ENGINE = (() => {
     s -= ({ 1: 0, 2: 7, 3: 14, 4: 20 })[LEAGUES[res.lg].tier]; s -= p.bdoYears.length * 1.2;
     const yr = res.year + 1; const rival = 44.5 + gauss(seeded('bdo|' + yr)) * 3;
     const led = res.branch ? null : ledOf(world, p); const rec = led ? led.bdo[yr] : (!world?.lines && world?.bdo?.[yr] ? { name: world.bdo[yr] } : null);
+    // 기록 속 선수로 사는 커리어: 세계선이 기억하는 그 해의 발롱도르는 원래 나의 것이다
+    if (rec && p.ghost && rec.by === p.ghost.id) {
+      if (s + INERTIA.bdo > rival) { res.awards.push('발롱도르'); p.awards.push({ name: '발롱도르', year: res.year }); res.bdo = 1; p.bdoYears.push(yr); p.flags.bdoNew = yr; bump(p, 'rep', 5); res.notes = (res.notes || []).concat('세계선이 기억하는 대로, 그해 발롱도르는 그의 것이었다.'); return { won: true, year: yr, branch: null }; }
+      const branch = overturn(world, p, res.year, `${yr} 발롱도르 · 원래 ${p.name}`, res); const g2 = ghostOf(yr, p.line, p.club);
+      res.bdoRank = clamp(2 + Math.floor(Math.max(0, rival - s - INERTIA.bdo) / 2.2), 2, 30); res.bdoRival = g2.name; res.bdoGhost = g2;
+      res.notes = (res.notes || []).concat(`세계선이 기억하던 그의 발롱도르는, 이번에는 ${g2.name}에게 갔다.`); return { won: false, rank: res.bdoRank, branch };
+    }
     // 세계선이 기억하는 수상자가 있으면 그보다 확실히 앞서야 뒤집힌다
     if (s > rival && (!rec || (led && s > rival + INERTIA.bdo))) { res.awards.push('발롱도르'); p.awards.push({ name: '발롱도르', year: res.year }); res.bdo = 1; p.bdoYears.push(yr); p.flags.bdoNew = yr; bump(p, 'rep', 5); const branch = rec ? overturn(world, p, res.year, `${yr} 발롱도르 ${p.name} · 원래 ${rec.name}`, res) : null; return { won: true, year: yr, branch }; }
-    const rank = clamp(2 + Math.floor(Math.max(0, rival - s) / 2.2), 2, 40); if (rank <= 30) res.bdoRank = rank; if (rec && s > rival) { res.bdoRank = 2; res.bdoRival = rec.name; }
+    const rank = clamp(2 + Math.floor(Math.max(0, rival - s) / 2.2), 2, 40); if (rank <= 30) res.bdoRank = rank; if (rec && s > rival) res.bdoRank = 2; if (rec && res.bdoRank) res.bdoRival = rec.name;
+    // 기록된 수상자가 없는 해에 아깝게 놓쳤다면, 그 상을 가져간 사람이 세계선에 이름으로 남는다
+    if (!rec && res.bdoRank && res.bdoRank <= 3) { const g = ghostOf(yr, p.line, p.club); res.bdoGhost = g; res.bdoRival = g.name; }
     return { won: false, rank: res.bdoRank };
   }
 
@@ -2628,7 +2679,7 @@ const ENGINE = (() => {
       homeClub: p.homeClub, talent: p.talent, curve: p.curve, custom: !!p.custom, kids: (p.kids || []).slice(), numByClub, fans: { ...p.fans }, injuries: (p.injuries || []).length, majorInj: (p.injuries || []).filter(i => i.major).length, number: p.number, foot: p.foot, weak: p.weak, ambi: !!p.ambi,
       earned: Math.round(p.earned || 0), peakWage: Math.max(0, ...(p.wageHist || []).map(w => w.wage), p.wage || 0), early: p.flags.early || null, P: p.P,
       temper: temperament(p), tmp: { big: +T(p).big.toFixed(2), nat: +T(p).nat.toFixed(2) },
-      hist: histOf(p), scars: scarsOf(p), nations: nationsOf(p), natTeam: natT(p), natPick: p.flags.natPick || null, spouse: p.flags.partner ? { name: p.flags.partnerName || '', job: p.flags.partner, nation: p.flags.partnerNation || null, married: p.flags.married || null } : null, severity: p.severity || 'normal', medEnd: p.flags.medEnd || null, deceased: p.flags.deceased || null, whatIf: p.whatIf ? { of: p.whatIf.of, y: p.whatIf.y, kind: p.whatIf.kind, label: p.whatIf.label } : null, line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
+      hist: histOf(p), scars: scarsOf(p), nations: nationsOf(p), natTeam: natT(p), natPick: p.flags.natPick || null, ghosts: p.seasons.filter(x => x.bdoGhost).map(x => x.bdoGhost), gv: 1, ghost: p.ghost ? { ...p.ghost, kept: (p.bdoYears || []).includes(p.ghost.Y) } : null, spouse: p.flags.partner ? { name: p.flags.partnerName || '', job: p.flags.partner, nation: p.flags.partnerNation || null, married: p.flags.married || null } : null, severity: p.severity || 'normal', medEnd: p.flags.medEnd || null, deceased: p.flags.deceased || null, whatIf: p.whatIf ? { of: p.whatIf.of, y: p.whatIf.y, kind: p.whatIf.kind, label: p.whatIf.label } : null, line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
     };
   }
   // ---------- 영구결번 · 구단 명예의 전당 ----------
@@ -2776,7 +2827,7 @@ const ENGINE = (() => {
     LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    ghostOf, ghostStat, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, hasJong, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -5521,6 +5572,12 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     }
     return out;
   }
+  // 기록 속 선수: 주인공이 아깝게 놓친 발롱도르를 가져간 사람. 그 사람으로 살아볼 수 있다
+  function ghostTaken(g) { return S.world.careers.some(c => c.ghost?.id === g.id) || (S.p && S.p.ghost?.id === g.id) ? (S.world.careers.find(c => c.ghost?.id === g.id) || S.p) : null; }
+  function ghostBlock(g) {
+    (S.ghosts = S.ghosts || {})[g.id] = g; const by = ghostTaken(g); const can = g.birthYear + 16 >= 2026;
+    return `<div class="ghostp">${ava(g.look, g.club, { gk: g.pos === 'GK', age: g.Y - 1 - g.birthYear, cls: 'sm' })}<div class="grow"><p><b>발롱도르 ${g.Y} · ${esc(g.name)}</b></p><p class="small">${flag(g.nation)} ${esc(g.nation)} · ${esc(g.pos)} · ${g.Y - 1 - g.birthYear}세 · ${g.club ? `${crest(g.club, 'xs')} ${esc(club(g.club).name)} · ` : ''}${esc(E.ghostStat(g))}</p><p class="small muted">${g.birthYear}년생 · 이 세계선에 이름만 남은 사람이에요.</p>${by ? `<p class="small">${by === S.p && S.p.status !== 'retired' ? '지금 이 사람으로 살고 있어요.' : `이 사람의 커리어가 있어요. <button class="link" data-card="${by.id}">기록 보기</button>`}</p>` : can ? `<button class="btn sm" data-act="ghoststart" data-g="${g.id}">이 선수로 살아보기</button>` : '<p class="small muted">2026년 이전에 태어난 사람이라 직접 살아볼 수는 없어요.</p>'}</div></div>`;
+  }
   function viewAlmanac(w, VL, led) {
     const P = almPeople(VL, led); if (!P.length) return '<p class="muted">커리어가 하나라도 쌓이면, 해마다 이 세계선의 주인공들이 어디서 무엇을 했는지 여기에 쌓여요.</p>';
     const lo = Math.min(...P.map(x => x.c.startYear)), hi = Math.max(...P.map(x => x.cut != null ? Math.min(x.c.endYear, x.cut - 1) : x.c.endYear));
@@ -5537,13 +5594,15 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const nav = `<div class="alm-nav"><button class="btn sm" data-almy="${Y - 1}" ${Y <= lo ? 'disabled' : ''} aria-label="이전 시즌">‹</button>${sel}<button class="btn sm" data-almy="${Y + 1}" ${Y >= hi ? 'disabled' : ''} aria-label="다음 시즌">›</button></div>`;
     // 그해 세계선에 기록된 것: 주인공들이 남긴 우승과 상
     const W = [];
-    const bd = led.bdo[Y + 1]; if (bd) W.push(`발롱도르 ${Y + 1} · ${bd.name}`);
+    const bd = led.bdo[Y + 1]; if (bd && !bd.ghost) W.push(`발롱도르 ${Y + 1} · ${bd.name}`);
+    const liveG = !bd && S.p && (S.p.line || 'L0') === VL ? (S.p.seasons.find(r => r.year === Y && r.bdoGhost)?.bdoGhost || null) : null;
+    const gw = (bd && bd.ghost) || liveG ? ghostBlock((bd && bd.ghost) || liveG) : '';
     Object.entries(led.cont).forEach(([k, v]) => { const [comp, y] = k.split('|'); if (+y === Y) W.push(`${comp} · ${club(v.club).name} (${v.name})`); });
     Object.entries(led.nat).forEach(([k, v]) => { const [kind, y] = k.split('|'); if (+y === Y + 1) W.push(`${Y + 1} ${E.TOUR[kind]?.comp || kind} · ${v.nation} (${v.name})`); });
     if (S.p && (S.p.line || 'L0') === VL) { if ((S.p.bdoYears || []).includes(Y + 1) && !bd) W.push(`발롱도르 ${Y + 1} · ${S.p.name}`); }
     const cross = almCross(on, Y); const fw = almFootball(w, VL, Y);
     const head = `<div class="alm-top">${almRing(years, cnt, Y, splits)}<div><p class="eyebrow">시즌 연감</p><h3 class="alm-y">${sl(Y)}</h3><p class="small muted">${on.length ? `이 세계선의 주인공 ${on.length}명이 같은 해를 지나고 있었어요.` : '이 해에는 주인공이 없었어요.'}</p></div></div>${spNow.map(s => `<div class="alm-split"><span>세계선 분기</span><p>${esc(J(s.name, '이'))} 이 시즌에 갈라졌어요.</p>${s.what ? `<p class="small muted">${s.by ? `${esc(s.by)} · ` : ''}${esc(s.what)}</p>` : ''}</div>`).join('')}`;
-    const wl = W.length ? `<div class="alm-world"><span>그해의 기록</span>${W.map(t => `<p>${esc(t)}</p>`).join('')}</div>` : '';
+    const wl = W.length || gw ? `<div class="alm-world"><span>그해의 기록</span>${W.map(t => `<p>${esc(t)}</p>`).join('')}${gw}</div>` : '';
     const cl = cross.length ? `<div class="alm-cross"><span>엇갈린 길</span>${cross.map(t => `<p>${esc(t)}</p>`).join('')}</div>` : '';
     return `${head}${nav}${strip}${fw}${wl}${cl}<ul class="alm-list">${on.map(x => almEntry(x, Y, led)).join('')}${ghosts.map(x => almGhostEntry(x, Y, w)).join('')}</ul><p class="muted small">고리 하나가 한 시즌이에요. 같은 해를 산 주인공이 많을수록 짙어져요. 커리어가 쌓일수록 나이테가 두꺼워져요.${splits.length ? ' 보라색 점선은 이 세계선이 갈라진 해예요.' : ''}</p>`;
   }
@@ -5633,22 +5692,24 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     // 세계선: 후손은 부모가 있는 세계선(과 그 갈래)에서만
     const lineIds = Object.keys(S.world.lines || { L0: 1 });
     const kb = parent && f.kid >= 0 ? parent.kids?.[f.kid]?.born : null; const allowed = f.mode === 'heir' && parent ? lineIds.filter(id => E.lineChain(S.world, id).some(x => { if (x.id !== (parent.line || 'L0')) return false; const k = Math.min(x.cut, x.only?.[parent.id] ?? Infinity); return k === Infinity || k > (kb ?? parent.startYear); })) : lineIds;
+    if (f.mode === 'ghost') allowed.splice(0, allowed.length, f.ghost.line);
     if (!allowed.includes(f.line)) f.line = allowed.includes(parent?.line) ? parent.line : (allowed.includes(S.viewLine) ? S.viewLine : allowed[0] || 'L0');
     const ledN = E.lineView(S.world, f.line); const span = ledN && ledN.people.length ? [Math.min(...ledN.people.map(c => c.startYear)), Math.max(...ledN.people.map(c => Math.min(c.endYear, (ledN.cut[c.id] ?? Infinity) - 1)))] : null;
     const lineFld = retired.length ? `<div class="fld"><span>세계선</span>${lineIds.length > 1 ? `<select id="f-line" class="inp">${allowed.map(id => `<option value="${id}" ${id === f.line ? 'selected' : ''}>${esc(lineLabel(id))}</option>`).join('')}</select>` : ''}<p class="muted small">${span ? `이 세계선엔 ${span[0]}–${span[1]}년의 기록이 있어요. 기록이 있는 해에 뛰면 역사가 버티고, 기록된 우승·발롱도르를 뒤집으면 세계선이 갈라져요. 그때 뛰던 선배들도 동료나 상대로 나와요.` : '아직 기록이 없는 세계선이에요.'}</p></div>` : '';
-    const yearFld = `<label class="fld"><span>시작 연도 · 16세 시즌</span><div class="row wrapgap"><input id="f-year" class="inp grow" type="number" min="${f.mode === 'heir' && parent && f.kid < 0 ? heirYearRange(parent)[0] : 2026}" max="${f.mode === 'heir' && parent && f.kid < 0 ? heirYearRange(parent)[1] : 2400}" value="${f.startYear}" ${f.mode === 'heir' && f.kid >= 0 ? 'readonly' : ''}>${span && f.mode !== 'heir' ? `<button class="btn sm" data-yr="${Math.max(2026, span[0] - 2)}">선배들과 같은 시대</button><button class="btn sm" data-yr="${Math.max(2026, span[1] - 8)}">기록 끝 무렵</button><button class="btn sm" data-yr="${span[1] + 1}">기록 이후</button>` : ''}</div>${f.mode === 'heir' && parent && f.kid < 0 ? `<p class="muted small">${f.startYear - 16}년생 · ${esc(parent.name)} ${f.startYear - 16 - parent.birthYear}세 때${parent.spouse?.married ? ` · ${parent.spouse.married}년 결혼` : ''}. 태어난 해는 연도를 바꿔 고를 수 있어요.</p>` : ''}</label>`;
+    const yearFld = `<label class="fld"><span>시작 연도 · 16세 시즌</span><div class="row wrapgap"><input id="f-year" class="inp grow" type="number" min="${f.mode === 'heir' && parent && f.kid < 0 ? heirYearRange(parent)[0] : 2026}" max="${f.mode === 'heir' && parent && f.kid < 0 ? heirYearRange(parent)[1] : 2400}" value="${f.startYear}" ${(f.mode === 'heir' && f.kid >= 0) || f.mode === 'ghost' ? 'readonly' : ''}>${span && f.mode === 'new' ? `<button class="btn sm" data-yr="${Math.max(2026, span[0] - 2)}">선배들과 같은 시대</button><button class="btn sm" data-yr="${Math.max(2026, span[1] - 8)}">기록 끝 무렵</button><button class="btn sm" data-yr="${span[1] + 1}">기록 이후</button>` : ''}</div>${f.mode === 'heir' && parent && f.kid < 0 ? `<p class="muted small">${f.startYear - 16}년생 · ${esc(parent.name)} ${f.startYear - 16 - parent.birthYear}세 때${parent.spouse?.married ? ` · ${parent.spouse.married}년 결혼` : ''}. 태어난 해는 연도를 바꿔 고를 수 있어요.</p>` : ''}</label>`;
     return `<section class="panel"><h1 class="h1">새 커리어</h1>
-      ${retired.length ? `<div class="seg"><button data-mode="new" class="${f.mode === 'new' ? 'on' : ''}">새 선수</button><button data-mode="heir" class="${f.mode === 'heir' ? 'on' : ''}">가문 후손으로 시작</button></div>` : ''}
+      ${f.mode === 'ghost' ? (() => { const g = f.ghost; return `<div class="note ghostnote"><p><b>세계선의 기록 · ${g.Y} 발롱도르 ${esc(g.name)}</b></p><p class="small">기록 속 그는 ${sl(g.Y - 1)} 시즌 ${g.club ? esc(club(g.club).name) + '에서 ' : ''}${esc(E.ghostStat(g))}${E.hasJong(E.ghostStat(g)) ? '을' : '를'} 남기고 발롱도르를 받았어요. 이름도 국적도 태어난 해도 정해져 있어요. 나머지는 이제부터예요.</p><p class="small muted">그 해 발롱도르를 받으면 세계선이 기억하는 대로 흘러가요. 놓치면 세계선이 갈라져요.</p><button class="btn sm" data-mode="new">기록 속 선수 그만두고 새 선수로</button></div>`; })() : ''}
+      ${retired.length && f.mode !== 'ghost' ? `<div class="seg"><button data-mode="new" class="${f.mode === 'new' ? 'on' : ''}">새 선수</button><button data-mode="heir" class="${f.mode === 'heir' ? 'on' : ''}">가문 후손으로 시작</button></div>` : ''}
       ${f.mode === 'heir' ? `<label class="fld"><span>누구의 후손인가요</span><select id="f-parent" class="inp">${retired.map(c => `<option value="${c.id}" ${c.id === f.parentId ? 'selected' : ''}>${esc(c.name)} · ${c.pos} · ${c.startYear}–${c.endYear} · 피크 ${c.peakOvr}${(c.kids || []).length ? ` · 자녀 ${c.kids.length}` : ''}</option>`).join('')}</select></label>
         ${kids.length ? `<div class="fld"><span>어느 아이로 시작할까요</span><div class="seg">${kids.map((k, i) => `<button data-kid="${i}" class="${f.kid === i ? 'on' : ''}" ${k.used ? 'disabled title="이미 커리어가 있어요"' : ''}>${esc(k.name)} (${k.born}년생)${k.used ? ' · 뛰었음' : ''}</button>`).join('')}<button data-kid="-1" class="${f.kid === -1 ? 'on' : ''}">기록에 없는 아이</button></div><p class="muted small">${f.kid >= 0 ? '커리어 중에 태어난 아이예요. 이름과 태어난 해는 기록 그대로예요.' : '부모의 커리어 기록에 없는 아이로 시작해요. 시작하면 부모의 자녀 목록에 올라가요.'}</p></div>` : ''}
         ${parent ? `<p class="note">${esc(parent.name)}의 ${parent.generation === 1 ? '자식' : '후손'}(${(parent.generation || 1) + 1}대)으로 ${f.startYear}년에 16세로 시작해요. 재능 일부, 외모, 가문 클럽(${esc(club(parent.topClubs[0]?.club).name)})이 이어지고, 가문 출신 감독 아래서는 기회를 더 받아요.</p>` : ''}` : ''}
       <div class="newtop">${ava(L, f.club, { gk: f.pos === 'GK', cls: 'lg' })}<div class="grow">
-        <label class="fld"><span>이름</span><div class="row"><input id="f-name" class="inp grow" maxlength="40" value="${esc(f.name)}" placeholder="이름" ${f.mode === 'heir' && f.kid >= 0 ? 'readonly' : ''}><button class="btn" data-act="rname" title="국적에 맞는 이름 무작위">무작위</button></div></label>
-        <label class="fld"><span>국적</span><div class="row">${flag(f.nation, 'md')}<select id="f-nation" class="inp grow">${nationOpts}</select><button class="btn" data-act="rnation">무작위</button></div></label>
+        <label class="fld"><span>이름</span><div class="row"><input id="f-name" class="inp grow" maxlength="40" value="${esc(f.name)}" placeholder="이름" ${(f.mode === 'heir' && f.kid >= 0) || f.mode === 'ghost' ? 'readonly' : ''}>${f.mode === 'ghost' ? '' : '<button class="btn" data-act="rname" title="국적에 맞는 이름 무작위">무작위</button>'}</div></label>
+        <label class="fld"><span>국적</span><div class="row">${flag(f.nation, 'md')}<select id="f-nation" class="inp grow" ${f.mode === 'ghost' ? 'disabled' : ''}>${nationOpts}</select>${f.mode === 'ghost' ? '' : '<button class="btn" data-act="rnation">무작위</button>'}</div></label>
         <label class="fld"><span>${heirNats.length ? '추가 국적' : '두 번째 국적'} <span class="muted">(선택)</span></span><select id="f-nat2" class="inp">${nat2Opts}</select>${heirNats.length ? `<p class="muted small">자동으로 물려받는 국적: ${heirNats.map(x => `${flag(x.n)} ${esc(x.n)} <span class="muted">(${esc(x.why)})</span>`).join(' · ')}</p>` : ''}${(() => { const all = [...new Set([f.nation, ...heirNats.map(x => x.n), f.nat2].filter(Boolean))]; return all.length > 1 ? `<p class="small natsum">이 선수의 국적: ${all.map(n => `${flag(n)} ${esc(n)}`).join(' · ')} <span class="muted">— 대표팀은 나중에 고를 수 있어요</span></p>` : ''; })()}</label>
       </div></div>
       <div class="grid2">
-        <label class="fld"><span>포지션</span><select id="f-pos" class="inp">${posOpts}</select></label>
+        <label class="fld"><span>포지션</span><select id="f-pos" class="inp" ${f.mode === 'ghost' ? 'disabled' : ''}>${posOpts}</select></label>
         <label class="fld"><span>처음 해볼 역할</span><select id="f-role" class="inp">${roles.map(r => `<option value="${r.id}" ${r.id === f.role ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>
         <label class="fld"><span>유스 구단</span><div class="row"><select id="f-club" class="inp grow">${lgGroups}</select><button class="btn" data-act="rclub">무작위</button></div></label>
         <label class="fld"><span>선호 등번호</span><input id="f-num" class="inp" type="number" min="1" max="99" value="${f.number}"></label>
@@ -6125,6 +6186,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       ${sum.early ? `<p class="cc-sub small">${sum.early.age}세 조기 은퇴 · ${esc(EARLY_NAME[sum.early.reason] || '')}</p>` : ''}
       ${sum.talent && sum.curve ? (() => { const bn = E.bloomNote(sum); return `<p class="cc-sub small">숨겨져 있던 재능: <b>${esc(E.TALENT[sum.talent]?.label || '')}</b> · 성장 곡선: <b>${esc(({ early: '조숙형', normal: '보통형', late: '대기만성형' })[sum.curve] || '')}</b>${bn ? ` · <b class="cc-bloom ${bn.kind}">${esc(bn.badge)}</b>` : ''}</p>${bn ? `<p class="cc-bloomtxt">${esc(bn.text)}</p>` : ''}`; })() : ''}
       ${sum.natPick && (sum.natPick.over || []).length ? `<p class="cc-sub small">${sum.natPick.switched ? `${esc(sum.natPick.switched)}에서 ${esc(sum.natPick.chose)}로 대표팀을 바꿨다` : `${esc(sum.natPick.over.join(', '))} 대신 ${esc(sum.natPick.chose)}${E.hasJong(sum.natPick.chose) ? '을' : '를'} 택했다`} (${sum.natPick.year})</p>` : ''}
+      ${sum.ghost ? `<p class="cc-sub small">세계선이 기억하던 ${sum.ghost.Y} 발롱도르의 주인 · ${sum.ghost.kept ? '기억대로 들어 올렸다' : '이번에는 그에게 오지 않았다'}</p>` : ''}
       ${heirBlock}
       <div class="cc-stats"><div><b>${nf(sum.apps)}</b><span>출전</span></div>${isGK ? `<div><b>${nf(sum.saves)}</b><span>선방</span></div><div><b>${nf(sum.cs)}</b><span>클린시트</span></div>` : `<div><b>${nf(sum.goals)}</b><span>골</span></div><div><b>${nf(sum.assists)}</b><span>도움</span></div>`}<div><b>${sum.avgRating.toFixed(2)}</b><span>평균 평점</span></div><div><b>${sum.trophies}회</b><span>우승</span></div><div><b>${sum.awards}회</b><span>개인상</span></div></div>
       </div><div class="cc-r">
@@ -6905,18 +6967,19 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     }
     if (S.view === 'new' && ['rname', 'rnation', 'rclub', 'rlook', 'rall'].includes(a)) {
       const f = S.newForm; f.name = $('#f-name').value;
-      if (a === 'rnation' || a === 'rall') { f.nation = E.pick(E.NATIONS).name; }
-      if (a === 'rname' || a === 'rnation' || a === 'rall') f.name = f.mode === 'heir' ? f.name : NAMES.gen(f.nation);
+      if (f.mode === 'ghost' && ['rname', 'rnation'].includes(a)) return;
+      if ((a === 'rnation' || a === 'rall') && f.mode !== 'ghost') { f.nation = E.pick(E.NATIONS).name; }
+      if (a === 'rname' || a === 'rnation' || a === 'rall') f.name = f.mode === 'heir' || f.mode === 'ghost' ? f.name : NAMES.gen(f.nation);
       if (a === 'rclub' || a === 'rall' || a === 'rnation') f.club = randomClub(f.nation);
       if (a === 'rlook' || a === 'rall' || a === 'rnation') f.look = AVATAR.randomLook(Math.random, f.nation);
-      if (a === 'rall') { f.pos = E.pick(Object.keys(E.POS)); f.role = E.pick(E.rolesFor(f.pos)).id; f.trait = E.pick(Object.keys(E.TRAITS)); f.number = E.pick([7, 8, 9, 10, 11, 14, 17, 19, 21, 22, 23, 77, 99, 4, 5, 6, 1, 3]); }
+      if (a === 'rall' && f.mode !== 'ghost') { f.pos = E.pick(Object.keys(E.POS)); f.role = E.pick(E.rolesFor(f.pos)).id; f.trait = E.pick(Object.keys(E.TRAITS)); f.number = E.pick([7, 8, 9, 10, 11, 14, 17, 19, 21, 22, 23, 77, 99, 4, 5, 6, 1, 3]); }
       render(); return;
     }
     if (a === 'create') {
       const f = S.newForm; f.name = $('#f-name').value.trim();
       if (!f.name) { toast('이름을 적어 주세요.'); $('#f-name').focus(); return; }
       const parent = f.mode === 'heir' ? S.world.careers.find(c => c.id === f.parentId) : null;
-      const np = E.createPlayer({ nations: [f.nat2, ...(parent ? heirNations(parent, f.startYear) : [])].filter(n => n && n !== f.nation), name: f.name, nation: f.nation, pos: f.pos, role: f.role, talent: f.talent || undefined, startYear: f.startYear, club: f.club, parent, trait: f.trait, look: f.look, number: f.number, foot: f.foot || undefined });
+      const np = E.createPlayer({ nations: [f.nat2, ...(parent ? heirNations(parent, f.startYear) : [])].filter(n => n && n !== f.nation), name: f.name, nation: f.nation, pos: f.pos, role: f.role, talent: f.talent || undefined, startYear: f.startYear, club: f.club, parent, trait: f.trait, look: f.look, number: f.number, foot: f.foot || undefined, ghost: f.mode === 'ghost' ? f.ghost : undefined });
       np.severity = E.SEVERITY[f.severity] ? f.severity : 'real';
       if (parent && f.kid >= 0) { const k = parent.kids[f.kid]; if (k) k.used = true; }
       if (parent && f.kid < 0) { parent.kids = (parent.kids || []).concat({ name: f.name, born: f.startYear - 16, used: true, later: true }); Store.loadCareer(parent.id).then(d => { if (d) { d.kids = parent.kids.slice(); Store.save('career', d); } }).catch(() => { }); }
@@ -6925,6 +6988,11 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       S.p = np; S.world.activeId = np.id; S.choice = defaultChoice(np); S.offerPick = -1; S.lastRes = null; S.phase = 'prep'; S.windowQ = []; S.pendingNumber = null;
       Store.save('career', np); Store.save('world', S.world);
       S.view = 'career'; render(); window.scrollTo(0, 0); return;
+    }
+    if (a === 'ghoststart') {
+      const g = S.ghosts?.[el.dataset.g]; if (!g) return; const nat = g.nation;
+      S.newForm = { mode: 'ghost', ghost: g, name: g.name, nation: nat, pos: g.pos, role: E.rolesFor(g.pos)[0].id, talent: '', club: randomClub(nat), startYear: g.birthYear + 16, parentId: null, kid: -1, trait: 'pro', severity: 'real', number: g.pos === 'GK' ? 1 : g.pos === 'ST' ? 9 : 10, look: g.look || AVATAR.randomLook(Math.random, nat), line: g.line };
+      S.view = 'new'; render(); window.scrollTo(0, 0); return;
     }
     if (a === 'whatif') return openWhatIf(el.dataset.id);
     if (a === 'linkopen') { S.linkFor = el.dataset.id; render(); const lp = $('.linkp'); if (lp) lp.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
@@ -7101,6 +7169,15 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       if (doc && c.temper) { try { c.temper = E.temperament(doc); } catch { } }
       c.v14 = 1; changed = true;
     }
+    // 아깝게 놓친 발롱도르: 그 상을 가져간 사람을 세계선에 이름으로 남긴다
+    const lineAt = (d, y) => { const B = d.branches || []; let ln = B.length ? B[0].from : (d.line || 'L0'); for (const b of B) if (b.year <= y) ln = b.line; return ln; };
+    const ghostFill = (d, selfId) => { let n = 0; for (const r of d.seasons || []) { if (!r.bdoRank || r.bdoRank > 3 || r.bdoGhost || r.bdoRival || (r.awards || []).includes('발롱도르')) continue; const Y = r.year + 1; const ln = lineAt(d, r.year); let rec = null; try { rec = E.lineView(w, ln)?.bdo[Y]; } catch { } if (rec && rec.by !== selfId) { r.bdoRival = rec.name; n++; continue; } const g = E.ghostOf(Y, ln, r.club); r.bdoGhost = g; r.bdoRival = g.name; n++; } return n; };
+    for (const c of w.careers) {
+      if (c.gv) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
+      if (doc) { try { if (ghostFill(doc, c.id)) Store.save('career', doc); c.ghosts = (doc.seasons || []).filter(r => r.bdoGhost).map(r => r.bdoGhost); } catch (e) { console.warn('ghost', e); } }
+      c.gv = 1; changed = true;
+    }
+    if (S.p && !S.p.gv) { try { ghostFill(S.p, S.p.id); } catch { } S.p.gv = 1; changed = true; }
     const needs = w.careers.some(c => !c.line || !w.lines[c.line]) || (S.p && !(S.p.line && w.lines[S.p.line]));
     if (needs) { let out = []; try { out = E.migrateLines(w, S.p); } catch (e) { console.warn('lines', e); } changed = true; if (out.length) S.migMsg = `겹쳐 있던 커리어를 세계선 ${out.length}갈래로 정리했어요. 세계선 → 세계선 계보에서 볼 수 있어요.`; }
     if (changed) { Store.save('world', w); if (S.p) Store.save('career', S.p); }
