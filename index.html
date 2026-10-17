@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v55'</script>
+<script>window.SK_VER='v56'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -548,6 +548,13 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .alm-strip .ay.sp { box-shadow: inset 0 -4px 0 #8f84e8; } .alm-strip .ay.sp.on { box-shadow: 0 0 0 2px var(--gold), inset 0 -4px 0 #8f84e8; }
 .alm-split { border: 1px dashed #8f84e8; border-radius: 12px; padding: 9px 12px; margin-top: 10px; } .alm-split span { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: #8f84e8; } .alm-split p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.5; }
 .alm-p.ghost { opacity: .62; border-style: dashed; } .alm-p.ghost .px { filter: grayscale(1); } .alm-p.ghost p { margin: 0; line-height: 1.5; }
+.alm-gh { grid-column: 1 / -1; border: 1px dashed var(--line); border-radius: 14px; padding: 12px; opacity: .78; }
+.alm-gh p { margin: 0 0 4px; line-height: 1.5; }
+.ghl { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 2px 18px; }
+@media (min-width: 760px) { .ghl { grid-template-columns: 1fr 1fr; } }
+.ghl li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); min-width: 0; }
+.ghl .ghn { min-width: 0; display: flex; flex-direction: column; } .ghl .ghn .link { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.ghl .ghc { white-space: nowrap; flex-shrink: 0; }
 .alm-p .memo { margin: 2px 0 0; font-size: 13px; }
 .cc-wi { text-align: center; font-size: 12px; font-weight: 800; letter-spacing: .06em; color: #b8a8ff; margin: 6px 0 -4px; }
 .pill.wi { background: rgba(143, 132, 232, .16); color: #8f84e8; box-shadow: inset 0 0 0 1px rgba(143, 132, 232, .5); }
@@ -5525,6 +5532,13 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const c = x.c; const age = Y - c.birthYear; const h = (c.hist?.s || []).find(s => s[0] === Y); const home = w.lines?.[c.line]?.name || '원래 세계선';
     return `<li class="alm-p ghost"><div class="alm-h">${ava(c.look, h ? h[1] : c.topClubs?.[0]?.club || c.homeClub, { gk: c.pos === 'GK', age, cls: 'sm' })}<div><b><button class="link" data-card="${c.id}">${esc(c.name)}</button></b><small>${flag(c.natTeam || c.nation)} ${age}세 · ${esc(E.POS[c.pos]?.name || c.pos)}</small></div></div><p class="small">${sl(x.cut)} 시즌에 세계선이 갈라진 뒤, 이 세계선에서 그의 행방은 기록되지 않았다.</p>${h ? `<p class="small muted">${esc(home)}에서는 이 해 ${esc(club(h[1]).name)}에서 뛰고 있었다.</p>` : ''}</li>`;
   }
+  // 갈라지기 전의 주인공들: 한 사람씩 같은 문장을 되풀이하지 않고, 갈라진 시점별로 한 묶음에 모은다
+  function almGhostGroup(list, Y, w) {
+    if (!list.length) return ''; const by = new Map(); list.forEach(x => { const k = x.cut + '|' + (x.c.line || 'L0'); if (!by.has(k)) by.set(k, []); by.get(k).push(x); });
+    return [...by.values()].map(g => { const cut = g[0].cut; const home = w.lines?.[g[0].c.line]?.name || '원래 세계선';
+      const rows = g.map(x => { const c = x.c; const age = Y - c.birthYear; const h = (c.hist?.s || []).find(s => s[0] === Y); return `<li><span class="ghn"><button class="link" data-card="${c.id}">${esc(c.name)}</button> <small class="muted">${flag(c.natTeam || c.nation)} ${age}세 · ${esc(E.POS[c.pos]?.name || c.pos)}</small></span>${h ? `<span class="ghc small muted">${crest(h[1], 'xs')} ${esc(club(h[1]).name)}</span>` : ''}</li>`; }).join('');
+      return `<li class="alm-gh"><p class="small"><b>${g.length > 1 ? `행방이 기록되지 않은 사람들 · ${g.length}명` : '행방이 기록되지 않은 사람'}</b></p><p class="small muted">${sl(cut)} 시즌에 세계선이 갈라진 뒤, 이 세계선에서 ${g.length > 1 ? '그들' : '그'}의 행방은 기록되지 않았다. 오른쪽은 ${esc(home)}에서 ${g.length > 1 ? '그들이' : '그가'} 이 해 뛰던 곳이다.</p><ul class="ghl">${rows}</ul></li>`; }).join('');
+  }
   function almDoc(x) { if (x.doc) return x.doc; const d = ALM.docs[x.c.id]; return d === undefined ? undefined : d; }
   function almLoad(list) {
     const need = list.filter(x => !x.doc && ALM.docs[x.c.id] === undefined && !ALM.loading.has(x.c.id)); if (!need.length) return;
@@ -5610,7 +5624,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const head = `<div class="alm-top">${almRing(years, cnt, Y, splits)}<div><p class="eyebrow">시즌 연감</p><h3 class="alm-y">${sl(Y)}</h3><p class="small muted">${on.length ? `이 세계선의 주인공 ${on.length}명이 같은 해를 지나고 있었어요.` : '이 해에는 주인공이 없었어요.'}</p></div></div>${spNow.map(s => `<div class="alm-split"><span>세계선 분기</span><p>${esc(J(s.name, '이'))} 이 시즌에 갈라졌어요.</p>${s.what ? `<p class="small muted">${s.by ? `${esc(s.by)} · ` : ''}${esc(s.what)}</p>` : ''}</div>`).join('')}`;
     const wl = W.length || gw ? `<div class="alm-world"><span>그해의 기록</span>${W.map(t => `<p>${esc(t)}</p>`).join('')}${gw}</div>` : '';
     const cl = cross.length ? `<div class="alm-cross"><span>엇갈린 길</span>${cross.map(t => `<p>${esc(t)}</p>`).join('')}</div>` : '';
-    return `${head}${nav}${strip}${fw}${wl}${cl}<ul class="alm-list">${on.map(x => almEntry(x, Y, led)).join('')}${ghosts.map(x => almGhostEntry(x, Y, w)).join('')}</ul><p class="muted small">고리 하나가 한 시즌이에요. 같은 해를 산 주인공이 많을수록 짙어져요. 커리어가 쌓일수록 나이테가 두꺼워져요.${splits.length ? ' 보라색 점선은 이 세계선이 갈라진 해예요.' : ''}</p>`;
+    return `${head}${nav}${strip}${fw}${wl}${cl}<ul class="alm-list">${on.map(x => almEntry(x, Y, led)).join('')}${almGhostGroup(ghosts, Y, w)}</ul><p class="muted small">고리 하나가 한 시즌이에요. 같은 해를 산 주인공이 많을수록 짙어져요. 커리어가 쌓일수록 나이테가 두꺼워져요.${splits.length ? ' 보라색 점선은 이 세계선이 갈라진 해예요.' : ''}</p>`;
   }
   // ---------- 축구사 ----------
   const EC_TAGC = { '재정난': 'bad', '재건 중': 'bad', '몰락한 명문': 'bad', '하락세': 'bad', '신흥 부자': 'gold', '떠오르는 구단': 'gold', '상승세': 'gold' };
