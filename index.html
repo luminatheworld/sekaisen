@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v66'</script>
+<script>window.SK_VER='v67'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -641,6 +641,15 @@ const ENGINE = (() => {
     USA: { name: 'MLS', cup: 'US 오픈컵', games: 34, tier: 3, conf: 'CONCACAF', country: '미국' },
     KOR: { name: 'K리그1', cup: '코리아컵', games: 38, tier: 3, conf: 'AFC', country: '대한민국' },
     JPN: { name: 'J1리그', cup: '일왕배', games: 38, tier: 3, conf: 'AFC', country: '일본' },
+    // 동유럽 (1차 확장): ext 리그는 축구사 난수를 따로 굴려, 기존 세계선의 흐름을 흔들지 않는다
+    CRO: { name: '크로아티아 HNL', cup: '크로아티아컵', games: 36, tier: 3, conf: 'UEFA', country: '크로아티아', ext: true },
+    SRB: { name: '세르비아 수페르리가', cup: '세르비아컵', games: 37, tier: 3, conf: 'UEFA', country: '세르비아', ext: true },
+    UKR: { name: '우크라이나 프리미어리그', cup: '우크라이나컵', games: 30, tier: 3, conf: 'UEFA', country: '우크라이나', ext: true },
+    CZE: { name: '체코 리그', cup: '체코컵', games: 35, tier: 3, conf: 'UEFA', country: '체코', ext: true },
+    POL: { name: '에크스트라클라사', cup: '폴란드컵', games: 34, tier: 3, conf: 'UEFA', country: '폴란드', ext: true },
+    HUN: { name: '헝가리 NB I', cup: '헝가리컵', games: 33, tier: 3, conf: 'UEFA', country: '헝가리', ext: true },
+    ROU: { name: '루마니아 리가 1', cup: '루마니아컵', games: 40, tier: 3, conf: 'UEFA', country: '루마니아', ext: true },
+    BUL: { name: '불가리아 1부', cup: '불가리아컵', games: 36, tier: 3, conf: 'UEFA', country: '불가리아', ext: true },
   };
   // id, name, league, strength, color1, color2, kit pattern
   const C = (id, name, lg, str, c1, c2, pat = 'solid') => ({ id, name, lg, str, c1, c2, pat });
@@ -705,10 +714,18 @@ const ENGINE = (() => {
     C('gwj', '광주 FC', 'KOR', 63, '#F7C600', '#E2001A'), C('dae', '대전 하나 시티즌', 'KOR', 64, '#00594C', '#9E1B32', 'halves'), C('gwo', '강원 FC', 'KOR', 63, '#F47920', '#00594C'), C('suw', '수원 삼성', 'KOR', 63, '#1C3F94', '#ffffff', 'hband'),
     C('kob', '비셀 고베', 'JPN', 68, '#8A1538', '#000000'), C('kaw', '가와사키 프론탈레', 'JPN', 67, '#00A0E9', '#000000', 'stripes'), C('yok', '요코하마 F. 마리노스', 'JPN', 67, '#004C9C', '#ffffff'), C('fct', 'FC 도쿄', 'JPN', 64, '#004098', '#E60012', 'stripes'),
     Object.assign(C('gim', '김천 상무', 'KOR', 62, '#E2001A', '#1C3F94', 'hband'), { mil: true }),
+    C('din', '디나모 자그레브', 'CRO', 74, '#0A3D91', '#ffffff'), C('haj', '하이두크 스플리트', 'CRO', 70, '#ffffff', '#0A2A6B', 'hband'), C('rij', '리예카', 'CRO', 67, '#ffffff', '#0072CE'), C('osi', '오시예크', 'CRO', 65, '#1C3F94', '#FFFFFF', 'stripes'), C('var', '바라주딘', 'CRO', 62, '#0A3D91', '#ffffff'), C('lokz', '로코모티바', 'CRO', 61, '#0A3D91', '#FFD200'),
+    C('crv', '츠르베나 즈베즈다', 'SRB', 74, '#E2001A', '#ffffff', 'stripes'), C('prt', '파르티잔', 'SRB', 70, '#000000', '#ffffff', 'stripes'), C('voj', '보이보디나', 'SRB', 64, '#E2001A', '#ffffff', 'halves'), C('tsc', 'TSC', 'SRB', 64, '#0072CE', '#ffffff'), C('cuk', '추카리치키', 'SRB', 61, '#000000', '#FFD200'), C('rad', '라드니치키 니시', 'SRB', 60, '#B6121B', '#0A3D91'),
+    C('shk', '샤흐타르 도네츠크', 'UKR', 74, '#F58220', '#000000', 'stripes'), C('dyn', '디나모 키이우', 'UKR', 73, '#ffffff', '#0057B7'), C('pol', '폴리시아', 'UKR', 65, '#FFD200', '#00843D'), C('kry', '크리우바스', 'UKR', 63, '#E2001A', '#ffffff'), C('ole', '올렉산드리야', 'UKR', 62, '#FFD200', '#000000'), C('zor', '조리아', 'UKR', 62, '#000000', '#ffffff', 'hband'),
+    C('sla', '슬라비아 프라하', 'CZE', 75, '#E2001A', '#ffffff', 'halves'), C('spa', '스파르타 프라하', 'CZE', 74, '#8A1538', '#ffffff'), C('plz', '빅토리아 플젠', 'CZE', 72, '#E2001A', '#0057B7', 'halves'), C('ban', '바니크 오스트라바', 'CZE', 66, '#0072CE', '#ffffff', 'stripes'), C('mla', '믈라다 볼레슬라프', 'CZE', 64, '#0072CE', '#ffffff'), C('sig', '시그마 올로모우츠', 'CZE', 63, '#0A3D91', '#ffffff', 'hband'),
+    C('leg', '레기아 바르샤바', 'POL', 70, '#ffffff', '#00843D', 'hband'), C('lech', '레흐 포즈난', 'POL', 70, '#0057B7', '#ffffff'), C('rak', '라쿠프', 'POL', 68, '#E2001A', '#0057B7', 'halves'), C('jag', '야기엘로니아', 'POL', 67, '#FFD200', '#E2001A', 'stripes'), C('pog', '포곤 슈체친', 'POL', 65, '#0A3D91', '#8A1538', 'stripes'), C('gor', '구르니크 자브제', 'POL', 64, '#ffffff', '#0072CE', 'hband'),
+    C('fer', '페렌츠바로시', 'HUN', 72, '#00843D', '#ffffff', 'stripes'), C('pus', '푸슈카시 아카데미아', 'HUN', 64, '#FFD200', '#0A3D91'), C('paks', '퍼크시', 'HUN', 63, '#00843D', '#ffffff'), C('feh', '페헤르바르', 'HUN', 63, '#E2001A', '#0057B7', 'halves'), C('deb', '데브레첸', 'HUN', 61, '#E2001A', '#ffffff'), C('ujp', '우이페슈트', 'HUN', 60, '#5B2D8E', '#ffffff'),
+    C('fcsb', 'FCSB', 'ROU', 68, '#E2001A', '#0057B7', 'halves'), C('cfr', 'CFR 클루지', 'ROU', 67, '#8A1538', '#ffffff'), C('ucv', '우니베르시타테아 크라이오바', 'ROU', 65, '#0072CE', '#ffffff'), C('rap', '라피드 부쿠레슈티', 'ROU', 64, '#8A1538', '#ffffff', 'hband'), C('dinb', '디나모 부쿠레슈티', 'ROU', 62, '#E2001A', '#ffffff'), C('far', '파룰 콘스탄차', 'ROU', 62, '#0057B7', '#ffffff'),
+    C('lud', '루도고레츠', 'BUL', 71, '#00843D', '#ffffff'), C('levs', '레프스키 소피아', 'BUL', 64, '#0057B7', '#ffffff'), C('cska', 'CSKA 소피아', 'BUL', 64, '#E2001A', '#ffffff'), C('lpl', '로코모티프 플로브디프', 'BUL', 60, '#000000', '#E2001A', 'stripes'), C('bpl', '보테프 플로브디프', 'BUL', 59, '#E2001A', '#000000', 'stripes'), C('chm', '체르노 모레', 'BUL', 60, '#ffffff', '#0A3D91'),
     C('kas2', '가시마 앤틀러스', 'JPN', 66, '#B6121B', '#1C2C5B'), C('ura', '우라와 레즈', 'JPN', 66, '#E2001A', '#000000'), C('hir', '산프레체 히로시마', 'JPN', 66, '#5B2D8E', '#ffffff'), C('gam', '감바 오사카', 'JPN', 64, '#1C3F94', '#000000', 'stripes'),
   ];
   const CLUB = Object.fromEntries(CLUBS.map(c => [c.id, c]));
-  const RIVALS = [['mun', 'liv'], ['mun', 'mci'], ['ars', 'tot'], ['liv', 'eve'], ['che', 'tot'], ['rma', 'bar'], ['rma', 'atm'], ['bet', 'sev'], ['int', 'mil'], ['juv', 'int'], ['rom', 'laz'], ['gen', 'sam'], ['bvb', 's04'], ['bay', 'bvb'], ['psg', 'om'], ['ol', 'asse'], ['slb', 'fcp'], ['slb', 'scp'], ['aja', 'fey'], ['gal', 'fen'], ['fen', 'bjk'], ['cel2', 'ran'], ['oly', 'pao'], ['riv', 'boc'], ['ind', 'rac'], ['uls', 'poh'], ['fcs', 'suw'], ['hil', 'nas'], ['cor', 'pal2'], ['ath', 'rso'], ['nap', 'juv'], ['hsv', 'bsc'], ['ura', 'kas2']];
+  const RIVALS = [['din', 'haj'], ['crv', 'prt'], ['dyn', 'shk'], ['spa', 'sla'], ['leg', 'lech'], ['fer', 'ujp'], ['fcsb', 'dinb'], ['fcsb', 'rap'], ['levs', 'cska'], ['lpl', 'bpl'], ['mun', 'liv'], ['mun', 'mci'], ['ars', 'tot'], ['liv', 'eve'], ['che', 'tot'], ['rma', 'bar'], ['rma', 'atm'], ['bet', 'sev'], ['int', 'mil'], ['juv', 'int'], ['rom', 'laz'], ['gen', 'sam'], ['bvb', 's04'], ['bay', 'bvb'], ['psg', 'om'], ['ol', 'asse'], ['slb', 'fcp'], ['slb', 'scp'], ['aja', 'fey'], ['gal', 'fen'], ['fen', 'bjk'], ['cel2', 'ran'], ['oly', 'pao'], ['riv', 'boc'], ['ind', 'rac'], ['uls', 'poh'], ['fcs', 'suw'], ['hil', 'nas'], ['cor', 'pal2'], ['ath', 'rso'], ['nap', 'juv'], ['hsv', 'bsc'], ['ura', 'kas2']];
   const isRival = (a, b) => RIVALS.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
   const rivalOf = (a) => RIVALS.filter(r => r.includes(a)).map(r => r[0] === a ? r[1] : r[0]);
 
@@ -719,7 +736,7 @@ const ENGINE = (() => {
     N('네덜란드', 'UEFA', 83, 'NL'), N('벨기에', 'UEFA', 80, 'BE'), N('크로아티아', 'UEFA', 79, 'HR'), N('덴마크', 'UEFA', 77, 'NO'), N('스위스', 'UEFA', 76, 'DE'), N('오스트리아', 'UEFA', 76, 'DE'),
     N('노르웨이', 'UEFA', 75, 'NO'), N('튀르키예', 'UEFA', 75, 'TR'), N('우크라이나', 'UEFA', 73, 'UA'), N('세르비아', 'UEFA', 72, 'HR'), N('스웨덴', 'UEFA', 72, 'NO'), N('폴란드', 'UEFA', 72, 'PL'),
     N('체코', 'UEFA', 71, 'PL'), N('스코틀랜드', 'UEFA', 70, 'EN'), N('그리스', 'UEFA', 70, 'GR'), N('헝가리', 'UEFA', 69, 'HU'), N('웨일스', 'UEFA', 68, 'EN'), N('아일랜드', 'UEFA', 66, 'EN'),
-    N('알바니아', 'UEFA', 64, 'AL'), N('핀란드', 'UEFA', 63, 'NO'), N('아이슬란드', 'UEFA', 62, 'IS'),
+    N('루마니아', 'UEFA', 68, 'RO'), N('불가리아', 'UEFA', 60, 'BG'), N('알바니아', 'UEFA', 64, 'AL'), N('핀란드', 'UEFA', 63, 'NO'), N('아이슬란드', 'UEFA', 62, 'IS'),
     N('아르헨티나', 'CONMEBOL', 88, 'ES'), N('브라질', 'CONMEBOL', 87, 'BR'), N('우루과이', 'CONMEBOL', 80, 'ES'), N('콜롬비아', 'CONMEBOL', 79, 'ES'), N('에콰도르', 'CONMEBOL', 75, 'ES'),
     N('파라과이', 'CONMEBOL', 71, 'ES'), N('칠레', 'CONMEBOL', 70, 'ES'), N('페루', 'CONMEBOL', 68, 'ES'),
     N('모로코', 'CAF', 80, 'AR'), N('세네갈', 'CAF', 78, 'WA'), N('코트디부아르', 'CAF', 75, 'WA'), N('나이지리아', 'CAF', 74, 'NG'), N('알제리', 'CAF', 73, 'AR'), N('이집트', 'CAF', 72, 'AR'),
@@ -730,7 +747,7 @@ const ENGINE = (() => {
   ];
   const NATION = Object.fromEntries(NATIONS.map(n => [n.name, n]));
   const CONT_CUP = { UEFA: '유로', CONMEBOL: '코파 아메리카', CAF: '아프리카 네이션스컵', AFC: '아시안컵', CONCACAF: '골드컵', OFC: 'OFC 네이션스컵' };
-  const HOME_LEAGUE = { '잉글랜드': 'ENG', '스페인': 'ESP', '이탈리아': 'ITA', '독일': 'GER', '프랑스': 'FRA', '포르투갈': 'POR', '네덜란드': 'NED', '튀르키예': 'TUR', '벨기에': 'BEL', '스코틀랜드': 'SCO', '그리스': 'GRE', '브라질': 'BRA', '아르헨티나': 'ARG', '사우디아라비아': 'KSA', '미국': 'USA', '대한민국': 'KOR', '일본': 'JPN' };
+  const HOME_LEAGUE = { '잉글랜드': 'ENG', '스페인': 'ESP', '이탈리아': 'ITA', '독일': 'GER', '프랑스': 'FRA', '포르투갈': 'POR', '네덜란드': 'NED', '튀르키예': 'TUR', '벨기에': 'BEL', '스코틀랜드': 'SCO', '그리스': 'GRE', '브라질': 'BRA', '아르헨티나': 'ARG', '사우디아라비아': 'KSA', '미국': 'USA', '대한민국': 'KOR', '일본': 'JPN', '크로아티아': 'CRO', '세르비아': 'SRB', '우크라이나': 'UKR', '체코': 'CZE', '폴란드': 'POL', '헝가리': 'HUN', '루마니아': 'ROU', '불가리아': 'BUL' };
   const homeLeagues = (nation) => { const h = HOME_LEAGUE[nation]; return h ? Object.keys(LEAGUES).filter(k => k === h || LEAGUES[k].parent === h) : []; };
 
   // ---------- ATTRIBUTES ----------
@@ -998,7 +1015,7 @@ const ENGINE = (() => {
   // 그해의 승강(축구사·연감용)
   function movesAt(year) { const ec = econCur(); return (ec?.moves || []).filter(m => m.y === year); }
   function buildEcon(led, seed, folds = [], act = []) {
-    const rng = seeded('econ|' + seed); const gn = () => (rng() + rng() + rng() - 1.5) * 1.41;
+    const rng0 = seeded('econ|' + seed), rngX = seeded('econx|' + seed); let rng = rng0; const gn = () => (rng() + rng() + rng() - 1.5) * 1.41;
     const NY = ECON_Y1 - ECON_Y0 + 1; const pow = {}, fame = {}, raw = {}, fiO = {}, boost = {}, crisis = {}, tk = {};
     const lm = {}, trend = {}, lgM = {}, lgIdx = {}; const ev = []; const st = {};
     // 승강: 구단의 그해 리그(mem)와, 리그 수준을 천천히 따라가는 기준선(base)
@@ -1017,12 +1034,14 @@ const ENGINE = (() => {
       const byLg = {}; ECON_CLUBS.forEach(c => (byLg[mem[c.id]] = byLg[mem[c.id]] || []).push(c));
       if (i > 0) {
         for (const k of LG_KEYS) {
+          rng = LEAGUES[k].ext ? rngX : rng0;
           const r1 = rng(), r2 = rng(), g = gn(); const T = trend[k];
           if (T && T.left > 0) { lm[k] += T.d; T.left--; if (!T.left) trend[k] = null; }
           else { const pb = (LG_BOOM[k] || .012) * (LEAGUES[k].tier >= 4 ? .5 : 1); if (r1 < pb) { trend[k] = { d: .22 + r2 * .3, left: 8 + Math.floor(r2 * 8) }; ev.push({ y, lg: k, kind: 'boom' }); } else if (r1 < pb + .01) { trend[k] = { d: -(.25 + r2 * .3), left: 8 + Math.floor(r2 * 8) }; ev.push({ y, lg: k, kind: 'slump' }); } }
           lm[k] = clamp((lm[k] + g * .15) * .997, -8, 8);
         }
         for (const c of ECON_CLUBS) {
+          rng = LEAGUES[c.lg].ext ? rngX : rng0;
           const id = c.id; const a = rng(), b = rng(), cc = rng(), d = rng(), e = rng(), g2 = rng(), nz = gn(), nf = gn(); let kind = null;
           if (crisis[id] > 0) crisis[id]--;
           const L = mem[id]; base[id] += (LG_BASE[L] - base[id]) * .2;
@@ -1614,7 +1633,7 @@ const ENGINE = (() => {
 
   // ---------- 신체: 키와 체격 ----------
   // 능력치가 아니라 틀이다. 어떤 능력치가 어디까지 클 수 있는지, 어떻게 늙는지, 어디를 잘 다치는지를 조금씩 바꾼다
-  const H_NAT = { 네덜란드: 183, 덴마크: 182, 세르비아: 182, 크로아티아: 182, 노르웨이: 182, 아이슬란드: 182, 독일: 181, 스웨덴: 181, 체코: 181, 핀란드: 180, 오스트리아: 180, 벨기에: 180, 폴란드: 180, 우크라이나: 180, 스위스: 179, 잉글랜드: 179, 아일랜드: 179, 프랑스: 179, 웨일스: 178, 스코틀랜드: 178, 알바니아: 178, 헝가리: 178, 그리스: 178, 이탈리아: 178, 튀르키예: 177, 스페인: 177, 포르투갈: 176, 세네갈: 181, 카메룬: 180, 나이지리아: 179, 코트디부아르: 179, 가나: 178, 기니: 178, 모로코: 177, 알제리: 177, 이집트: 176, 마다가스카르: 172, 레소토: 172, 소말리아: 175, 아르헨티나: 176, 우루과이: 177, 브라질: 177, 콜롬비아: 175, 에콰도르: 173, 파라과이: 176, 칠레: 175, 페루: 172, 멕시코: 174, 미국: 179, 캐나다: 179, 코스타리카: 175, 자메이카: 178, 바베이도스: 177, 몬트세랫: 176, '영국령 버진아일랜드': 176, 대한민국: 177, 일본: 175, 이란: 178, 호주: 180, 사우디아라비아: 175, 우즈베키스탄: 177, 카타르: 175, 부탄: 170, 뉴질랜드: 180 };
+  const H_NAT = { 루마니아: 179, 불가리아: 179, 네덜란드: 183, 덴마크: 182, 세르비아: 182, 크로아티아: 182, 노르웨이: 182, 아이슬란드: 182, 독일: 181, 스웨덴: 181, 체코: 181, 핀란드: 180, 오스트리아: 180, 벨기에: 180, 폴란드: 180, 우크라이나: 180, 스위스: 179, 잉글랜드: 179, 아일랜드: 179, 프랑스: 179, 웨일스: 178, 스코틀랜드: 178, 알바니아: 178, 헝가리: 178, 그리스: 178, 이탈리아: 178, 튀르키예: 177, 스페인: 177, 포르투갈: 176, 세네갈: 181, 카메룬: 180, 나이지리아: 179, 코트디부아르: 179, 가나: 178, 기니: 178, 모로코: 177, 알제리: 177, 이집트: 176, 마다가스카르: 172, 레소토: 172, 소말리아: 175, 아르헨티나: 176, 우루과이: 177, 브라질: 177, 콜롬비아: 175, 에콰도르: 173, 파라과이: 176, 칠레: 175, 페루: 172, 멕시코: 174, 미국: 179, 캐나다: 179, 코스타리카: 175, 자메이카: 178, 바베이도스: 177, 몬트세랫: 176, '영국령 버진아일랜드': 176, 대한민국: 177, 일본: 175, 이란: 178, 호주: 180, 사우디아라비아: 175, 우즈베키스탄: 177, 카타르: 175, 부탄: 170, 뉴질랜드: 180 };
   const H_POS = { GK: 8, CB: 6, ST: 2, DM: 1, CM: 0, AM: -2, LW: -3, RW: -3, LB: -1, RB: -1, LWB: -2, RWB: -2 };
   const BUILD = { lean: '날렵', normal: '보통', stocky: '탄탄' };
   const hMean = (nation, pos) => (H_NAT[nation] ?? 177) + (H_POS[pos] ?? 0);
@@ -1706,7 +1725,7 @@ const ENGINE = (() => {
   }
 
   // ---------- COMPETITIONS ----------
-  const UEFA_SPOTS = { ENG: [4, 2, 1], ESP: [4, 2, 1], ITA: [4, 2, 1], GER: [4, 2, 1], FRA: [3, 2, 1], POR: [2, 1, 1], NED: [2, 1, 1], TUR: [1, 1, 1], BEL: [1, 1, 1], SCO: [1, 1, 1], GRE: [1, 1, 1] };
+  const UEFA_SPOTS = { ENG: [4, 2, 1], ESP: [4, 2, 1], ITA: [4, 2, 1], GER: [4, 2, 1], FRA: [3, 2, 1], POR: [2, 1, 1], NED: [2, 1, 1], TUR: [1, 1, 1], BEL: [1, 1, 1], SCO: [1, 1, 1], GRE: [1, 1, 1], CRO: [1, 1, 1], SRB: [1, 1, 1], UKR: [1, 1, 1], CZE: [1, 1, 1], POL: [1, 1, 1], HUN: [1, 1, 1], ROU: [1, 1, 1], BUL: [1, 1, 1] };
   function tableFor(lg, year, boost) {
     const rows = clubsIn(lg, year).map(c => ({ id: c.id, p: seasonPower(c.id, year) + (boost && boost.id === c.id ? boost.v : 0) + gauss(seeded('tab|' + lg + '|' + year + '|' + c.id)) * 1.6 + (boost && boost.id === c.id ? gauss() * .8 : 0) }));
     rows.sort((a, b) => b.p - a.p); return rows;
@@ -2576,7 +2595,7 @@ const ENGINE = (() => {
   // ---------- 연봉 (억 원) ----------
   // 리그 평균 연봉(그 리그 평균 수준 선수 기준) × 실력 × 구단 규모 × 나이 × 명성. 이적료는 €M로 계산하고 화면에선 원화로 바꾼다(€1M ≈ 15억 원).
   const EUR_KRW = 15;
-  const WAGE_AVG = { ENG: 45, ESP: 30, ITA: 25, GER: 28, FRA: 22, POR: 8, NED: 10, TUR: 15, BEL: 8, SCO: 5, GRE: 6, ENG2: 12, ESP2: 4, ITA2: 3.5, GER2: 6, FRA2: 3, BRA: 9, ARG: 3.5, KSA: 55, USA: 8, KOR: 2.5, JPN: 3 };
+  const WAGE_AVG = { ENG: 45, ESP: 30, ITA: 25, GER: 28, FRA: 22, POR: 8, NED: 10, TUR: 15, BEL: 8, SCO: 5, GRE: 6, ENG2: 12, ESP2: 4, ITA2: 3.5, GER2: 6, FRA2: 3, BRA: 9, ARG: 3.5, KSA: 55, USA: 8, KOR: 2.5, JPN: 3, CRO: 4, SRB: 3.5, UKR: 4, CZE: 4.5, POL: 5, HUN: 3.5, ROU: 3.5, BUL: 3 };
   const WAGE_CLUB = { psg: 1.35, rma: 1.15, mci: 1.1, bay: 1.1, mun: 1.1, che: 1.05, bar: 1.05, mia: 1.4 };
   const LG_AVG = {}; for (const k in LEAGUES) { const cs = CLUBS.filter(c => c.lg === k && !c.mil); LG_AVG[k] = cs.reduce((a, c) => a + c.str, 0) / cs.length; }
   function marketWage(p, clubId, year) {
@@ -2626,7 +2645,7 @@ const ENGINE = (() => {
     return Math.max(.3, 3 * Math.exp((o - 70) / 5.5) * ageF * ctF * (1 + p.rep / 220));
   }
   // 구단 이적 예산(€M): 구단 전력 × 리그 자금력
-  const WEALTH = { ENG: 1.6, ESP: 1.0, ITA: .85, GER: .95, FRA: .75, POR: .42, NED: .42, TUR: .5, BEL: .34, SCO: .28, GRE: .25, ENG2: .45, ESP2: .18, ITA2: .18, GER2: .25, FRA2: .14, BRA: .34, ARG: .18, KSA: 1.5, USA: .5, KOR: .14, JPN: .2 };
+  const WEALTH = { ENG: 1.6, ESP: 1.0, ITA: .85, GER: .95, FRA: .75, POR: .42, NED: .42, TUR: .5, BEL: .34, SCO: .28, GRE: .25, ENG2: .45, ESP2: .18, ITA2: .18, GER2: .25, FRA2: .14, BRA: .34, ARG: .18, KSA: 1.5, USA: .5, KOR: .14, JPN: .2, CRO: .2, SRB: .18, UKR: .22, CZE: .22, POL: .26, HUN: .2, ROU: .18, BUL: .16 };
   const CLUB_WEALTH = { psg: 2.1, mci: 1.15, che: 1.2, new: 1.3, rma: 1.3, bar: .85, bay: 1.2 };
   function clubBudget(id, year) { const c = CLUB[id] ? { ...CLUB[id], lg: lgAt(id, year) } : null; if (!c) return 1; const s = clubStr(id, year); return 8 * Math.exp((s - 70) / 6) * (CLUB_WEALTH[id] || WEALTH[c.lg] || .3) * (.8 + seeded('bud|' + id + '|' + year)() * .45); }
   // 영입 정책: 빌바오는 스페인(바스크) 선수만, 남미·아시아 리그는 외국인 슬롯이 좁고, 사우디는 30대 스타를 선호한다
@@ -2934,6 +2953,8 @@ const NAMES = (() => {
     DE: { f: ['Leon', 'Jonas', 'Florian', 'Kai', 'Niklas', 'Lukas', 'Julian', 'Maximilian', 'Felix', 'Moritz', 'Tim', 'Robin', 'Joshua', 'Yann', 'Marcel', 'Paul', 'Noah', 'Jannik'], l: ['Müller', 'Schmidt', 'Wagner', 'Becker', 'Hoffmann', 'Schulz', 'Koch', 'Richter', 'Wolf', 'Neuhaus', 'Brandt', 'Krause', 'Vogel', 'Baumann', 'Zimmermann', 'Hartmann', 'Lang', 'Keller'] },
     NL: { f: ['Matthijs', 'Cody', 'Xavi', 'Ryan', 'Teun', 'Brian', 'Daley', 'Joey', 'Sven', 'Wout', 'Jeremie', 'Micky', 'Thijs', 'Bram', 'Jesse'], l: ['de Vries', 'Bakker', 'Visser', 'Smit', 'Mulder', 'de Boer', 'van der Berg', 'Janssen', 'Dekker', 'Brouwer', 'Kuipers', 'Vermeulen', 'van Leeuwen', 'Hendriks', 'Peters'] },
     BE: { f: ['Arthur', 'Charles', 'Loïs', 'Amadou', 'Axel', 'Jarne', 'Lars', 'Senne', 'Mathéo', 'Robbe', 'Kobe', 'Wout'], l: ['Peeters', 'Janssens', 'Maes', 'Claes', 'Wouters', 'Goossens', 'Willems', 'Dubois', 'Lemaire', 'Hermans', 'Martens', 'Van Damme'] },
+    RO: { f: ['Andrei', 'Alexandru', 'Ianis', 'Răzvan', 'Florin', 'Dennis', 'Nicolae', 'Darius', 'Vlad', 'Radu', 'Tudor', 'Mihai'], l: ['Popescu', 'Ionescu', 'Stanciu', 'Hagi', 'Mitriță', 'Drăgușin', 'Rațiu', 'Man', 'Mihăilă', 'Coman', 'Marin', 'Dumitru'] },
+    BG: { f: ['Ivaylo', 'Georgi', 'Kiril', 'Dimitar', 'Martin', 'Petar', 'Stoyan', 'Nikolay', 'Valentin', 'Todor', 'Hristo', 'Radoslav'], l: ['Petrov', 'Ivanov', 'Georgiev', 'Dimitrov', 'Kostadinov', 'Despodov', 'Krastev', 'Hristov', 'Stoichkov', 'Berbatov', 'Nedelev', 'Popov'] },
     HR: { f: ['Luka', 'Ivan', 'Josip', 'Mateo', 'Marko', 'Dušan', 'Nikola', 'Lovro', 'Borna', 'Filip', 'Aleksandar', 'Toni', 'Ante', 'Stefan'], l: ['Horvat', 'Babić', 'Petrović', 'Marić', 'Jurić', 'Novak', 'Kovač', 'Knežević', 'Radić', 'Pavlović', 'Ilić', 'Tomić', 'Božić', 'Lukić'] },
     NO: { f: ['Martin', 'Viktor', 'Rasmus', 'Mikkel', 'Emil', 'Oscar', 'Alexander', 'Kasper', 'Sander', 'Magnus', 'Jesper', 'Elias', 'Oskari', 'Aksel'], l: ['Andersen', 'Johansson', 'Lindström', 'Nielsen', 'Larsen', 'Bergström', 'Hakala', 'Berg', 'Halvorsen', 'Lund', 'Dahl', 'Virtanen', 'Strand', 'Holm'] },
     IS: { f: ['Kári', 'Hákon', 'Ísak', 'Jón', 'Aron', 'Birkir', 'Orri', 'Sindri'], l: ['Sigurðsson', 'Guðmundsson', 'Jónsson', 'Gunnarsson', 'Bjarnason', 'Haraldsson', 'Einarsson'] },
@@ -3352,6 +3373,8 @@ const FLAGS = (() => {
     '스코틀랜드': bg('#005EB8') + saltire('#fff', 3.4),
     '그리스': stripes(9, '#0D5EAF', '#fff') + rect(0, 0, 11.1, 11.1, '#0D5EAF') + rect(4.45, 0, 2.2, 11.1, '#fff') + rect(0, 4.45, 11.1, 2.2, '#fff'),
     '헝가리': H(['#CE2939', '#fff', '#477050']),
+    '루마니아': V(['#002B7F', '#FCD116', '#CE1126']),
+    '불가리아': H(['#fff', '#00966E', '#D62612']),
     '웨일스': H(['#fff', '#00B140']) + `<path d="M8 13 L11 8 L15 7 L18 4 L19 7 L22 7 L20 10 L23 13 L19 12 L17 15 L14 12 L11 14 Z" fill="#D30731"/>`,
     '아일랜드': V(['#169B62', '#fff', '#FF883E']),
     '알바니아': bg('#E41E20') + `<path d="M15 4 L17 7 L21 6 L19 10 L22 13 L17 12 L15 16 L13 12 L8 13 L11 10 L9 6 L13 7 Z" fill="#000"/>`,
@@ -3634,8 +3657,50 @@ const CITIES = (() => {
     사이타마: '도쿄 바로 북쪽의 주거 도시. 일본에서 가장 뜨거운 서포터들의 홈.',
     히로시마: '평화의 도시. 오코노미야키와 미야지마, 온화한 세토내해 기후.',
     오사카: '일본 제2 도시. 먹다 망한다는 음식 천국, 사람들이 시끄럽고 다정하다.',
+    // 동유럽
+    자그레브: '크로아티아 수도. 오스트리아풍 구시가지와 카페 문화, 겨울엔 꽤 춥다.',
+    스플리트: '아드리아해의 항구 도시. 로마 궁전 안에서 사람들이 산다. 축구 열기가 뜨겁다.',
+    리예카: '크로아티아 최대 항구. 산과 바다 사이에 끼인 공업 도시, 카니발로 유명하다.',
+    오시예크: '크로아티아 동부 평원의 도시. 조용하고 물가가 싸다.',
+    바라주딘: '바로크 건물이 남은 작은 북부 도시. 축구 말고는 할 게 많지 않다.',
+    베오그라드: '세르비아 수도. 두 강이 만나는 도시, 밤이 길고 더비는 유럽에서 가장 거칠다.',
+    노비사드: '다뉴브 강가의 대학 도시. 여름 음악 축제로 유명하다.',
+    바치카토폴라: '세르비아 북부의 작은 마을. 구단이 마을의 전부다.',
+    니시: '세르비아 남부 도시. 소박하고 정이 많다.',
+    키이우: '우크라이나 수도. 드니프로 강 언덕 위 황금빛 돔의 도시.',
+    지토미르: '우크라이나 북서부 도시. 숲과 강에 둘러싸여 있다.',
+    크리비리흐: '광산과 제철의 도시. 길쭉하게 수십 킬로미터 이어져 있다.',
+    올렉산드리야: '우크라이나 중부의 작은 공업 도시.',
+    프라하: '체코 수도. 다리와 첨탑의 도시, 맥주가 물보다 싸다. 더비는 도시를 반으로 가른다.',
+    플젠: '맥주의 고향. 체코 서부의 공업 도시.',
+    오스트라바: '체코 동부의 옛 탄광 도시. 거칠고 솔직한 사람들.',
+    믈라다볼레슬라프: '자동차 공장이 먹여 살리는 작은 도시.',
+    올로모우츠: '모라비아의 대학 도시. 아담하고 조용하다.',
+    바르샤바: '폴란드 수도. 전쟁 뒤 다시 지은 구시가지와 유리 빌딩이 섞여 있다.',
+    포즈난: '폴란드 서부의 상업 도시. 홈 관중이 유난히 시끄럽다.',
+    쳉스토호바: '순례지로 유명한 폴란드 남부 도시.',
+    비아위스토크: '폴란드 북동부, 벨라루스 국경 가까운 도시.',
+    슈체친: '발트해로 이어지는 항구 도시. 바람이 세다.',
+    자브제: '실레지아의 탄광 도시. 폴란드 축구의 옛 심장.',
+    부다페스트: '헝가리 수도. 다뉴브를 사이에 둔 두 도시, 온천과 밤 풍경.',
+    펠추트: '인구 2천 명의 마을에 최신 경기장이 있다.',
+    데브레첸: '헝가리 동부의 대학 도시. 넓은 평원 한가운데.',
+    퍼크시: '원자력 발전소가 있는 다뉴브 강가의 작은 도시.',
+    세케슈페헤르바르: '헝가리 옛 왕들의 대관식 도시.',
+    부쿠레슈티: '루마니아 수도. 거대한 대로와 낡은 골목이 섞여 있다. 더비는 늘 뜨겁다.',
+    클루지나포카: '트란실바니아의 대학 도시. 젊고 활기차다.',
+    크라이오바: '루마니아 남서부 도시. 축구 열기가 대단하다.',
+    콘스탄차: '흑해의 항구 도시. 여름엔 해변으로 사람이 몰린다.',
+    라즈그라드: '불가리아 북동부의 작은 도시. 리그 최강 구단이 이곳에 있다.',
+    소피아: '불가리아 수도. 산 아래 자리한 오래된 도시, 물가가 싸다.',
+    플로브디프: '유럽에서 가장 오래된 도시 가운데 하나. 로마 극장 위로 사람들이 산책한다.',
+    바르나: '흑해 휴양 도시. 해변과 바다 정원.',
   };
   const BY_CLUB = {
+    din: '자그레브', lokz: '자그레브', haj: '스플리트', rij: '리예카', osi: '오시예크', var: '바라주딘', crv: '베오그라드', prt: '베오그라드', cuk: '베오그라드', voj: '노비사드', tsc: '바치카토폴라', rad: '니시',
+    dyn: '키이우', pol: '지토미르', kry: '크리비리흐', ole: '올렉산드리야', sla: '프라하', spa: '프라하', plz: '플젠', ban: '오스트라바', mla: '믈라다볼레슬라프', sig: '올로모우츠',
+    leg: '바르샤바', lech: '포즈난', rak: '쳉스토호바', jag: '비아위스토크', pog: '슈체친', gor: '자브제', fer: '부다페스트', ujp: '부다페스트', pus: '펠추트', deb: '데브레첸', paks: '퍼크시', feh: '세케슈페헤르바르',
+    fcsb: '부쿠레슈티', rap: '부쿠레슈티', dinb: '부쿠레슈티', cfr: '클루지나포카', ucv: '크라이오바', far: '콘스탄차', lud: '라즈그라드', levs: '소피아', cska: '소피아', lpl: '플로브디프', bpl: '플로브디프', chm: '바르나',
     mci: '맨체스터', mun: '맨체스터', ars: '런던', che: '런던', tot: '런던', whu: '런던', cry: '런던', ful: '런던', bre: '런던', liv: '리버풀', eve: '리버풀', new: '뉴캐슬', avl: '버밍엄', bha: '브라이턴', nfo: '노팅엄', wol: '울버햄튼',
     swd: '셰필드', lee: '리즈', sou: '사우샘프턴', der: '더비', wat: '왓퍼드', nor: '노리치', mid: '미들즈브러', sto: '스토크온트렌트',
     rma: '마드리드', atm: '마드리드', bar: '바르셀로나', ath: '빌바오', vil: '비야레알', rso: '산세바스티안', bet: '세비야', sev: '세비야', val: '발렌시아', lev: '발렌시아', gir: '지로나', cel: '비고', osa: '팜플로나', mal: '말라가', dep: '라코루냐', zar: '사라고사', spg: '히혼',
@@ -3698,6 +3763,7 @@ const PRESS = (() => {
     turkey: { name: '타라프타르', scale: 'ten1', where: '튀르키예 스포츠 타블로이드' },
     belgium: { name: '르 발롱 벨주', scale: 'ten1', where: '벨기에 스포츠지' },
     greece: { name: '갈라노 아틀리티카', scale: 'ten1', where: '그리스 스포츠지' },
+    east: { name: '스포르트 이스트', scale: 'ten1', where: '동유럽 축구 매체' },
     brazil: { name: '조르나우 두 크라키', scale: 'ten1', where: '브라질 스포츠지' },
     arg: { name: '라 인차다', scale: 'ten1', where: '아르헨티나 스포츠지' },
     gulf: { name: '알 말아브', scale: 'ten1', where: '사우디 스포츠지' },
@@ -3705,7 +3771,7 @@ const PRESS = (() => {
     kor: { name: '스포츠 한마당', scale: 'ten1', where: '국내 스포츠지' },
     jpn: { name: '주간 축구신보', scale: 'ten1', where: '일본 축구 주간지' },
   };
-  const LG_OUT = { ENG: 'tabloid', ENG2: 'tabloid', SCO: 'scot', ITA: 'italy', ITA2: 'italy', GER: 'germany', GER2: 'germany', FRA: 'france', FRA2: 'france', POR: 'portugal', NED: 'dutch', TUR: 'turkey', BEL: 'belgium', GRE: 'greece', BRA: 'brazil', ARG: 'arg', KSA: 'gulf', USA: 'usa', KOR: 'kor', JPN: 'jpn' };
+  const LG_OUT = { ENG: 'tabloid', ENG2: 'tabloid', SCO: 'scot', ITA: 'italy', ITA2: 'italy', GER: 'germany', GER2: 'germany', FRA: 'france', FRA2: 'france', POR: 'portugal', NED: 'dutch', TUR: 'turkey', BEL: 'belgium', GRE: 'greece', CRO: 'east', SRB: 'east', UKR: 'east', CZE: 'east', POL: 'east', HUN: 'east', ROU: 'east', BUL: 'east', BRA: 'brazil', ARG: 'arg', KSA: 'gulf', USA: 'usa', KOR: 'kor', JPN: 'jpn' };
   // 자국 언론 (해외파 소식)
   const HOME_OUT = { '대한민국': 'korhome', '일본': 'jpnhome' };
   OUT.korhome = { name: '스포츠 한마당', scale: 'ten1', where: '국내 스포츠지', home: true };
@@ -3738,6 +3804,7 @@ const PRESS = (() => {
     dutch: { legend: ['토털 풋볼의 후계자'], great: ['기술과 지능, 둘 다 갖췄다'], good: ['성장 곡선이 가파르다'], meh: ['볼 터치는 좋으나 결과물이 부족'], bad: ['아약스식 표현으로는 "아직 아니다"'], bench: ['출전 기회 부족'], inj: ['부상으로 흐름이 끊겼다'] },
     turkey: { legend: ['신이 내려왔다!!!', '이 남자를 위해 동상을 세워라!!'], great: ['경기장이 불타올랐다!', '팬들이 그를 위해 홍염을 켰다!'], good: ['나쁘지 않다! 하지만 우리는 더 원한다!'], meh: ['이게 전부인가?!'], bad: ['당장 짐 싸라!!!', '회장님, 이 선수 누가 데려왔습니까?!'], bench: ['벤치에 앉으려고 여기 왔나?!'], inj: ['또 부상?!'] },
     belgium: { legend: ['벨기에 무대는 그에게 좁다'], great: ['빅리그 진출은 시간문제'], good: ['착실한 시즌'], meh: ['보여준 것이 많지 않다'], bad: ['실망스러운 한 해'], bench: ['출전 기회 부족'], inj: ['부상으로 고생한 시즌'] },
+    east: { legend: ['이 리그는 그를 오래 붙잡아 둘 수 없다', '서유럽 스카우트들이 매주 관중석에 앉아 있다'], great: ['빅리그 이적은 시간문제', '더비의 주인공'], good: ['착실하게 한 단계 올라섰다'], meh: ['보여준 것이 많지 않다'], bad: ['기대에 한참 못 미쳤다'], bench: ['출전 기회 부족'], inj: ['부상으로 날아간 시즌'] },
     greece: { legend: ['아테네가 그의 이름을 외친다'], great: ['더비에서 가장 빛난 별'], good: ['기대만큼 해줬다'], meh: ['평범했다'], bad: ['팬들의 인내심이 바닥났다'], bench: ['기회가 없었다'], inj: ['부상에 울었다'] },
     brazil: { legend: ['크라키! 징가가 살아 있다', '브라질 축구의 기쁨 그 자체'], great: ['발끝에 마법이 있다'], good: ['좋은 시즌, 하지만 우리는 예술을 원한다'], meh: ['평범한 시즌'], bad: ['한물갔다는 말이 나온다'], bench: ['벤치에서 시간을 보냈다'], inj: ['부상으로 날린 시즌'] },
     arg: { legend: ['가슴에 엠블럼을 새긴 남자', '봄보네라가 그의 이름으로 흔들렸다'], great: ['가라(투지)와 기술, 둘 다 있다'], good: ['투지는 충분했다'], meh: ['가라가 부족하다'], bad: ['이 유니폼을 입을 자격이 있는가'], bench: ['경기장 밖에 있었다'], inj: ['부상이 그를 멈췄다'] },
@@ -4475,7 +4542,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     '불도저': ['The Bulldozer', 'La Excavadora', 'La Ruspa', 'Der Bulldozer', 'Le Bulldozer', 'O Trator', 'De Bulldozer', 'Buldozer', 'Η Μπουλντόζα', 'الجرافة', 'ブルドーザー'],
     '캡틴': ['The Captain', 'El Capitán', 'Il Capitano', 'Der Kapitän', 'Le Capitaine', 'O Capitão', 'De Kapitein', 'Kaptan', 'Ο Αρχηγός', 'القائد', 'キャプテン'],
   };
-  const LG_LANG = { ENG: 'en', ENG2: 'en', SCO: 'en', USA: 'en', ESP: 'es', ESP2: 'es', ARG: 'es', ITA: 'it', ITA2: 'it', GER: 'de', GER2: 'de', FRA: 'fr', FRA2: 'fr', POR: 'pt', BRA: 'pt', NED: 'nl', BEL: 'nl', TUR: 'tr', GRE: 'el', KSA: 'ar', JPN: 'ja', KOR: 'ko' };
+  const LG_LANG = { ENG: 'en', ENG2: 'en', SCO: 'en', USA: 'en', ESP: 'es', ESP2: 'es', ARG: 'es', ITA: 'it', ITA2: 'it', GER: 'de', GER2: 'de', FRA: 'fr', FRA2: 'fr', POR: 'pt', BRA: 'pt', NED: 'nl', BEL: 'nl', TUR: 'tr', GRE: 'el', KSA: 'ar', JPN: 'ja', KOR: 'ko', CRO: 'hr', SRB: 'sr', UKR: 'uk', CZE: 'cs', POL: 'pl', HUN: 'hu', ROU: 'ro', BUL: 'bg' };
   const CLUB_LANG = { and: 'fr', stl: 'fr', usg: 'fr', cha: 'fr' };
   const langOf = (clubId) => CLUB_LANG[clubId] || LG_LANG[E.CLUB[clubId]?.lg] || 'en';
   const localNick = (ko, clubId) => { const l = langOf(clubId); if (l === 'ko') return null; const row = NICK[ko]; return row ? row[NL.indexOf(l)] : null; };
