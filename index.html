@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v63'</script>
+<script>window.SK_VER='v64'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1834,7 +1834,7 @@ const ENGINE = (() => {
     const role = ROLE[choice.role] || rolesFor(p.pos)[0];
     const rs = roleScore(p, role.id);
     const xp0 = p.roleXp ? famOf(p, role.id) : FAM_MASTER; const fam = p.youth ? 1 : clamp(xp0 / FAM_MASTER, 0, 1);
-    const res = { year, age, club: p.club, lg: lgK, pos: p.pos, role: role.id, focus: choice.focus, attitude: choice.attitude, number: p.number, mgr: { name: mgr.name, style: mgr.style, legend: mgr.legend, q: mgr.q }, ovrStart: Math.round(o0), trophies: [], awards: [], finals: [], events: [], memo: choice.memo || '', memoQ: choice.memo && choice.q ? choice.q : '', notes: (mods.notes || []).slice(), captain: p.captain, loan: !!p.loanFrom, fam: famLevel(xp0), fit: +(rs - o0).toFixed(1), assigned: !!choice.assigned };
+    const res = { year, age, club: p.club, lg: lgK, pos: p.pos, role: role.id, focus: choice.focus, attitude: choice.attitude, number: p.number, mgr: { name: mgr.name, style: mgr.style, legend: mgr.legend, q: mgr.q, lid: mgr.legendId || null }, ovrStart: Math.round(o0), trophies: [], awards: [], finals: [], events: [], memo: choice.memo || '', memoQ: choice.memo && choice.q ? choice.q : '', notes: (mods.notes || []).slice(), captain: p.captain, loan: !!p.loanFrom, fam: famLevel(xp0), fit: +(rs - o0).toFixed(1), assigned: !!choice.assigned };
     if (p.pendingEvents?.length) { res.events.push(...p.pendingEvents); p.pendingEvents = []; }
     const isGK = p.pos === 'GK';
     const injW = clamp((mods.injWeeks || 0), 0, 46);
@@ -1949,6 +1949,8 @@ const ENGINE = (() => {
     p.peakOvr = Math.max(p.peakOvr, res.ovrEnd);
     try { wiEcho(p, res); } catch { }
     try { ghostEcho(p, res); } catch { }
+    // 은사: 세계선의 전설이 감독인 팀에서 제대로 뛴 시즌이 쌓이면, 그 인연은 감독이 떠나도 남는다
+    if (mgr.legend && mgr.legendId && !res.loan && (res.apps || 0) + (res.youthApps || 0) >= 10) { const M = p.mentors = p.mentors || {}; const m = M[mgr.legendId] = M[mgr.legendId] || { id: mgr.legendId, name: mgr.name, seasons: 0, first: year, clubs: [] }; m.seasons++; m.last = year; if (!m.clubs.includes(p.club)) m.clubs.push(p.club); }
     p.seasons.push(res);
     res.trophies.forEach(t => p.trophies.push({ ...t, year, club: p.club }));
     res.awards.forEach(a => p.awards.push({ name: a, year }));
@@ -2667,10 +2669,24 @@ const ENGINE = (() => {
       const cands = CLUBS.filter(c => c.id !== cur && !c.mil && clubStr(c.id, year) <= o + 2 && !recentlyLeft(p, c.id) && policyMul(p, c, o) >= .3).sort(() => R() - .5).slice(0, 3);
       res = res.concat(cands.map(c => offerTerms(p, { club: c.id, type: free ? 'free' : 'transfer', expect: expectRole(o, clubStr(c.id, year)), years: 1 + Math.floor(R() * 2), fee: free ? 0 : Math.round(fee * .7) })));
     }
+    // 은사의 부름: 예전 감독이 다른 팀을 맡고 있으면, 그 팀에서 먼저 연락이 온다
+    for (const m of mentorsOf(p)) {
+      const mc = mentorClub(world, p, m.id, year); if (!mc || mc === cur || CLUB[mc]?.mil || recentlyLeft(p, mc)) continue;
+      const s2 = clubStr(mc, year); if (o < s2 - 11) continue; const ex = res.find(x => x.club === mc && x.type !== 'loan');
+      if (ex) { ex.mentor = m.name; continue; }
+      if (R() < clamp(.35 + m.seasons * .1, 0, .8)) res.push(offerTerms(p, { club: mc, type: free ? 'free' : 'transfer', expect: expectRole(o, s2), years: Math.max(1, 2 + Math.floor(R() * 3) - (p.age >= 31 ? 1 : 0)), fee: free ? 0 : Math.round(fee * (.9 + R() * .2)), mentor: m.name }));
+    }
     const keep = !free && p.contract >= 2 && last && (last.share ?? 0) > .7 && p.age < 29 && !p.released && !extra.force;
     res.forEach(of => { if (of.type === 'loan') return; if (p.release && of.fee >= p.release) { of.buyout = true; return; } if (keep && clubStr(of.club, year) > clubStr(cur, year) + 2 && R() < .45) of.blocked = true; });
     return res;
   }
+  // 은사의 지금 자리: 그 사람의 감독 경력 중 이 해에 맡은 구단 (이 세계선에서 기록된 동안만)
+  const isMentor = (p, lid) => { const m = p.mentors?.[lid]; return !!m && (m.seasons >= 2 || (m.seasons >= 1 && p.flags['adv_' + lid])); };
+  function mentorClub(world, p, lid, year) {
+    const led = ledOf(world, p); const c = (led ? led.coaches : (world?.careers || [])).find(x => x.id === lid); if (!c) return null;
+    const k = led ? (led.cut[c.id] ?? Infinity) : Infinity; const st = (c.coach?.stints || []).find(x => year >= x.from && year <= x.to && x.from < k); return st ? st.club : null;
+  }
+  function mentorsOf(p) { return Object.values(p.mentors || {}).filter(m => isMentor(p, m.id)).sort((a, b) => b.seasons - a.seasons); }
   function expectRole(o, s) { const r = o - s; return r >= 3 ? '핵심 주전' : r >= -1 ? '주전 경쟁' : r >= -5 ? '로테이션' : '백업·유망주'; }
 
   function endOfSeason(p, world) {
@@ -2738,7 +2754,7 @@ const ENGINE = (() => {
       homeClub: p.homeClub, talent: p.talent, curve: p.curve, custom: !!p.custom, kids: (p.kids || []).slice(), numByClub, fans: { ...p.fans }, injuries: (p.injuries || []).length, majorInj: (p.injuries || []).filter(i => i.major).length, number: p.number, foot: p.foot, weak: p.weak, ambi: !!p.ambi,
       earned: Math.round(p.earned || 0), peakWage: Math.max(0, ...(p.wageHist || []).map(w => w.wage), p.wage || 0), early: p.flags.early || null, P: p.P,
       temper: temperament(p), tmp: { big: +T(p).big.toFixed(2), nat: +T(p).nat.toFixed(2) },
-      hist: histOf(p), scars: scarsOf(p), nations: nationsOf(p), natTeam: natT(p), natPick: p.flags.natPick || null, ghosts: p.seasons.filter(x => x.bdoGhost).map(x => x.bdoGhost), gv: 2, ghost: p.ghost ? { ...p.ghost, kept: (p.bdoYears || []).includes(p.ghost.Y) } : null, spouse: p.flags.partner ? { name: p.flags.partnerName || '', job: p.flags.partner, nation: p.flags.partnerNation || null, married: p.flags.married || null } : null, severity: p.severity || 'normal', medEnd: p.flags.medEnd || null, deceased: p.flags.deceased || null, whatIf: p.whatIf ? { of: p.whatIf.of, y: p.whatIf.y, kind: p.whatIf.kind, label: p.whatIf.label } : null, line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
+      hist: histOf(p), scars: scarsOf(p), nations: nationsOf(p), natTeam: natT(p), natPick: p.flags.natPick || null, mentors: mentorsOf(p).slice(0, 3).map(m => ({ name: m.name, seasons: m.seasons, clubs: m.clubs, first: m.first, last: m.last })), ghosts: p.seasons.filter(x => x.bdoGhost).map(x => x.bdoGhost), gv: 2, ghost: p.ghost ? { ...p.ghost, kept: (p.bdoYears || []).includes(p.ghost.Y) } : null, spouse: p.flags.partner ? { name: p.flags.partnerName || '', job: p.flags.partner, nation: p.flags.partnerNation || null, married: p.flags.married || null } : null, severity: p.severity || 'normal', medEnd: p.flags.medEnd || null, deceased: p.flags.deceased || null, whatIf: p.whatIf ? { of: p.whatIf.of, y: p.whatIf.y, kind: p.whatIf.kind, label: p.whatIf.label } : null, line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
     };
   }
   // ---------- 영구결번 · 구단 명예의 전당 ----------
@@ -2886,7 +2902,7 @@ const ENGINE = (() => {
     lgAt, clubsIn, movesAt, setActive, PAIRS, LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, hasJong, sharedPast, splitSummer, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -4371,10 +4387,18 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       { label: '조용히 기부만 한다', hint: '사기 +2', run(x) { return H(x).b('morale', 2); } },
     ] };
   } });
+  // 다시 만난 은사: 함께했던 레전드 감독과 몇 년 뒤 같은 팀에서
+  def({ id: 'mentorback', phase: 'pre', cd: 0, w: (c) => { const p = c.p; const m = E.managerFor(p.club, p.year, c.world, p); const M = m.legend && p.mentors?.[m.legendId]; if (!M || !E.isMentor(p, m.legendId) || M.last >= p.year - 1 || p.flags['reun_' + m.legendId + '_' + p.year]) return 0; return 90; }, make(c) {
+    const p = c.p; const m = E.managerFor(p.club, p.year, c.world, p); const M = p.mentors[m.legendId]; const gap = p.year - M.last; const where = M.clubs.map(id => club(id)).join('·');
+    return { title: `다시 만난 은사, ${m.name}`, tone: 'legacy', text: `${where}에서 함께한 ${M.seasons}시즌 이후 ${gap}년 만이다. 훈련장 입구에서 그가 먼저 손을 내밀었다. "많이 컸구나."`, options: [
+      { label: '그때처럼 믿고 따른다', hint: '감독 신뢰 ▲▲ · 성장 조금 ▲', run(x) { x.p.flags['reun_' + m.legendId + '_' + x.p.year] = 1; const h = H(x); h.mod('growth', 1.03); return h.b('trust', 10); } },
+      { label: '이제는 같은 눈높이에서 이야기한다', hint: '사기 ▲ · 감독 신뢰 ▲', run(x) { x.p.flags['reun_' + m.legendId + '_' + x.p.year] = 1; const h = H(x); return [h.b('morale', 6), h.b('trust', 4)].join(' · '); } },
+    ] };
+  } });
   def({ id: 'legendcoach', phase: 'pre', cd: 0, w: (c) => { const p = c.p; const m = E.managerFor(p.club, p.year, c.world, p); if (!m.legend || p.flags['metL_' + m.legendId]) return 0; return 80; }, make(c) {
     const p = c.p; const m = E.managerFor(p.club, p.year, c.world, p); const fam = m.family && m.family === (p.familyId || p.id);
     return { title: fam ? `감독은 우리 가문의 ${m.name}` : `레전드 감독 ${m.name}`, tone: 'legacy', text: fam ? `벤치에 앉은 사람은 같은 피를 나눈 ${m.name}이다. 기자들은 "족벌 기용"을 의심하지만, 그는 누구보다 엄격하다.` : `세계선의 레전드 ${J(m.name, '이')} 이 팀을 이끌고 있다. 그의 현역 시절 영상을 보며 자랐다.`, options: [
-      { label: '조언을 구한다', hint: '성장 ×1.06 · 감독 신뢰 +6', run(x) { x.p.flags['metL_' + m.legendId] = 1; const h = H(x); h.mod('growth', 1.06); return h.b('trust', 6); } },
+      { label: '조언을 구한다', hint: '성장 ×1.06 · 감독 신뢰 +6', run(x) { x.p.flags['metL_' + m.legendId] = 1; x.p.flags['adv_' + m.legendId] = 1; const h = H(x); h.mod('growth', 1.06); return h.b('trust', 6); } },
       { label: '실력으로만 인정받겠다', hint: '사기 +4', run(x) { x.p.flags['metL_' + m.legendId] = 1; return H(x).b('morale', 4); } },
     ] };
   } });
@@ -5946,7 +5970,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const market = p.youth ? '' : `<section class="panel"><div class="ptitle"><h2>이적 시장</h2>${p.released ? '<span class="pill red">방출</span>' : ''}${p.contract <= 0 && !p.loanFrom ? '<span class="pill gold">자유계약</span>' : ''}</div>
       <div class="offers">
         ${p.released ? '' : offerRow(-1, p.club, '잔류', '', `${lgTag(p.club, p.year, p)} · ${E.expectRole(o, E.clubStr(p.club, p.year))}${p.contract <= 0 && !p.loanFrom ? ` · 2년 재계약 · 연봉 ${E.fmtWon(p.renewOffer ?? E.renewWage(p))}` : p.wage ? ` · 연봉 ${E.fmtWon(p.wage)}` : ''}`, S.offerPick === -1, false, null)}
-        ${offers.map((of, i) => { const oc = club(of.club); const m2 = E.managerFor(of.club, p.year, S.world, p); const pills = `${of.type === 'loan' ? '<span class="pill">임대</span>' : of.type === 'free' ? '<span class="pill gold">자유</span>' : ''}${of.blocked ? '<span class="pill red">거절됨</span>' : ''}${E.isRival(p.club, of.club) ? '<span class="pill red">라이벌</span>' : ''}${of.home ? '<span class="pill">친정</span>' : ''}${m2.legend ? '<span class="pill gold">레전드 감독</span>' : ''}${of.buyout ? '<span class="pill gold">바이아웃</span>' : ''}${of.withdrawn ? '<span class="pill red">철회</span>' : ''}${of.release ? '<span class="pill">바이아웃 조항</span>' : ''}${of.minutes ? '<span class="pill">출전 보장</span>' : ''}`; E.offerTerms(p, of); return offerRow(i, of.club, oc.name, pills, `${lgTag(of.club, p.year, p)} · ${of.expect}${of.type !== 'loan' ? ` · ${of.years}년 · <span class="fee">연봉 ${E.fmtWon(of.wage)}</span>${of.fee ? ` · <span class="fee">이적료 ${E.fmtFee(of.fee)}</span>` : ''}` : ' · 연봉은 원 소속팀 그대로'}`, S.offerPick === i, of.blocked || of.withdrawn, of); }).join('')}
+        ${offers.map((of, i) => { const oc = club(of.club); const m2 = E.managerFor(of.club, p.year, S.world, p); const pills = `${of.mentor ? `<span class="pill gold">은사 ${esc(of.mentor)}</span>` : ''}${of.type === 'loan' ? '<span class="pill">임대</span>' : of.type === 'free' ? '<span class="pill gold">자유</span>' : ''}${of.blocked ? '<span class="pill red">거절됨</span>' : ''}${E.isRival(p.club, of.club) ? '<span class="pill red">라이벌</span>' : ''}${of.home ? '<span class="pill">친정</span>' : ''}${m2.legend ? '<span class="pill gold">레전드 감독</span>' : ''}${of.buyout ? '<span class="pill gold">바이아웃</span>' : ''}${of.withdrawn ? '<span class="pill red">철회</span>' : ''}${of.release ? '<span class="pill">바이아웃 조항</span>' : ''}${of.minutes ? '<span class="pill">출전 보장</span>' : ''}`; E.offerTerms(p, of); return offerRow(i, of.club, oc.name, pills, `${lgTag(of.club, p.year, p)} · ${of.expect}${of.type !== 'loan' ? ` · ${of.years}년 · <span class="fee">연봉 ${E.fmtWon(of.wage)}</span>${of.fee ? ` · <span class="fee">이적료 ${E.fmtFee(of.fee)}</span>` : ''}` : ' · 연봉은 원 소속팀 그대로'}`, S.offerPick === i, of.blocked || of.withdrawn, of); }).join('')}
         ${!offers.length && !p.released ? '<p class="muted small">들어온 제안이 없어요.</p>' : ''}
         ${(() => { const pl = p.flags.renewPledge; if (!pl || pl.year !== p.year || pl.club !== p.club || !offers.some(o => o.type !== 'loan' && !o.blocked)) return ''; return pl.open ? `<p class="note">이번 여름 ${esc(J(club(p.club).name, '와'))} 계약을 연장하면서, 좋은 제안이 오면 이적을 추진하기로 합의했어요.</p>` : `<p class="note">이번 여름 ${esc(J(club(p.club).name, '와'))} 장기 재계약에 서명했어요. 팬들은 잔류 선언으로 받아들였어요. 지금 떠나면 약속을 깬 이적이 돼요.</p>`; })()}
       </div></section>`;
@@ -6284,6 +6308,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       ${sum.early ? `<p class="cc-sub small">${sum.early.age}세 조기 은퇴 · ${esc(EARLY_NAME[sum.early.reason] || '')}</p>` : ''}
       ${sum.talent && sum.curve ? (() => { const bn = E.bloomNote(sum); return `<p class="cc-sub small">숨겨져 있던 재능: <b>${esc(E.TALENT[sum.talent]?.label || '')}</b> · 성장 곡선: <b>${esc(({ early: '조숙형', normal: '보통형', late: '대기만성형' })[sum.curve] || '')}</b>${bn ? ` · <b class="cc-bloom ${bn.kind}">${esc(bn.badge)}</b>` : ''}</p>${bn ? `<p class="cc-bloomtxt">${esc(bn.text)}</p>` : ''}`; })() : ''}
       ${sum.natPick && (sum.natPick.over || []).length ? `<p class="cc-sub small">${sum.natPick.switched ? `${esc(sum.natPick.switched)}에서 ${esc(sum.natPick.chose)}로 대표팀을 바꿨다` : `${esc(sum.natPick.over.join(', '))} 대신 ${esc(sum.natPick.chose)}${E.hasJong(sum.natPick.chose) ? '을' : '를'} 택했다`} (${sum.natPick.year})</p>` : ''}
+      ${(sum.mentors || []).length ? `<p class="cc-sub small">은사 · ${sum.mentors.map(m => `${esc(m.name)} <span class="muted">(${esc(m.clubs.map(c => club(c).name).join('·'))} ${m.seasons}시즌)</span>`).join(' · ')}</p>` : ''}
       ${sum.ghost ? `<p class="cc-sub small">세계선이 기억하던 ${sum.ghost.Y} 발롱도르의 주인 · ${sum.ghost.kept ? '기억대로 들어 올렸다' : '이번에는 그에게 오지 않았다'}</p>` : ''}
       ${heirBlock}
       <div class="cc-stats"><div><b>${nf(sum.apps)}</b><span>출전</span></div>${isGK ? `<div><b>${nf(sum.saves)}</b><span>선방</span></div><div><b>${nf(sum.cs)}</b><span>클린시트</span></div>` : `<div><b>${nf(sum.goals)}</b><span>골</span></div><div><b>${nf(sum.assists)}</b><span>도움</span></div>`}<div><b>${sum.avgRating.toFixed(2)}</b><span>평균 평점</span></div><div><b>${sum.trophies}회</b><span>우승</span></div><div><b>${sum.awards}회</b><span>개인상</span></div></div>
