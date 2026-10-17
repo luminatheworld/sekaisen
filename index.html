@@ -12,12 +12,12 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v61'</script>
+<script>window.SK_VER='v62'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&display=swap">
+<link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&display=swap">
 <style>
 /* Layout: 낮 경기장. 밝은 회백색 바탕에 사선 결, 흰 카드, 금색 잉크 배지. 커리어 카드만 남색 트레이딩 카드로 남긴다. */
 :root {
@@ -327,7 +327,7 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
   .cc-r { border-left: 1px solid var(--line); padding-left: 24px; }
 }
 .lifebox { background: var(--panel-2); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; } .lifebox p { margin: 0; }
-.cc-top { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.cc-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); } .cc-top > :last-child { white-space: nowrap; flex-shrink: 0; }
 .cc-mid { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
 .cc-mid > div { display: flex; flex-direction: column; min-width: 0; } .cc-mid .right { align-items: flex-end; text-align: right; }
 .cc-ava { display: flex; justify-content: center; }
@@ -342,7 +342,7 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .cc-stats span { font-size: 11.5px; font-weight: 700; color: var(--gold); }
 .cc-badges { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
 .cc-clubs { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; } .cc-clubs.many { gap: 10px 12px; } .cc-clubs.many > span { min-width: 44px; }
-.cc-clubs > span { display: flex; flex-direction: column; align-items: center; gap: 4px; } .cc-clubs small { font-size: 11px; color: var(--muted); font-weight: 700; }
+.cc-clubs > span { display: flex; flex-direction: column; align-items: center; gap: 4px; } .cc-clubs small { font-size: 11px; color: var(--muted); font-weight: 700; white-space: nowrap; }
 .cc-clubs img, .cc-clubs svg { filter: drop-shadow(0 0 .6px rgba(255,255,255,.75)) drop-shadow(0 0 3px rgba(255,255,255,.22)); }
 .careercard p { text-align: center; }
 .sampleout { white-space: pre-wrap; background: var(--panel-2); border-radius: var(--r-sm); padding: 14px; font-size: 14px; }
@@ -444,7 +444,7 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .ctx span.hot { background: var(--red-bg); color: var(--red); } .ctx span.cool { background: var(--pos-bg); color: var(--pos); }
 /* 기질 공개 */
 .tmp { border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
-.tmp-l { font-size: 11px; font-weight: 900; letter-spacing: .1em; color: var(--muted); }
+.tmp-l { font-size: 11px; font-weight: 900; letter-spacing: .1em; color: var(--muted); white-space: nowrap; }
 .tmp-n { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .tmp-n b { font-family: var(--f-serif); font-size: 22px; font-weight: 900; color: var(--gold); padding: 2px 14px; border-radius: 10px; background: var(--gold-bg); }
 .tmp-d { font-size: 12px; color: var(--muted); }
@@ -6011,7 +6011,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   async function shotNode(node, name, width) {
     const holder = document.createElement('div'); holder.className = 'shotholder'; const inner = document.createElement('div'); inner.className = 'shotin'; inner.style.width = width + 'px'; inner.appendChild(node); holder.appendChild(inner); document.body.appendChild(holder);
     try {
-      await new Promise(r => setTimeout(r, 80)); const MS = window.modernScreenshot; if (!MS) throw new Error('lib');
+      await new Promise(r => setTimeout(r, 80)); try { await Promise.race([document.fonts?.ready, new Promise(r => setTimeout(r, 1500))]); } catch { } const MS = window.modernScreenshot; if (!MS) throw new Error('lib');
       // 엠블럼·아바타 이미지가 다 그려진 뒤에 높이를 잰다(안 그러면 아래가 잘린다)
       await Promise.all([...inner.querySelectorAll('img')].map(im => im.complete ? (im.decode ? im.decode().catch(() => {}) : 0) : new Promise(r => { im.onload = im.onerror = r; })));
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
