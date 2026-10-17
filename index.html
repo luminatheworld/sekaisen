@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v70'</script>
+<script>window.SK_VER='v71'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -105,6 +105,10 @@ textarea.inp { resize: vertical; }
 .pill.gold { background: var(--gold-bg); color: var(--gold); box-shadow: inset 0 0 0 1px rgba(154, 106, 8, .4); }
 .pill.red { background: var(--red-bg); color: var(--red); }
 .pill.quiet { background: transparent; box-shadow: inset 0 0 0 1px var(--line); justify-self: start; }
+.groute { margin: 8px 0 4px; } .groute.gr-rec { margin-top: 14px; } .gr-t { font-size: 12.5px; color: var(--muted); margin: 0 0 5px; font-weight: 600; } .gr-style { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 999px; background: var(--gold-bg); color: var(--gold); font-size: 11.5px; font-weight: 700; }
+.gr-bar { display: flex; gap: 2px; height: 7px; border-radius: 4px; overflow: hidden; background: var(--panel-3); } .gr-bar i { display: block; min-width: 3px; height: 100%; background: var(--c); }
+.gr-leg { display: flex; flex-wrap: wrap; gap: 3px 11px; margin: 6px 0 0; font-size: 12px; color: var(--muted); } .gr-leg span { white-space: nowrap; } .gr-leg span::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 2px; background: var(--c); margin-right: 4px; vertical-align: 1px; } .gr-leg b { color: var(--ink); font-weight: 700; } .gr-leg small { margin-left: 3px; color: var(--faint); }
+.gr-r { --c: var(--blue); } .gr-l { --c: var(--pos); } .gr-h { --c: var(--gold-hi); } .gr-ls { --c: #8a5ac6; } .gr-fk { --c: #d0721e; } .gr-pk { --c: var(--red); }
 .fit { font-weight: 700; white-space: nowrap; } .fit.good { color: var(--pos); } .fit.bad { color: var(--red); } .fit.mid { color: var(--muted); } .fitbar { display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 2px; } .fitbar i { width: 5px; height: 11px; border-radius: 1.5px; background: currentColor; opacity: .2; } .fitbar i.on { opacity: 1; }
 details.fold > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; font-weight: 700; min-height: 36px; }
 details.fold > summary::-webkit-details-marker { display: none; }
@@ -1970,8 +1974,9 @@ const ENGINE = (() => {
         }
       }
       const totalGames = lg.games + cupR + 2 + contGames;
-      const apps = Math.round(clamp(totalGames * share * av * (.92 + R() * .12), 0, totalGames));
-      res.apps = apps; res.lgApps = Math.round(lg.games * share * av);
+      // 시즌 중 이벤트에서 골을 넣었다면 적어도 그 경기들엔 나섰다
+      const apps = Math.max(isGK ? 0 : (mods.goals || 0), Math.round(clamp(totalGames * share * av * (.92 + R() * .12), 0, totalGames)));
+      res.apps = apps; res.lgApps = Math.max(Math.min(apps, mods.goals || 0), Math.round(lg.games * share * av));
       if (isGK) {
         const spg = clamp(2.6 + (80 - clubStr(p.club, year)) * .06 + gauss() * .2, 1.5, 5);
         res.saves = poisson(apps * spg);
@@ -1980,7 +1985,7 @@ const ENGINE = (() => {
       } else {
         const q = qS;
         const form = clamp(1 + gauss() * .14 * role.v * traitMul(p, 'mood', 1.4) + mor * .25 + (mods.form || 0), .5, 1.6);
-        res.goals = poisson(apps * POS[p.pos].g * role.g * q * form);
+        res.goals = Math.max(mods.goals || 0, poisson(apps * POS[p.pos].g * role.g * q * form));
         res.assists = poisson(apps * POS[p.pos].a * role.a * q * form);
       }
       let rt = rbase + gauss() * .16 * role.v * traitMul(p, 'mood', 1.35) + (rank <= 2 ? .06 : 0);
@@ -1994,6 +1999,7 @@ const ENGINE = (() => {
       awardsFor(p, res, lg, rank, age, led, world);
     }
     const a0 = { ...p.attrs }; const fam0 = famLevel(famOf(p, role.id)); res.a0 = {}; for (const k of Object.keys(a0)) res.a0[k] = +(+a0[k]).toFixed(2); res.ceil0 = +(p.ceil || 0).toFixed(2);
+    if (!isGK && res.goals) { const gt = goalRoutes(p, res, mods.gk || {}); if (gt) res.gt = gt; }
     growth(p, res, share * (p.youth ? 1 : clamp(av + .15, 0, 1)), choice, mgr, mods);
     res.attrD = {}; for (const k of attrsFor(p.pos)) res.attrD[k] = +((p.attrs[k] || 0) - (a0[k] || 0)).toFixed(1);
     nationalTeam(p, res, mods);
@@ -2788,10 +2794,12 @@ const ENGINE = (() => {
       p.loanFrom = null; p.club = offer.club; p.contract = offer.years || 3; p.leftAt = p.leftAt || {}; p.leftAt[from] = p.year;
       if (offer.fee) p.fees = (p.fees || []).concat({ year: p.year, from, to: offer.club, fee: offer.fee });
       p.pendingEvents.push((offer.type === 'free' ? '자유 이적: ' : '이적: ') + CLUB[offer.club].name);
-      if (isRival(from, offer.club)) { p.fans[from] = clamp((p.fans[from] ?? 30) - 45, 0, 100); p.pendingEvents.push(CLUB[from].name + ' 팬들이 라이벌 이적에 분노했다'); p.tags.push('rivalmove'); }
-      else p.fans[from] = clamp((p.fans[from] ?? 30) - 8, 0, 100);
+      // 방출당했거나 구단이 무너져 떠난 선수는 배신자가 아니다
+      const pushed = p.released || p.flags?.forcedOut === p.year; p.flags.leftPushed = pushed ? p.year : p.flags.leftPushed;
+      if (isRival(from, offer.club) && !pushed) { p.fans[from] = clamp((p.fans[from] ?? 30) - 45, 0, 100); p.pendingEvents.push(CLUB[from].name + ' 팬들이 라이벌 이적에 분노했다'); p.tags.push('rivalmove'); }
+      else if (!pushed) p.fans[from] = clamp((p.fans[from] ?? 30) - 8, 0, 100);
       // 같은 여름에 맺은 재계약을 깨고 떠났다: 이례적인 사건으로 남는다
-      const pl = p.flags?.renewPledge; if (pl && pl.year === p.year && pl.club === from && !pl.open) { p.fans[from] = clamp((p.fans[from] ?? 30) - 30, 0, 100); p.flags.renewLeave = { year: p.year, from, to: offer.club }; p.tags.push('renewleave'); p.pendingEvents.push(`갑작스러운 작별 · 몇 주 전 ${CLUB[from].name}${hasJong(CLUB[from].name) ? '과' : '와'} 장기 재계약을 맺었던 그가 떠났다. ${CLUB[from].name} 팬들 사이에서 실망과 분노가 터져 나왔다`); }
+      const pl = p.flags?.renewPledge; if (pl && !pushed && pl.year === p.year && pl.club === from && !pl.open) { p.fans[from] = clamp((p.fans[from] ?? 30) - 30, 0, 100); p.flags.renewLeave = { year: p.year, from, to: offer.club }; p.tags.push('renewleave'); p.pendingEvents.push(`갑작스러운 작별 · 몇 주 전 ${CLUB[from].name}${hasJong(CLUB[from].name) ? '과' : '와'} 장기 재계약을 맺었던 그가 떠났다. ${CLUB[from].name} 팬들 사이에서 실망과 분노가 터져 나왔다`); }
     }
     if (p.fans[offer.club] == null) p.fans[offer.club] = 30;
     p.trust = offer.type === 'loan' ? 52 : 48 + (p.trait === 'lead' ? 5 : 0);
@@ -2813,7 +2821,7 @@ const ENGINE = (() => {
     return {
       id: p.id, name: p.name, nation: p.nation, pos: p.pos, origPos: p.origPos, role: p.role, trait: p.trait, look: p.look, nickname: p.nickname, nickLocal: p.nickLocal || null, roles: mainRoles(p), body: p.body ? { h: p.body.h, b: p.body.b } : null, legends: (p.legends || []).map(e => ({ ...e, line: legendLine(e) })), feats: (p.feats || []).map(e => ({ ...e, line: featLine(e) })), birthYear: p.birthYear, startYear: p.startYear, endYear: p.year - 1,
       retireAge: p.age - 1, seasons: s.length, clubs: topClubs.length, peakOvr: p.peakOvr,
-      apps: sum('apps'), goals: sum('goals'), assists: sum('assists'), saves: sum('saves'), cs: sum('cs'), avgRating: +avg.toFixed(2),
+      apps: sum('apps'), goals: sum('goals'), gt: p.pos === 'GK' ? null : routeSum(p, s), assists: sum('assists'), saves: sum('saves'), cs: sum('cs'), avgRating: +avg.toFixed(2),
       trophies: p.trophies.filter(t => t.type !== 'youth').length, youthTrophies: p.trophies.filter(t => t.type === 'youth').length, awards: p.awards.length, awardCount, bdo: p.bdoYears.length, bdoYears: p.bdoYears.slice(),
       topClubs, stints, familyId: p.familyId || p.id, parentId: p.parentId, generation: p.generation, caps: p.caps, intlGoals: p.intlGoals,
       uclFinals: p.finals.filter(f => f.comp === 'UEFA 챔피언스리그').length, uclWins: p.finals.filter(f => f.comp === 'UEFA 챔피언스리그' && f.won).length,
@@ -2823,6 +2831,63 @@ const ENGINE = (() => {
       hist: histOf(p), scars: scarsOf(p), nations: nationsOf(p), natTeam: natT(p), natPick: p.flags.natPick || null, mentors: mentorsOf(p).slice(0, 3).map(m => ({ name: m.name, seasons: m.seasons, clubs: m.clubs, first: m.first, last: m.last })), ghosts: p.seasons.filter(x => x.bdoGhost).map(x => x.bdoGhost), gv: 2, ghost: p.ghost ? { ...p.ghost, kept: (p.bdoYears || []).includes(p.ghost.Y) } : null, spouse: p.flags.partner ? { name: p.flags.partnerName || '', job: p.flags.partner, nation: p.flags.partnerNation || null, married: p.flags.married || null } : null, severity: p.severity || 'normal', medEnd: p.flags.medEnd || null, deceased: p.flags.deceased || null, whatIf: p.whatIf ? { of: p.whatIf.of, y: p.whatIf.y, kind: p.whatIf.kind, label: p.whatIf.label } : null, line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
     };
   }
+  // ---------- 득점 루트 ----------
+  // 그 시즌 골이 어떤 경로로 들어갔는지: 주발/약발 · 헤더 · 중거리 · PK · 프리킥.
+  // 능력치(시즌 시작 시점)·역할·키·주발/약발 레벨로 나눈다. 시즌마다 고정 시드라 옛 시즌도 다시 계산해도 같다.
+  const GR_HEAD = { CB: .5, FB: .16, WB: .16, DM: .22, CM: .16, AM: .1, W: .1, ST: .24 };
+  const GR_LONG = { CB: .05, FB: .08, WB: .09, DM: .26, CM: .17, AM: .16, W: .1, ST: .06 };
+  const GR_ROLE = { target: [1.9, .5], aerialcb: [1.4, .6], widetm: [2.2, .6], farpost: [1.8, .6], boxcrash: [1.35, .55], poacher: [1.15, .35], channel: [.8, .5], raum: [1.3, .4], shadow: [1, .7], complete: [1, 1.1], dlf: [1, 1.3], false9: [.6, 1.4],
+    insidef: [.6, 1.5], invwinger: [.7, 1.2], iso: [.6, .9], winger: [.8, .8], trackback: [1, .9], wide10: [.6, 1.3],
+    regista: [.8, 1.6], dlp: [.8, 1.5], linebreaker: [.8, 1.4], mezzala: [1, 1.25], b2b: [1.2, 1.25], segundo: [1.2, .9], carrier: [.8, 1.2], roam: [.8, 1.2], carrilero: [1, 1], anchor: [1.3, 1.1], destroyer: [1.1, 1.2], volante: [1, 1.3], halfback: [1.3, 1],
+    treq: [.6, 1.45], enganche: [.5, 1.6], mediapunta: [.9, 1.2], free10: [.6, 1.3], ap: [.6, 1.3],
+    libero: [.9, 1.5], bpd: [1, 1.4], stopper: [1.1, .8], invwb: [.7, 1.5], underlap: [.8, 1.1], attwb: [1, 1] };
+  const GR_KEYS = ['r', 'l', 'h', 'ls', 'pk', 'fk'];
+  const GR_NAME = { r: '오른발', l: '왼발', h: '헤더', ls: '중거리', pk: 'PK', fk: '프리킥' };
+  function goalRoutes(p, r, ev = {}) {
+    const G = r.goals || 0; if (!G || (r.pos || p.pos) === 'GK') return null;
+    const rng = seeded('gr|' + (p.id || p.name) + '|' + r.year);
+    const a = r.a0 || p.attrs || {}; const A = (k) => a[k] ?? 60;
+    const grp = roleGroup(r.pos || p.pos) || 'CM'; const rm = GR_ROLE[r.role] || [1, 1];
+    const apps = Math.max(1, r.apps || 1); const recent = (y) => y != null && r.year - y >= 0 && r.year - y <= 3;
+    const out = { r: 0, l: 0, h: 0, ls: 0, pk: 0, fk: 0 };
+    // PK: 전담 키커일 때만 쌓인다
+    const pkTaker = p.flags?.pkY === r.year || rng() < clamp(.05 + (A('SHO') - 70) / 36 + ({ ST: .35, AM: .14, W: .1, CM: -.06, DM: -.15 }[grp] ?? -.3) + ((p.rep || 0) - 20) / 220, .01, .9);
+    let pk = pkTaker ? poisson(apps * .1 * clamp(.66 + (A('SHO') - 60) / 120, .55, .92), rng) : (rng() < .04 ? 1 : 0);
+    // 프리킥: 킥 기술 + 전담 경험
+    const fkS = A('SHO') * .4 + A('CRO') * .3 + A('PAS') * .3 + (p.ambi ? 4 : 0);
+    const fkTaker = recent(p.flags?.fkY) || (p.flags?.fk && rng() < .7) || rng() < clamp((fkS - 75) / 24, 0, .6);
+    let fk = fkTaker ? poisson(apps * .018 * Math.pow(clamp(fkS / 76, .6, 1.3), 4), rng) : 0;
+    pk = Math.max(pk, ev.pk || 0); fk = Math.max(fk, ev.fk || 0);
+    const cap = Math.max(0, G - (ev.long || 0));
+    while (pk + fk > cap && pk + fk > 0) { if (fk > (ev.fk || 0) && (fk >= pk || pk <= (ev.pk || 0))) fk--; else pk--; }
+    out.pk = pk; out.fk = fk;
+    // 필드 골: 헤더 · 중거리 · 주발 · 약발
+    const hgt = p.body?.h || 182;
+    const wH = GR_HEAD[grp] * rm[0] * Math.pow(A('AIR') / 66, 2.2) * clamp(1 + (hgt - 182) / 30, .55, 1.6);
+    const wL = GR_LONG[grp] * rm[1] * Math.pow(A('SHO') / 68, 2.4) * (p.trait === 'mood' ? 1.1 : 1);
+    const weak = p.ambi ? 5 : p.weak || 3; const wkS = p.ambi ? .48 : ({ 1: .04, 2: .09, 3: .17, 4: .28, 5: .42 }[weak] ?? .17);
+    const wF = Math.max(.15, 1 - Math.min(.85, wH + wL));
+    const tot = wH + wL + wF; const ph = wH / tot, pl = wL / tot;
+    const main = p.foot === 'L' ? 'l' : 'r', off = main === 'r' ? 'l' : 'r';
+    let open = G - pk - fk; let ls = Math.min(open, ev.long || 0); open -= ls; out.ls = ls;
+    for (let i = 0; i < open; i++) { const x = rng(); if (x < ph) out.h++; else if (x < ph + pl) out.ls++; else out[rng() < wkS ? off : main]++; }
+    return out;
+  }
+  const routesOf = (p, s) => s.gt || goalRoutes(p, s);
+  function routeSum(p, seasons = p.seasons) { const o = { r: 0, l: 0, h: 0, ls: 0, pk: 0, fk: 0 }; for (const s of seasons || []) { const g = routesOf(p, s); if (g) for (const k of GR_KEYS) o[k] += g[k] || 0; } return o; }
+  // 득점 루트로 본 그 선수의 '주무기'
+  function routeStyle(o, foot) {
+    const T = GR_KEYS.reduce((a, k) => a + (o[k] || 0), 0); if (T < 12) return null; const sh = (k) => (o[k] || 0) / T;
+    const main = foot === 'L' ? 'l' : 'r', off = main === 'r' ? 'l' : 'r'; const fe = (o.r || 0) + (o.l || 0);
+    if (sh('fk') >= .08 && (o.fk || 0) >= 5) return '프리킥 스페셜리스트';
+    if (sh('h') >= .4) return '공중전의 지배자';
+    if (sh('ls') >= .22) return '중거리 슈터';
+    if (sh('pk') >= .3) return '페널티 박스의 집행자';
+    if (fe >= 10 && (o[off] || 0) / fe >= .38) return '양발 피니셔';
+    if (sh('h') >= .25) return '헤더가 강한 골잡이';
+    return main === 'l' ? '왼발 피니셔' : '오른발 피니셔';
+  }
+
   // ---------- 영구결번 · 구단 명예의 전당 ----------
   // 구단 규모가 클수록 문턱이 높다. 결번까지는 못 가도 오래 사랑받았으면 구단 명예의 전당에 오른다.
   // 빅클럽: 12시즌·주요 트로피 2개·주장이나 세계적 스타여야 후보. 중견: 9시즌, 작은 구단: 7시즌.
@@ -2967,6 +3032,7 @@ const ENGINE = (() => {
   return {
     lgAt, clubsIn, movesAt, setActive, PAIRS, LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
+    goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
     isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
@@ -3935,6 +4001,14 @@ const PRESS = (() => {
     transfer: { _: ['{s}, {to} 유니폼 입는다', '{to}의 선택은 {s}'], tabloid: ['딜 완료! {s}, {to}행 도장', '{to}, {s} 영입 쾌거'], korhome: ['[오피셜] {s}, {to} 이적 확정', "{s}, {to} 입성… '새 도전'"], turkey: ['{s} 왔다!!! {to} 팬들 공항 점령!'], italy: ['{to}, 전술 퍼즐의 마지막 조각 {s}'], germany: ['{s}, {to} 이적 공식 발표'] },
     loan: { _: ['{s}, {to}로 임대', '출전 시간 찾아 {to}로 떠난 {s}'], korhome: ['{s}, {to} 임대 이적… "뛰어야 산다"'] },
     renewleave: { _: ['잉크도 마르기 전에… {s}, 재계약 몇 주 만에 {to}로', '{from} 팬들 "약속은 어디 갔나" — {s}, {to} 이적'], tabloid: ['서명하고 떠났다! {s}, {to}행 충격'], korhome: ['{s}, {from} 재계약 직후 {to} 이적… 현지 팬들 반발'] },
+    // 이적 기사는 선수의 무게만큼만: 무명은 단신으로, 스타는 1면으로
+    t_small: { _: ['{to}, {s} 영입 발표', '{s}, {to}와 계약', '{to}에 새 얼굴… {s} 합류', '{to}, {age}세 {pos} {s} 영입'], tabloid: ['{to}, 조용히 {s} 영입', '{s}? {to}의 새 영입생'], korhome: ['{s}, {to} 이적… 새 무대에서 도전'], italy: ['{to}, 스쿼드 보강 {s}'], germany: ['{to}, {s}와 계약 체결'], turkey: ['{to}, {s} 영입! 팬들은 아직 반신반의'] },
+    t_young: { _: ['{to}, {age}세 유망주 {s} 영입', '{s}, {age}세에 {to}로', '{to}가 점찍은 유망주 {s}'], tabloid: ['{to}의 미래? {age}세 {s} 영입'], korhome: ['{age}세 {s}, {to} 이적… "더 큰 무대로"'], dutch: ['{to}, 재능 있는 {s} 확보'] },
+    t_free: { _: ['{s}, 자유계약으로 {to} 합류', '{to}, 이적료 없이 {s} 영입', '계약 만료 {s}, 새 팀은 {to}'], korhome: ['{s}, FA로 {to} 이적'] },
+    t_fresh: { _: ['{from}을 떠난 {s}, {to}에서 새 출발', '{s}, {to}에서 다시 시작', '재기를 노리는 {s}, {to} 합류'], korhome: ['{s}, {to}에서 재도약 노린다'] },
+    t_mid: { _: ['{s}, {to} 유니폼 입는다', '{to}의 선택은 {s}', '{to}, 즉시 전력감 {s} 영입', '{s}, {to}로 이적 확정'], tabloid: ['딜 완료! {s}, {to}행', '{to}, {s} 영입 성공'], korhome: ['[오피셜] {s}, {to} 이적 확정', "{s}, {to} 입성… '새 도전'"], italy: ['{to}, 전술 퍼즐의 한 조각 {s}'], germany: ['{s}, {to} 이적 공식 발표'], turkey: ['{s} 왔다! {to} 팬들 환영'] },
+    t_big: { _: ['{to}, {s} 영입 쾌거', '이적시장의 주인공은 {s}… {to}행 확정', '{s}, 마침내 {to}로', '{to}가 {s}를 품었다'], tabloid: ['딜 완료! {s}, {to}행 도장', '초대형 이적! {s}, {to}로', '{to}, {s} 영입에 거금'], korhome: ['[오피셜] {s}, {to} 이적 확정… 이적료 {fee}', "{s}, {to} 입성… '꿈의 무대'"], turkey: ['{s} 왔다!!! {to} 팬들 공항 점령!'], italy: ['{to}, 전술 퍼즐의 마지막 조각 {s}'], germany: ['{s}, {to} 이적 공식 발표. 이적료 {fee}'], madrid: ['{s}, {to}의 새 별'], barca: ['{s}, {to}의 새 별'] },
+    rival_small: { _: ['{s}, 라이벌 {to}로 이적', '{from} 출신 {s}, {to} 유니폼'], tabloid: ['{from} 팬들 술렁… {s}, {to}행'] },
     rival: { _: ['배신인가 선택인가… {s}, 라이벌 {to}로', '{from} 팬들, {s} 유니폼 불태워'], tabloid: ['배신자! {s}, 적의 품으로'], arg: ['용서는 없다. {s}, {to}로'], turkey: ['배신!!! {s}의 이름을 지워라!!!'] },
     strike: { _: ['{s}, 훈련 거부… 구단과 정면충돌'], tabloid: ['{s} 태업 스캔들! 훈련장에 안 나타나'], germany: ['{s}, 무단 훈련 불참. 구단 징계 검토'] },
     league: { _: ['{club} 우승! 중심엔 {s}', '정상에 선 {club}, 그리고 {s}'], tabloid: ['챔피언스! {club}, 그리고 {s}의 시즌'], korhome: ["{s}, {lg} 우승 감격… '커리어 첫 정상'"], turkey: ['챔피언!!! 도시가 멈췄다!!!'] },
@@ -4024,10 +4098,23 @@ const PRESS = (() => {
     heirrival: { _: ['아버지의 라이벌 유니폼을 입은 {s}', '{par}의 아들이 적진으로'], tabloid: ['배신인가 운명인가! {par}의 아들, 라이벌로'], korhome: ['{s}, 아버지의 라이벌 구단행… 팬들 술렁'] },
     smallheart: { _: ['결승만 오면 작아지는 {s}', '{s}, 큰 무대에서 또 침묵'], tabloid: ['결승만 되면 실종! {s}는 어디에?'], korhome: ['{s}, 결승서 아쉬운 침묵… "큰 경기 약하다" 지적도'] },
   };
+  // 이적 기사의 무게: 명성·이적료·행선지
+  function transferKind(p, of, from, pushed) {
+    if (of.type === 'loan') return 'loan'; if (of.buyout) return 'buyout';
+    if (p.flags?.renewLeave?.year === p.year && p.flags.renewLeave.to === of.club) return 'renewleave';
+    const rep = p.rep || 0, fee = of.fee || 0, toBig = E.clubStr(of.club, p.year) >= 84;
+    if (E.isRival(from, of.club) && !pushed) return rep >= 30 || fee >= 30 ? 'rival' : 'rival_small';
+    if (pushed) return 't_fresh';
+    if (rep >= 55 || fee >= 60 || (toBig && rep >= 40)) return 't_big';
+    if (of.type === 'free') return 't_free';
+    if (p.age <= 20 && rep < 25) return 't_young';
+    if (rep >= 25 || fee >= 15) return 't_mid';
+    return 't_small';
+  }
   function make(kind, p, v = {}, outKey) {
     const key = outKey || localOutlets(p.club)[0];
     const pool = HL[kind]?.[key] || HL[kind]?._; if (!pool) return null;
-    const vv = Object.assign({ s: disp(p), club: clubN(p.club), lg: E.LEAGUES[E.lgAt ? E.lgAt(p.club, p.year) : E.CLUB[p.club]?.lg]?.name || '', nation: E.natT(p), age: p.age }, v);
+    const vv = Object.assign({ s: disp(p), pos: E.POS[p.pos]?.name || p.pos, club: clubN(p.club), lg: E.LEAGUES[E.lgAt ? E.lgAt(p.club, p.year) : E.CLUB[p.club]?.lg]?.name || '', nation: E.natT(p), age: p.age }, v);
     return { kind, out: key, outlet: OUT[key]?.name || '현지 언론', where: OUT[key]?.where || '', head: fill(pick(pool), vv), year: p.year };
   }
   // 현지 + (해외파면) 자국 언론 버전을 함께
@@ -4058,7 +4145,7 @@ const PRESS = (() => {
   }
   // 대기열: 시즌 사이에 생긴 헤드라인을 다음 시즌 결과에 붙인다
   function queue(p, items) { p.pressQ = p.pressQ || []; (Array.isArray(items) ? items : [items]).filter(Boolean).forEach(x => p.pressQ.push(x)); }
-  const PRI = { mourn: 13, medend: 10.5, legend: 11, jinxbreak: 10, ucl: 9, bdo: 9, tourwin: 9, league: 8, contwin: 8, uclloss: 7, scorer: 6, jinx: 6, jinxcrown: 6, pkmiss: 6, cup: 5, rival: 5, farewell: 4.5, transfer: 4, buyout: 4, loan: 3 };
+  const PRI = { mourn: 13, medend: 10.5, legend: 11, jinxbreak: 10, ucl: 9, bdo: 9, tourwin: 9, league: 8, contwin: 8, uclloss: 7, scorer: 6, jinx: 6, jinxcrown: 6, pkmiss: 6, cup: 5, rival: 5, farewell: 4.5, transfer: 4, t_big: 4.5, t_mid: 4, t_free: 3.5, t_fresh: 3.5, t_young: 3.5, t_small: 3, rival_small: 3.5, buyout: 4, loan: 3 };
   function flushInto(p, res) {
     // 그 시즌을 대표하는 사건이 먼저: 우승·징크스 해소가 이적 소식보다 위
     const items = [...(p.pressQ || []), ...seasonHeads(p, res)].map((x, i) => ({ x, i })).sort((a, b) => (String(b.x?.kind).startsWith('legend') ? 11 : PRI[b.x?.kind] ?? 4) - (String(a.x?.kind).startsWith('legend') ? 11 : PRI[a.x?.kind] ?? 4) || a.i - b.i).map(o => o.x); p.pressQ = [];
@@ -4069,7 +4156,7 @@ const PRESS = (() => {
     return res.press;
   }
   function record(p, items) { p.press = p.press || []; (Array.isArray(items) ? items : [items]).filter(Boolean).forEach(x => p.press.push(x)); }
-  return { review, make, both, natHead, queue, flushInto, record, OUT, SCALE, disp, outletsFor: localOutlets };
+  return { transferKind, review, make, both, natHead, queue, flushInto, record, OUT, SCALE, disp, outletsFor: localOutlets };
 })();
 
 </script>
@@ -4093,10 +4180,15 @@ const EVENTS = (() => {
       mod(k, v) { if (k === 'growth' || k === 'decay') m[k] = (m[k] || 1) * v; else m[k] = (m[k] || 0) + v; },
       attr(k, v) { m.attr = m.attr || {}; m.attr[k] = (m.attr[k] || 0) + v; },
       note(t) { (m.notes = m.notes || []).push(t); },
+      // 이벤트가 '골을 넣었다'고 말하면 그 시즌 기록에도 최소 그만큼은 남는다
+      goal(kind) { if (p.pos === 'GK') return; m.goals = (m.goals || 0) + 1; if (kind) { m.gk = m.gk || {}; m.gk[kind] = (m.gk[kind] || 0) + 1; } },
       next(k, v) { p.nextMods = p.nextMods || {}; p.nextMods[k] = (p.nextMods[k] || 0) + v; },
     };
   }
   const pick = (a) => a[Math.floor(R() * a.length)];
+  const ri = (a, b) => a + Math.floor(R() * (b - a + 1));
+  // 같은 선택도 매번 같은 결과가 나오지 않게: [가중치, 결과] 표에서 하나를 뽑는다. 가중치는 선수 상황(나이·기질·내구도·명성·가족)에 따라 바뀐다
+  const roll = (rows) => { const ok = rows.filter(r => r[0] > 0); let t = ok.reduce((a, r) => a + r[0], 0) * R(); for (const r of ok) { t -= r[0]; if (t <= 0) return r[1](); } return ok[ok.length - 1][1](); };
   const J = (w, p) => { w = String(w ?? ''); const ch = w.slice(-1); let jong = 0; if (/[가-힣]/.test(ch)) jong = (ch.charCodeAt(0) - 0xAC00) % 28; else if (/[0-9]/.test(ch)) jong = ({ 0: 21, 1: 8, 3: 16, 6: 1, 7: 8, 8: 8 })[ch] || 0; const P = { 이: ['이', '가'], 가: ['이', '가'], 을: ['을', '를'], 를: ['을', '를'], 은: ['은', '는'], 는: ['은', '는'], 과: ['과', '와'], 와: ['과', '와'], 으로: ['으로', '로'], 로: ['으로', '로'] }[p]; if (!P) return w + p; if (p === '로' || p === '으로') return w + (jong && jong !== 8 ? P[0] : P[1]); return w + (jong ? P[0] : P[1]); };
   // 받침에 맞춰 '와/과' (영문 이름은 '와')
   const wa = (n) => { const ch = String(n).slice(-1); if (!/[가-힣]/.test(ch)) return n + '와'; return n + ((ch.charCodeAt(0) - 0xAC00) % 28 ? '과' : '와'); };
@@ -4220,7 +4312,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       { label: '남아서 2군에서 버틴다', hint: '출전은 거의 없다 · 감독 신뢰 ▲', run(x) { const h = H(x); x.p.nextMods = Object.assign({}, x.p.nextMods, { share: (x.p.nextMods?.share || 0) - 1.2 }); return '2군 훈련장으로 향했다. ' + [h.b('trust', 6), h.b('morale', -6)].join(' · '); } },
     ] };
     return { title: '1군 승격 심사 탈락', tone: 'bad', text: `${J(cn, '는')} 재계약하지 않기로 했다. 유스 동기 몇 명도 같은 통보를 받았다. 이제 다른 팀을 찾아야 한다.`, options: [
-      { label: '새 팀을 찾는다', hint: '제안 중 하나를 골라야 한다', run(x) { const q = x.p; q.contract = 0; q.pendingOffers = E.offers(q, x.world, { force: true }); q.released = true; q.tags.push('academycut'); H(x).note(`${cn} 유스 방출`); return '짐을 쌌다. 여기서 끝나지 않는다. ' + H(x).b('morale', -8); } },
+      { label: '새 팀을 찾는다', hint: '제안 중 하나를 골라야 한다', run(x) { const q = x.p; q.contract = 0; q.pendingOffers = E.offers(q, x.world, { force: true }); q.released = true; q.flags.forcedOut = q.year; q.tags.push('academycut'); H(x).note(`${cn} 유스 방출`); return '짐을 쌌다. 여기서 끝나지 않는다. ' + H(x).b('morale', -8); } },
     ] };
   } });
   def({ id: 'youthhint', phase: 'pre', cd: 0, w: (c) => c.p.youth && c.p.age === 16 && !c.p.flags.youthHint ? 80 : 0, make(c) {
@@ -4262,21 +4354,40 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     ] };
   } });
   def({ id: 'heavy', phase: 'pre', cd: 3, w: (c) => (c.p.trait === 'mood' ? 16 : 6), make(c) {
-    return { title: '휴가 뒤 몸이 무겁다', tone: 'bad', text: '체중계 숫자가 3kg 늘었다. 피지컬 코치의 표정이 굳었다.', options: [
-      { label: '추가 훈련으로 뺀다', hint: '성장 소폭 ↓ · 내구도 +2', run(x) { const h = H(x); h.mod('growth', .95); return h.b('dur', 2); } },
-      { label: '시즌하면서 빠진다', hint: '평점 ↓ · 내구도 −4', run(x) { const h = H(x); h.mod('rating', -.12); h.note('시즌 초반 몸이 무거웠다'); return h.b('dur', -4); } },
+    const kg = ri(2, 4);
+    return { title: '휴가 뒤 몸이 무겁다', tone: 'bad', text: `체중계 숫자가 ${kg}kg 늘었다. 피지컬 코치의 표정이 굳었다.`, options: [
+      { label: '추가 훈련으로 뺀다', hint: '성장 소폭 ↓ · 내구도 ↑ · 무리하면 탈 난다', run(x) { const h = H(x); const q = x.p; return roll([
+        [5, () => { h.mod('growth', .95); return '2주 동안 아침저녁으로 뛰었다. ' + h.b('dur', 2); }],
+        [q.trait === 'pro' ? 4 : 2, () => { h.mod('growth', .98); return '생각보다 빨리 빠졌다. 원래 몸이 기억하고 있었다. ' + h.b('dur', 3); }],
+        [q.age >= 29 ? 2.5 : 1, () => { h.mod('growth', .95); h.mod('injWeeks', 2); return '급하게 빼다 종아리가 올라왔다. 2주. ' + h.b('dur', -1); }],
+      ]); } },
+      { label: '시즌하면서 빠진다', hint: '평점 ↓ · 내구도 ↓ · 그때그때 다르다', run(x) { const h = H(x); return roll([
+        [5, () => { h.mod('rating', -.12); h.note('시즌 초반 몸이 무거웠다'); return h.b('dur', -4); }],
+        [2, () => { h.mod('rating', -.04); return '세 경기 만에 빠졌다. 아무도 눈치채지 못했다. ' + h.b('dur', -2); }],
+        [1.5, () => { h.mod('rating', -.18); h.note('시즌 내내 몸이 무거웠다'); return '좀처럼 안 빠졌다. 감독이 체중계를 라커룸 한가운데로 옮겼다. ' + [h.b('dur', -4), h.b('trust', -3)].join(' · '); }],
+      ]); } },
     ] };
   } });
   def({ id: 'analyst', phase: 'pre', cd: 4, w: (c) => c.p.age >= 19 && c.p.age <= 30 ? 9 : 0, make(c) {
     return { title: '개인 분석관을 고용할까', tone: 'neutral', text: '데이터 분석가가 "당신의 약점을 숫자로 보여주겠다"고 한다.', options: [
-      { label: '고용한다', hint: '성장 ×1.08 · 명성 +1', run(x) { const h = H(x); h.mod('growth', 1.08); return '분석관과 계약했다. ' + h.b('rep', 1); } },
-      { label: '구단 시스템을 믿는다', hint: '감독 신뢰 +3', run(x) { return H(x).b('trust', 3); } },
+      { label: '고용한다', hint: '성장 ↑ · 궁합은 해 봐야 안다', run(x) { const h = H(x); const q = x.p; return roll([
+        [5, () => { h.mod('growth', 1.08); return '분석관과 계약했다. 매주 월요일 영상 30분. ' + h.b('rep', 1); }],
+        [2.5, () => { h.mod('growth', 1.1); const k = Object.entries(E.ROLE[q.role]?.w || {}).sort((a, b) => b[1] - a[1])[1]?.[0]; if (k && q.attrs[k] != null) h.attr(k, 1); return `첫 미팅에서 아무도 몰랐던 습관을 짚었다. ${k ? (E.ATTR_NAME[k] || '능력치') + ' +1 · ' : ''}` + h.b('morale', 2); }],
+        [2, () => { h.mod('growth', 1.02); return '숫자는 많은데 뭘 하라는 건지 모르겠다. ' + h.b('morale', -2); }],
+        [1.5, () => { h.mod('growth', 1.07); return '분석이 감독 전술과 정면으로 부딪쳤다. 미팅 자료가 감독 책상에 올라갔다. ' + h.b('trust', -3); }],
+      ]); } },
+      { label: '구단 시스템을 믿는다', hint: '감독 신뢰 ↑', run(x) { return H(x).b('trust', ri(2, 4)); } },
     ] };
   } });
   def({ id: 'mentor', phase: 'pre', cd: 3, w: (c) => c.p.age >= 30 && !c.p.loanFrom ? 14 : 0, make(c) {
     const kid = NAMES.gen(c.p.nation);
     return { title: '유망주가 멘토를 부탁한다', tone: 'good', text: `열일곱 살 ${J(kid, '가')} 훈련이 끝나고 따라와 "형처럼 되고 싶다"고 했다.`, options: [
-      { label: '맡아준다', hint: '팬심 +5 · 사기 +3', run(x) { x.p.tags.push('mentor'); const h = H(x); h.note(`유망주 ${kid}의 멘토가 됐다`); return [h.b('fans', 5), h.b('morale', 3)].join(' · '); } },
+      { label: '맡아준다', hint: '팬심 ↑ · 사기 ↑ · 그 뒤는 그 아이에게 달렸다', run(x) { x.p.tags.push('mentor'); const h = H(x); return roll([
+        [5, () => { h.note(`유망주 ${kid}의 멘토가 됐다`); return [h.b('fans', ri(4, 6)), h.b('morale', 3)].join(' · '); }],
+        [2, () => { h.note(`${kid}의 1군 데뷔를 도왔다`); return `시즌 중반 ${J(kid, '가')} 1군에 데뷔했다. 첫 패스가 네게 왔다. ` + [h.b('fans', 6), h.b('morale', 5), h.b('trust', 2)].join(' · '); }],
+        [1.5, () => { h.note(`유망주 ${kid}의 멘토`); return `${J(kid, '는')} 금세 네 자리를 노리기 시작했다. 기분이 묘했다. ` + [h.b('fans', 3), h.b('morale', -1)].join(' · '); }],
+        [1, () => `${J(kid, '는')} 석 달 만에 다른 구단으로 떠났다. 마지막 날 손편지를 두고 갔다. ` + h.b('morale', 2)],
+      ]); } },
       { label: '내 시즌에 집중한다', hint: '폼 소폭 ↑', run(x) { H(x).mod('form', .03); return '정중히 거절했다.'; } },
     ] };
   } });
@@ -4310,9 +4421,9 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'derby', phase: 'mid', cd: 2, w: (c) => !c.p.youth && E.rivalOf(c.p.club).length && c.p.pos !== 'GK' ? 16 * (1 + E.bigE(c.p) * .5) : 0, make(c) {
     const p = c.p; const rv = pick(E.rivalOf(p.club));
     return { title: `${club(rv)} 더비 결승골`, tone: 'good', text: `추가시간, ${club(rv)}와의 더비에서 결승골을 넣었다. 원정석이 조용해졌다.`, options: [
-      { label: '원정석 앞에서 도발한다', hint: '팬심 +10 · 명성 +2 · 25% 징계', run(x) { const h = H(x); h.mod('form', .04); const r = [h.b('fans', 10), h.b('rep', 2)]; E.bump(x.p, 'fans', -15, rv); if (chance(.25)) { h.mod('miss', 3); r.push('3경기 출장 정지'); } h.note(`${club(rv)} 더비 결승골, 원정석 도발`); return r.join(' · '); } },
-      { label: '엠블럼에 입을 맞춘다', hint: '팬심 +7', run(x) { const h = H(x); h.note(`${club(rv)} 더비 결승골`); h.mod('form', .03); return h.b('fans', 7); } },
-      { label: '동료들에게 달려간다', hint: '감독 신뢰 +4', run(x) { const h = H(x); h.note(`${club(rv)} 더비 결승골`); h.mod('form', .03); return h.b('trust', 4); } },
+      { label: '원정석 앞에서 도발한다', hint: '팬심 +10 · 명성 +2 · 25% 징계', run(x) { const h = H(x); h.mod('form', .04); h.goal('late'); const r = [h.b('fans', 10), h.b('rep', 2)]; E.bump(x.p, 'fans', -15, rv); if (chance(.25)) { h.mod('miss', 3); r.push('3경기 출장 정지'); } h.note(`${club(rv)} 더비 결승골, 원정석 도발`); return r.join(' · '); } },
+      { label: '엠블럼에 입을 맞춘다', hint: '팬심 +7', run(x) { const h = H(x); h.note(`${club(rv)} 더비 결승골`); h.goal('late'); h.mod('form', .03); return h.b('fans', 7); } },
+      { label: '동료들에게 달려간다', hint: '감독 신뢰 +4', run(x) { const h = H(x); h.note(`${club(rv)} 더비 결승골`); h.goal('late'); h.mod('form', .03); return h.b('trust', 4); } },
     ] };
   } });
   def({ id: 'redcard', phase: 'mid', cd: 2, w: (c) => !c.p.youth ? (['CB', 'DM'].includes(c.p.pos) ? 12 : 6) : 0, make(c) {
@@ -4332,9 +4443,17 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'clash', phase: 'mid', cd: 2, w: (c) => !c.p.youth && c.p.trust < 42 ? 30 : 0, make(c) {
     const m = E.managerFor(c.p.club, c.p.year, c.world, c.p);
     return { title: `${m.name} 감독과 언쟁`, tone: 'bad', text: '교체되어 나오면서 감독과 눈이 마주쳤다. 둘 다 한마디씩 했다.', options: [
-      { label: '면담을 신청한다', hint: '감독 신뢰 +10 · 사기 −2', run(x) { const h = H(x); return [h.b('trust', 10), h.b('morale', -2)].join(' · '); } },
+      { label: '면담을 신청한다', hint: '감독 신뢰 ↑ · 사기 −2 · 대화는 해 봐야 안다', run(x) { const h = H(x); return roll([
+        [5, () => [h.b('trust', 10), h.b('morale', -2)].join(' · ')],
+        [1.5, () => `${m.name} 감독이 먼저 사과했다. 처음으로 전술 노트를 보여 줬다. ` + [h.b('trust', 14), h.b('morale', 2)].join(' · ')],
+        [1.5, () => '서로 할 말만 하고 나왔다. 그래도 문은 열어 뒀다. ' + [h.b('trust', 5), h.b('morale', -3)].join(' · ')],
+      ]); } },
       { label: '언론에 불만을 털어놓는다', hint: '감독 신뢰 −20 · 팬심 +3 · 다음 이적 시장 제안 증가', run(x) { const h = H(x); x.p.wantOutNext = true; h.mod('share', -.4); return [h.b('trust', -20), h.b('fans', 3)].join(' · '); } },
-      { label: '훈련으로 말한다', hint: '성장 ×1.05 · 감독 신뢰 +3', run(x) { const h = H(x); h.mod('growth', 1.05); return h.b('trust', 3); } },
+      { label: '훈련으로 말한다', hint: '성장 ↑ · 감독 신뢰 ↑ · 알아봐 줄지는 모른다', run(x) { const h = H(x); return roll([
+        [5, () => { h.mod('growth', 1.05); return h.b('trust', 3); }],
+        [1.5, () => { h.mod('growth', 1.05); h.mod('share', .08); return '일주일 내내 제일 먼저 나와 제일 늦게 나갔다. 주말 선발 명단 맨 위에 이름이 있었다. ' + h.b('trust', 8); }],
+        [1.5, () => { h.mod('growth', 1.06); return '감독은 끝내 쳐다보지 않았다. 그래도 몸은 올라왔다. ' + h.b('morale', -3); }],
+      ]); } },
     ] };
   } });
   def({ id: 'dating', phase: 'mid', cd: 2, w: (c) => !c.p.flags.partner && c.p.age >= 19 ? 9 : 0, make(c) {
@@ -4363,40 +4482,80 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     ] };
   } });
   def({ id: 'pet', phase: 'mid', cd: 5, w: (c) => !c.p.flags.pet ? 7 : 0, make(c) {
-    const kind = pick(['보더콜리', '유기견 믹스', '시바견', '래브라도', '고양이 두 마리', '닥스훈트']);
+    const kind = pick(['보더콜리', '유기견 믹스', '시바견', '래브라도', '고양이 두 마리', '닥스훈트']); const cat = kind.includes('고양이');
     return { title: '보호소에서 만난 눈빛', tone: 'life', text: `봉사 활동으로 간 보호소에서 ${J(kind, '가')} 떠나지 않는다.`, options: [
-      { label: '입양한다', hint: '사기 +5 · 이후 매 시즌 사기 +2', run(x) { x.p.flags.pet = kind; const h = H(x); h.note(`${kind} 입양`); return h.b('morale', 5); } },
+      { label: '입양한다', hint: '사기 ↑ · 이후 매 시즌 사기 +2', run(x) { x.p.flags.pet = kind; const h = H(x); h.note(`${kind} 입양`); return roll([
+        [5, () => h.b('morale', ri(4, 6))],
+        [x.p.rep >= 20 ? 2.5 : 1, () => '올린 사진 한 장이 구단 SNS 역대 최다 좋아요를 찍었다. ' + [h.b('morale', 5), h.b('fans', 3)].join(' · ')],
+        [1.5, () => (cat ? '첫날 밤 커튼이 남아나지 않았다. ' : '첫 주에 새 축구화 한 켤레를 다 씹어 놨다. ') + '그래도 현관에서 기다린다. ' + h.b('morale', 4)],
+      ]); } },
       { label: '사진만 찍고 온다', hint: '명성 +1', run(x) { return H(x).b('rep', 1); } },
     ] };
   } });
   def({ id: 'family', phase: 'mid', cd: 3, w: () => 7, make(c) {
     const v = pick([0, 1, 2]);
-    if (v === 0) return { title: '부모님이 이사 오신다', tone: 'life', text: '고향에 계시던 부모님이 근처로 이사를 오기로 했다.', options: [{ label: '집을 구해 드린다', hint: '사기 +5', run(x) { return H(x).b('morale', 5); } }] };
+    if (v === 0) return { title: '부모님이 이사 오신다', tone: 'life', text: '고향에 계시던 부모님이 근처로 이사를 오기로 했다.', options: [{ label: '집을 구해 드린다', hint: '사기 ↑', run(x) { const h = H(x); return roll([
+      [5, () => h.b('morale', ri(4, 6))],
+      [2, () => '어머니가 매 경기 도시락을 싸 들고 오셨다. 동료들이 줄을 섰다. ' + [h.b('morale', 6), h.b('trust', 1)].join(' · ')],
+      [1.5, () => '아버지가 경기마다 전화로 전술 지적을 한다. 사랑이다, 아마도. ' + h.b('morale', 2)],
+    ]); } }] };
     if (v === 1) return { title: '가족에게 생긴 일', tone: 'life', text: '고향에서 급한 연락이 왔다. 가족이 곁에 있어 달라고 한다.', options: [
       { label: '잠시 다녀온다', hint: '사기 +4 · 감독 신뢰 −2 · 3경기 결장', run(x) { const h = H(x); h.mod('miss', 3); return [h.b('morale', 4), h.b('trust', -2)].join(' · '); } },
       { label: '경기에 집중한다', hint: '사기 −6 · 폼 ↓', run(x) { const h = H(x); h.mod('form', -.05); return h.b('morale', -6); } },
     ] };
-    return { title: '동생이 축구를 시작했다', tone: 'life', text: '열 살 터울 동생이 유소년 팀에 들어갔다. 경기마다 영상 통화를 건다.', options: [{ label: '축구화를 선물한다', hint: '사기 +4', run(x) { return H(x).b('morale', 4); } }] };
+    return { title: '동생이 축구를 시작했다', tone: 'life', text: '열 살 터울 동생이 유소년 팀에 들어갔다. 경기마다 영상 통화를 건다.', options: [{ label: '축구화를 선물한다', hint: '사기 ↑', run(x) { const h = H(x); return roll([
+      [5, () => h.b('morale', ri(3, 5))],
+      [1.5, () => `동생이 네 등번호를 달고 첫 골을 넣었다. 영상을 열 번 돌려 봤다. ` + h.b('morale', 6)],
+      [1.2, () => '동생은 축구화보다 네 사인을 더 좋아했다. 반 친구들 몫까지 서른 장. ' + [h.b('morale', 3), h.b('fans', 1)].join(' · ')],
+    ]); } }] };
   } });
   def({ id: 'homesick', phase: 'mid', cd: 2, w: (c) => !c.p.youth && E.isAbroad(c.p) && c.p.age <= 23 ? 16 : 0, make(c) {
     return { title: '향수병', tone: 'life', text: '집밥이 그립다. 시차 때문에 가족과 통화하기도 어렵다.', options: [
-      { label: '가족을 초대한다', hint: '사기 +6', run(x) { return H(x).b('morale', 6); } },
-      { label: '구단 심리 상담을 받는다', hint: '사기 +4 · 폼 소폭 ↑', run(x) { const h = H(x); h.mod('form', .02); return h.b('morale', 4); } },
-      { label: '참는다', hint: '사기 −6', run(x) { return H(x).b('morale', -6); } },
+      { label: '가족을 초대한다', hint: '사기 ↑ · 그때그때 다르다', run(x) { const h = H(x); return roll([
+        [5, () => '어머니가 김치통부터 꺼냈다. 냉장고가 고향 냄새로 찼다. ' + h.b('morale', ri(5, 7))],
+        [1.5, () => { h.mod('form', .02); return '아버지가 홈경기를 처음 직관했다. 그날 제일 많이 뛰었다. ' + [h.b('morale', 7), h.b('fans', 2)].join(' · '); }],
+        [1.5, () => '가족이 돌아가고 나니 집이 더 넓어 보였다. ' + h.b('morale', 2)],
+      ]); } },
+      { label: '구단 심리 상담을 받는다', hint: '사기 ↑ · 폼 ↑ · 궁합은 해 봐야 안다', run(x) { const h = H(x); return roll([
+        [5, () => { h.mod('form', .02); return h.b('morale', 4); }],
+        [2, () => { h.mod('form', .04); return '상담사가 같은 나라 출신이었다. 한 시간 내내 모국어로 떠들었다. ' + h.b('morale', 6); }],
+        [1.5, () => '말이 잘 안 나왔다. 두 번 가고 그만뒀다. ' + h.b('morale', 1)],
+      ]); } },
+      { label: '참는다', hint: '사기 ↓ · 그때그때 다르다', run(x) { const h = H(x); return roll([
+        [5, () => h.b('morale', -6)],
+        [2, () => { x.p.flags['lang_' + E.CLUB[x.p.club].lg] = 1; return '혼자 있는 시간에 현지어 앱을 붙잡았다. 라커룸 농담이 들리기 시작했다. ' + [h.b('morale', -3), h.b('trust', 2)].join(' · '); }],
+        [x.p.trait === 'pro' ? 2 : .8, () => { h.mod('form', .02); return '이를 악물었다. 외로움이 독기가 됐다. ' + h.b('morale', -4); }],
+      ]); } },
     ] };
   } });
   def({ id: 'slump', phase: 'mid', cd: 2, w: (c) => !c.p.youth ? 11 : 0, make(c) {
     const fw = ['FW', 'MF'].includes(E.POS[c.p.pos].grp);
     return { title: fw ? '골 가뭄' : '슬럼프', tone: 'bad', text: fw ? '열 경기째 공격 포인트가 없다. 홈 팬들의 한숨이 들린다.' : '실수가 이어진다. 해설진이 매 경기 이름을 부른다.', options: [
-      { label: '심리 상담사를 찾는다', hint: '사기 +6 · 폼 ↑', run(x) { const h = H(x); h.mod('form', .04); return h.b('morale', 6); } },
-      { label: '야간 개인 훈련', hint: '핵심 능력치 +1 · 내구도 −2', run(x) { const h = H(x); const k = Object.entries(E.ROLE[x.p.role]?.w || {}).sort((a, b) => b[1] - a[1])[0]?.[0]; if (k) h.attr(k, 1.2); h.mod('form', .02); return `${E.ATTR_NAME[k] || '능력치'} +1 · ` + h.b('dur', -2); } },
-      { label: '잠시 쉬게 해 달라고 한다', hint: '출전 ↓ · 사기 +4', run(x) { const h = H(x); h.mod('share', -.25); return h.b('morale', 4); } },
+      { label: '심리 상담사를 찾는다', hint: '사기 ↑ · 폼 ↑ · 궁합은 해 봐야 안다', run(x) { const h = H(x); return roll([
+        [5, () => { h.mod('form', .04); return h.b('morale', 6); }],
+        [2, () => { h.mod('form', .06); return '세 번째 상담에서 원인을 찾았다. 공이 아니라 잠이었다. ' + h.b('morale', 8); }],
+        [1.5, () => { h.mod('form', .01); return '좋은 사람이었지만 맞지 않았다. ' + h.b('morale', 2); }],
+      ]); } },
+      { label: '야간 개인 훈련', hint: '핵심 능력치 ↑ · 내구도 ↓ · 무리하면 탈 난다', run(x) { const h = H(x); const q = x.p; const k = Object.entries(E.ROLE[q.role]?.w || {}).sort((a, b) => b[1] - a[1])[0]?.[0]; const nm = E.ATTR_NAME[k] || '능력치'; return roll([
+        [5, () => { if (k) h.attr(k, 1.2); h.mod('form', .02); return `${nm} +1 · ` + h.b('dur', -2); }],
+        [2, () => { if (k) h.attr(k, .6); h.mod('form', .05); return `불 꺼진 훈련장에서 감이 돌아왔다. 다음 경기에서 바로 터졌다. ${nm} +0.6 · ` + h.b('morale', 3); }],
+        [q.dur < 50 || q.age >= 30 ? 2.5 : 1, () => { if (k) h.attr(k, .6); h.mod('injWeeks', 3); return `무리했다. 허벅지 뒤쪽이 찢어지는 소리가 났다. 3주. ${nm} +0.6 · ` + h.b('dur', -3); }],
+      ]); } },
+      { label: '잠시 쉬게 해 달라고 한다', hint: '출전 ↓ · 사기 ↑ · 자리는 장담 못 한다', run(x) { const h = H(x); return roll([
+        [5, () => { h.mod('share', -.25); return h.b('morale', 4); }],
+        [2, () => { h.mod('share', -.2); h.mod('form', .03); return '벤치에서 경기를 처음 밖에서 봤다. 보이는 게 달랐다. ' + h.b('morale', 5); }],
+        [1.5, () => { h.mod('share', -.35); return '쉬는 동안 대체자가 두 골을 넣었다. 돌아갈 자리가 좁아졌다. ' + [h.b('morale', 1), h.b('trust', -2)].join(' · '); }],
+      ]); } },
     ] };
   } });
   def({ id: 'rumor', phase: 'mid', cd: 2, w: (c) => c.p.rep >= 22 && !c.p.youth ? 12 : 0, make(c) {
     const big = pick(E.CLUBS.filter(x => x.str >= 84 && x.id !== c.p.club));
     return { title: '빅클럽 이적설', tone: 'neutral', text: `${J(big.name, '가')} 관심을 보인다는 보도가 나왔다. 기자들이 훈련장 앞에서 기다린다.`, options: [
-      { label: '단호하게 부인한다', hint: '팬심 +5 · 감독 신뢰 +3', run(x) { const h = H(x); return [h.b('fans', 5), h.b('trust', 3)].join(' · '); } },
+      { label: '단호하게 부인한다', hint: '팬심 ↑ · 감독 신뢰 ↑', run(x) { const h = H(x); return roll([
+        [5, () => [h.b('fans', 5), h.b('trust', 3)].join(' · ')],
+        [1.5, () => '서포터들이 다음 홈경기에 "우리의 ' + (x.p.number || '') + '번"이라는 걸개를 걸었다. ' + [h.b('fans', 8), h.b('trust', 3), h.b('morale', 2)].join(' · ')],
+        [1.2, () => '그 말을 믿는 사람은 많지 않았다. 다음 날 같은 기사가 또 났다. ' + [h.b('fans', 2), h.b('trust', 2)].join(' · ')],
+      ]); } },
       { label: '여지를 남긴다', hint: '팬심 −5 · 다음 이적 시장 제안 증가', run(x) { x.p.wantOutNext = true; return H(x).b('fans', -5); } },
       { label: '아무 말 하지 않는다', hint: '변화 없음', run() { return '침묵을 지켰다.'; } },
     ] };
@@ -4404,8 +4563,13 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'ad', phase: 'mid', cd: 3, w: (c) => c.p.rep >= 18 ? 9 : 0, make(c) {
     const b = pick(['스포츠웨어', '시계', '게임', '자동차', '음료', '헤드폰']);
     return { title: '광고 계약 제안', tone: 'good', text: `글로벌 ${b} 브랜드가 얼굴이 되어 달라고 한다. 촬영은 시즌 중이다.`, options: [
-      { label: '계약한다', hint: '명성 +4 · 사기 +3 · 폼 소폭 ↓', run(x) { const h = H(x); h.mod('form', -.02); return [h.b('rep', 4), h.b('morale', 3)].join(' · '); } },
-      { label: '시즌에 집중한다', hint: '감독 신뢰 +2', run(x) { return H(x).b('trust', 2); } },
+      { label: '계약한다', hint: '명성 ↑ · 폼 소폭 ↓ · 반응은 해 봐야 안다', run(x) { const h = H(x); return roll([
+        [5, () => { h.mod('form', -.02); return [h.b('rep', 4), h.b('morale', 3)].join(' · '); }],
+        [1.5, () => { h.mod('form', -.02); x.p.tags.push('adhit'); h.note(`${b} 광고가 화제`); return '광고 속 대사 한 줄이 유행어가 됐다. 상대 팬들도 따라 한다. ' + [h.b('rep', 7), h.b('fans', 2), h.b('morale', 3)].join(' · '); }],
+        [2, () => { h.mod('form', -.05); return '촬영이 원정 경기 이틀 전에 잡혔다. 열네 시간 조명 아래 서 있었다. ' + [h.b('rep', 4), h.b('trust', -2)].join(' · '); }],
+        [1.2, () => { h.mod('form', -.02); return '광고 장면이 밈이 됐다. 좋은 쪽은 아니었다. ' + [h.b('rep', 2), h.b('morale', -2)].join(' · '); }],
+      ]); } },
+      { label: '시즌에 집중한다', hint: '감독 신뢰 ↑', run(x) { return H(x).b('trust', ri(1, 3)); } },
     ] };
   } });
   def({ id: 'docu', phase: 'mid', cd: 6, w: (c) => c.p.rep >= 32 ? 8 : 0, make(c) {
@@ -4474,7 +4638,11 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'fight', phase: 'mid', cd: 4, w: (c) => c.p.trait === 'mood' ? 10 : 3, make(c) {
     const mate = NAMES.gen(pick(E.NATIONS).name);
     return { title: '훈련장 몸싸움', tone: 'bad', text: `연습 경기 중 ${J(mate, '와')} 멱살을 잡았다. 영상이 유출됐다.`, options: [
-      { label: '먼저 사과한다', hint: '감독 신뢰 +2 · 사기 −2', run(x) { const h = H(x); return [h.b('trust', 2), h.b('morale', -2)].join(' · '); } },
+      { label: '먼저 사과한다', hint: '감독 신뢰 ↑ · 사기 ↓ · 그 뒤는 그에게 달렸다', run(x) { const h = H(x); return roll([
+        [5, () => [h.b('trust', 2), h.b('morale', -2)].join(' · ')],
+        [1.8, () => { h.note(`${wa(mate)} 화해, 단짝이 됐다`); return `${J(mate, '가')} 저녁을 샀다. 그날 이후 원정 버스 옆자리는 늘 그였다. ` + [h.b('trust', 3), h.b('morale', 3)].join(' · '); }],
+        [1.2, () => `${J(mate, '는')} 사과를 받지 않았다. 라커룸 공기가 한동안 차가웠다. ` + [h.b('trust', 2), h.b('morale', -4)].join(' · ')],
+      ]); } },
       { label: '내 잘못이 아니다', hint: '감독 신뢰 −6 · 팬심 +2 · 출전 ↓', run(x) { const h = H(x); h.mod('share', -.25); return [h.b('trust', -6), h.b('fans', 2)].join(' · '); } },
     ] };
   } });
@@ -4485,14 +4653,29 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   } });
   def({ id: 'intlclash', phase: 'mid', cd: 3, w: (c) => !c.p.youth && c.p.caps > 5 && !c.p.intlRetired ? 7 : 0, make(c) {
     return { title: '대표팀 차출 갈등', tone: 'neutral', text: '가벼운 근육 통증이 있다. 구단은 쉬길 원하고, 대표팀 감독은 꼭 와 달라고 한다.', options: [
-      { label: '대표팀에 간다', hint: '명성 +2 · 감독 신뢰 −4 · 내구도 −2', run(x) { const h = H(x); return [h.b('rep', 2), h.b('trust', -4), h.b('dur', -2)].join(' · '); } },
-      { label: '소속팀 의견을 따른다', hint: '명성 −2 · 감독 신뢰 +4', run(x) { const h = H(x); return [h.b('rep', -2), h.b('trust', 4)].join(' · '); } },
+      { label: '대표팀에 간다', hint: '명성 ↑ · 감독 신뢰 ↓ · 몸은 해 봐야 안다', run(x) { const h = H(x); return roll([
+        [5, () => [h.b('rep', 2), h.b('trust', -4), h.b('dur', -2)].join(' · ')],
+        [1.5, () => { E.nudge(x.p, 'nat', .03, 'intlclash'); return '통증을 안고 뛰었고, 이겼다. 대표팀 감독이 공개적으로 고맙다고 했다. ' + [h.b('rep', 4), h.b('trust', -5)].join(' · '); }],
+        [x.p.dur < 50 ? 2.5 : 1.2, () => { h.mod('injWeeks', 3); return '20분 만에 다리를 잡고 주저앉았다. 소속팀 감독은 아무 말도 하지 않았다. 3주. ' + [h.b('trust', -8), h.b('dur', -3)].join(' · '); }],
+      ]); } },
+      { label: '소속팀 의견을 따른다', hint: '명성 ↓ · 감독 신뢰 ↑', run(x) { const h = H(x); return roll([
+        [5, () => [h.b('rep', -2), h.b('trust', 4)].join(' · ')],
+        [1.5, () => { E.nudge(x.p, 'nat', -.03, 'intlclash'); return '대표팀이 졌다. 그날 밤 댓글창에 네 이름이 가장 많았다. ' + [h.b('rep', -3), h.b('trust', 4), h.b('morale', -2)].join(' · '); }],
+      ]); } },
     ] };
   } });
   def({ id: 'burnout', phase: 'mid', cd: 3, w: (c) => !c.p.youth && c.p.morale < 42 ? 25 : 0, make(c) {
     return { title: '번아웃', tone: 'bad', text: '아침에 일어나기가 힘들다. 축구가 더는 즐겁지 않다.', options: [
-      { label: '2주 쉰다', hint: '사기 +12 · 3경기 결장', run(x) { const h = H(x); h.mod('miss', 3); return h.b('morale', 12); } },
-      { label: '버틴다', hint: '폼 ↓ · 사기 −4', run(x) { const h = H(x); h.mod('form', -.08); return h.b('morale', -4); } },
+      { label: '2주 쉰다', hint: '사기 ↑ · 3경기 결장 · 얼마나 회복할지는 모른다', run(x) { const h = H(x); h.mod('miss', 3); return roll([
+        [5, () => h.b('morale', ri(10, 13))],
+        [2, () => { h.mod('form', .02); return '바다를 보다가 문득 공을 차고 싶어졌다. 오랜만이었다. ' + h.b('morale', 16); }],
+        [2, () => { h.mod('form', -.03); return '돌아왔지만 아직 텅 빈 느낌이다. ' + h.b('morale', 6); }],
+      ]); } },
+      { label: '버틴다', hint: '폼 ↓ · 사기 ↓ · 그때그때 다르다', run(x) { const h = H(x); return roll([
+        [5, () => { h.mod('form', -.08); return h.b('morale', -4); }],
+        [x.p.trait === 'lead' || x.p.trait === 'pro' ? 2.5 : 1.2, () => { h.mod('form', -.03); return '룸메이트가 매일 밤 아무 말 없이 옆에 앉아 있었다. 조금씩 나아졌다. ' + h.b('morale', 3); }],
+        [1.5, () => { h.mod('form', -.12); return '더 깊어졌다. 경기 중에 멍하니 서 있는 장면이 잡혔다. ' + [h.b('morale', -7), h.b('trust', -2)].join(' · '); }],
+      ]); } },
     ] };
   } });
   def({ id: 'bloom', phase: 'mid', cd: 99, w: (c) => c.p.age >= 23 && c.p.age <= 27 && !c.p.tags.includes('bloom') ? 3 : 0, make(c) {
@@ -4937,7 +5120,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'setpiece', phase: 'pre', cd: 3, w: (c) => pro(c.p) && ['FW', 'MF'].includes(grp(c.p)) && c.p.age >= 20 ? 6 : 0, make(c) {
     const m = mate();
     return { title: '프리킥은 누가 차나', tone: 'neutral', text: `전담 키커가 떠났다. 훈련 때마다 ${J(m, '와')} 둘이 공 앞에 선다.`, options: [
-      { label: '내가 차겠다고 한다', hint: '평점 소폭 상승 · 실패하면 부담', run(x) { const h = H(x); if (chance(x.p.ambi ? .75 : .6)) { h.mod('rating', .05); x.p.flags.fk = (x.p.flags.fk || 0) + 1; return x.p.ambi ? '왼쪽 프리킥은 오른발로, 오른쪽 프리킥은 왼발로 감았다. 키퍼는 어느 쪽으로 올지 몰랐다. 이제 네 공이다.' : '첫 경기에서 감아 찬 공이 구석에 꽂혔다. 이제 네 공이다.'; } h.mod('rating', -.03); return '세 번 연속 벽에 맞았다. 관중석에서 한숨이 나온다.'; } },
+      { label: '내가 차겠다고 한다', hint: '평점 소폭 상승 · 실패하면 부담', run(x) { const h = H(x); if (chance(x.p.ambi ? .75 : .6)) { h.mod('rating', .05); h.goal('fk'); x.p.flags.fk = (x.p.flags.fk || 0) + 1; x.p.flags.fkY = x.p.year; return x.p.ambi ? '왼쪽 프리킥은 오른발로, 오른쪽 프리킥은 왼발로 감았다. 키퍼는 어느 쪽으로 올지 몰랐다. 이제 네 공이다.' : '첫 경기에서 감아 찬 공이 구석에 꽂혔다. 이제 네 공이다.'; } h.mod('rating', -.03); return '세 번 연속 벽에 맞았다. 관중석에서 한숨이 나온다.'; } },
       { label: `${m}에게 양보한다`, hint: '감독 신뢰 +2 · 사기 −1', run(x) { const h = H(x); return [h.b('trust', 2), h.b('morale', -1)].join(' · '); } },
     ] };
   } });
@@ -4978,9 +5161,9 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   // ---------- MID ----------
   def({ id: 'viral', phase: 'mid', cd: 4, w: (c) => pro(c.p) && ['FW', 'MF'].includes(grp(c.p)) ? 6 : 0, make(c) {
     return { title: '원더골이 퍼졌다', tone: 'good', text: '하프라인 근처에서 찬 공이 골키퍼 머리 위로 떨어졌다. 영상 조회수가 하루 만에 수천만이다.', options: [
-      { label: '"그냥 찼어요"', hint: '팬심 +3 · 명성 +2', run(x) { const h = H(x); return [h.b('fans', 3), h.b('rep', 2)].join(' · '); } },
-      { label: 'SNS 챌린지로 키운다', hint: '명성 +5 · 감독 신뢰 −3', run(x) { const h = H(x); x.p.tags.push('viral'); return [h.b('rep', 5), h.b('trust', -3)].join(' · '); } },
-      { label: '"사실 크로스였어요"', hint: '팬심 +5', run(x) { const h = H(x); h.note('"사실 크로스였다" 고백'); return '솔직한 고백이 더 화제가 됐다. ' + h.b('fans', 5); } },
+      { label: '"그냥 찼어요"', hint: '팬심 +3 · 명성 +2', run(x) { const h = H(x); h.goal('long'); return [h.b('fans', 3), h.b('rep', 2)].join(' · '); } },
+      { label: 'SNS 챌린지로 키운다', hint: '명성 +5 · 감독 신뢰 −3', run(x) { const h = H(x); h.goal('long'); x.p.tags.push('viral'); return [h.b('rep', 5), h.b('trust', -3)].join(' · '); } },
+      { label: '"사실 크로스였어요"', hint: '팬심 +5', run(x) { const h = H(x); h.goal('long'); h.note('"사실 크로스였다" 고백'); return '솔직한 고백이 더 화제가 됐다. ' + h.b('fans', 5); } },
     ] };
   } });
   def({ id: 'refrant', phase: 'mid', cd: 3, w: (c) => pro(c.p) ? (c.p.trait === 'mood' ? 9 : 4) : 0, make(c) {
@@ -4991,8 +5174,9 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     ] };
   } });
   def({ id: 'abuse', phase: 'mid', cd: 4, w: (c) => pro(c.p) && c.p.rep >= 12 ? 5 : 0, make(c) {
-    return { title: '원정석의 야유', tone: 'bad', text: '코너킥을 차러 갈 때마다 원정 팬들이 이름을 비틀어 부른다. 물병 하나가 발밑에 떨어졌다.', options: [
-      { label: '골을 넣고 그 앞에서 세리머니한다', hint: '팬심 +6 · 명성 −2 · 징계 위험', run(x) { const h = H(x); const r = [h.b('fans', 6), h.b('rep', -2)]; if (chance(.3)) { h.mod('miss', 1); r.push('경고 누적으로 1경기 결장'); } return r.join(' · '); } },
+    const gk = c.p.pos === 'GK';
+    return { title: '원정석의 야유', tone: 'bad', text: gk ? '골킥을 찰 때마다 원정 팬들이 이름을 비틀어 부른다. 물병 하나가 골대 옆에 떨어졌다.' : '코너킥을 차러 갈 때마다 원정 팬들이 이름을 비틀어 부른다. 물병 하나가 발밑에 떨어졌다.', options: [
+      { label: gk ? '페널티킥을 막고 그 앞에서 포효한다' : '골을 넣고 그 앞에서 세리머니한다', hint: '팬심 +6 · 명성 −2 · 징계 위험', run(x) { const h = H(x); h.goal(); const r = [h.b('fans', 6), h.b('rep', -2)]; if (chance(.3)) { h.mod('miss', 1); r.push('경고 누적으로 1경기 결장'); } return r.join(' · '); } },
       { label: '경기 후 공식적으로 문제를 제기한다', hint: '명성 +3 · 사기 −1', run(x) { const h = H(x); return '리그가 해당 구단에 벌금을 매겼다. ' + [h.b('rep', 3), h.b('morale', -1)].join(' · '); } },
       { label: '흘려듣는다', hint: '사기 −3 · 감독 신뢰 +1', run(x) { const h = H(x); return [h.b('morale', -3), h.b('trust', 1)].join(' · '); } },
     ] };
@@ -5087,7 +5271,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'markman', phase: 'mid', cd: 3, w: (c) => pro(c.p) && (grp(c.p) === 'DF' || c.p.pos === 'DM') ? 6 : 0, make(c) {
     const star = NAMES.gen(pick(E.NATIONS.filter(n => n.str >= 75)).name);
     return { title: '전담 마크 지시', tone: 'neutral', text: `빅매치. 감독이 상대 에이스 ${star}만 90분 동안 따라다니라고 했다. 공격 가담은 잊으라고.`, options: [
-      { label: '그림자가 된다', hint: '감독 신뢰 +5 · 해 봐야 안다', run(x) { const h = H(x); if (chance(.6)) { h.note(`${star} 지우기`); h.mod('rating', .04); return `${J(star, '가')} 슈팅 하나 없이 교체됐다. ` + h.b('trust', 5); } return `${star}에게 두 번 뚫렸다. 그래도 감독은 고개를 끄덕였다. ` + h.b('trust', 3); } },
+      { label: '그림자가 된다', hint: '감독 신뢰 +5 · 해 봐야 안다', run(x) { const h = H(x); if (chance(.6)) { h.note(`${star} 완벽 봉쇄`); h.mod('rating', .04); return `${J(star, '가')} 슈팅 하나 없이 교체됐다. ` + h.b('trust', 5); } return `${star}에게 두 번 뚫렸다. 그래도 감독은 고개를 끄덕였다. ` + h.b('trust', 3); } },
       { label: '내 방식대로 막겠다고 한다', hint: '감독 신뢰 −4 · 사기 +2', run(x) { const h = H(x); return [h.b('trust', -4), h.b('morale', 2)].join(' · '); } },
     ] };
   } });
@@ -5100,15 +5284,15 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'pkgift', phase: 'mid', cd: 4, w: (c) => pro(c.p) && grp(c.p) === 'FW' ? 5 : 0, make(c) {
     const m = mate();
     return { title: '페널티킥을 양보할까', tone: 'neutral', text: `${J(m, '가')} 2경기째 골이 없다. 오늘 페널티킥이 나왔다. 전담 키커는 너다.`, options: [
-      { label: `${m}에게 공을 건넨다`, hint: '감독 신뢰 +3 · 사기 +2', run(x) { const h = H(x); return `${J(m, '가')} 넣고 너를 안았다. ` + [h.b('trust', 3), h.b('morale', 2)].join(' · '); } },
-      { label: '내가 찬다', hint: '평점 소폭 상승', run(x) { const h = H(x); h.mod('rating', .02); return '구석으로 찼다. 숫자는 쌓였다.'; } },
+      { label: `${m}에게 공을 건넨다`, hint: '감독 신뢰 +3 · 사기 +2', run(x) { const h = H(x); x.p.flags.pkY = x.p.year; return `${J(m, '가')} 넣고 너를 안았다. ` + [h.b('trust', 3), h.b('morale', 2)].join(' · '); } },
+      { label: '내가 찬다', hint: '평점 소폭 상승', run(x) { const h = H(x); h.mod('rating', .02); h.goal('pk'); x.p.flags.pkY = x.p.year; return '구석으로 찼다. 숫자는 쌓였다.'; } },
     ] };
   } });
   def({ id: 'kidletter', phase: 'mid', cd: 8, w: (c) => pro(c.p) && c.p.rep >= 10 ? 4 : 0, make(c) {
     const n = NAMES.gen(lgOf(c.p).country === '대한민국' ? '대한민국' : c.p.nation).split(' ')[0];
-    return { title: '병원에서 온 편지', tone: 'life', text: `소아 병동에 있는 ${J(n, '가')} 크레파스로 쓴 편지가 왔다. "다음 경기에서 골 넣으면 저 퇴원할 수 있대요."`, options: [
+    return { title: '병원에서 온 편지', tone: 'life', text: `소아 병동에 있는 ${J(n, '가')} 크레파스로 쓴 편지가 왔다. "${c.p.pos === 'GK' ? '다음 경기에서 한 골도 안 먹으면' : '다음 경기에서 골 넣으면'} 저 퇴원할 수 있대요."`, options: [
       { label: '병원에 찾아간다', hint: '사기 +5 · 팬심 +3', run(x) { const h = H(x); h.note(`어린 팬 ${n} 병문안`); return [h.b('morale', 5), h.b('fans', 3)].join(' · '); } },
-      { label: '골을 약속한다', hint: '해 봐야 안다', run(x) { const h = H(x); if (chance(.55)) { h.mod('form', .03); h.note(`${n}에게 약속한 골`); return '약속을 지켰다. 세리머니로 하트를 그렸다. ' + h.b('rep', 3); } return '골은 나오지 않았다. 경기 후 병원으로 유니폼을 보냈다. ' + h.b('morale', -2); } },
+      { label: c.p.pos === 'GK' ? '무실점을 약속한다' : '골을 약속한다', hint: '해 봐야 안다', run(x) { const h = H(x); const gk = x.p.pos === 'GK'; if (chance(.55)) { h.mod('form', .03); h.goal(); h.note(gk ? `${n}에게 약속한 무실점` : `${n}에게 약속한 골`); return (gk ? '약속을 지켰다. 종료 휘슬이 울리자 장갑을 벗어 하트를 그렸다. ' : '약속을 지켰다. 세리머니로 하트를 그렸다. ') + h.b('rep', 3); } return (gk ? '막판에 한 골을 내줬다. 경기 후 병원으로 장갑을 보냈다. ' : '골은 나오지 않았다. 경기 후 병원으로 유니폼을 보냈다. ') + h.b('morale', -2); } },
     ] };
   } });
   def({ id: 'ownerpet', phase: 'mid', cd: 6, w: (c) => pro(c.p) && c.p.rep >= 20 ? 3 : 0, make(c) {
@@ -5147,11 +5331,37 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     ] };
   } });
   def({ id: 'holiday', phase: 'post', cd: 3, w: (c) => pro(c.p) ? 5 : 0, make(c) {
-    return { title: '여름 휴가', tone: 'life', text: '3주가 생겼다. 어디로 갈까.', options: [
-      { label: '고향에 간다', hint: '사기 +4', run(x) { return '어머니 밥을 먹었다. ' + H(x).b('morale', 4); } },
-      { label: '아무도 모르는 섬으로', hint: '내구도 +3 · 사기 +2', run(x) { const h = H(x); return [h.b('dur', 3), h.b('morale', 2)].join(' · '); } },
-      { label: '개인 코치와 훈련 캠프', hint: '다음 시즌 폼 ↑ · 사기 −2 · 내구도 −1', run(x) { const h = H(x); h.next('form', .03); return [h.b('morale', -2), h.b('dur', -1)].join(' · '); } },
-    ] };
+    const p = c.p; const kids = (p.kids || []).length; const fam = p.flags.married || p.flags.partner; const star = p.rep >= 30;
+    const isle = pick(['아무도 모르는 섬', '그리스의 작은 섬', '몰디브', '노르웨이 피오르', '아이슬란드 오두막', '발리 해변', '알프스 산장']);
+    const text = kids ? '3주가 생겼다. 아이들이 달력에 동그라미를 쳐 놨다.' : fam ? '3주가 생겼다. 둘이서 어디든 갈 수 있다.' : '3주가 생겼다. 어디로 갈까.';
+    const opts = [
+      { label: '고향에 간다', hint: '사기 ↑ · 그때그때 다르다', run(x) { const h = H(x); const q = x.p; return roll([
+        [5, () => '어머니 밥을 먹었다. 아무것도 안 했다. ' + h.b('morale', ri(3, 5))],
+        [star ? 4 : 1, () => '동네가 뒤집혔다. 사인 받으려는 줄이 골목 끝까지 섰다. 조기축구회에 깜짝 등장한 영상이 퍼졌다. ' + [h.b('fans', ri(2, 4)), h.b('rep', 1), h.b('morale', 2)].join(' · ')],
+        [2, () => { h.mod('form', .02); return '처음 공을 가르쳐 준 코치를 만났다. "너 요즘 공을 너무 오래 끈다." 맞는 말이었다. ' + h.b('morale', 3) + ' · 다음 시즌 폼 ↑'; }],
+        [q.age >= 28 ? 2.5 : .5, () => '부모님 머리가 하얗게 셌다. 처음으로 은퇴 뒤를 생각했다. ' + h.b('morale', 1)],
+        [q.trait === 'mood' ? 2.5 : 1, () => { const r = [h.b('morale', ri(5, 7)), h.b('dur', -2)]; if (q.rep >= 25) r.push(h.b('rep', -1)); return (q.rep >= 25 ? '고향 친구들과 밤새 마셨다. 다음 날 아침 사진이 돌았다. ' : '고향 친구들과 밤새 마셨다. 몸은 조금 상했다. ') + r.join(' · '); }],
+      ]); } },
+      { label: `${isle}로`, hint: '내구도 ↑ · 그때그때 다르다', run(x) { const h = H(x); const q = x.p; return roll([
+        [5, () => '휴대폰을 껐다. 파도 소리만 들었다. ' + [h.b('dur', ri(2, 4)), h.b('morale', ri(1, 3))].join(' · ')],
+        [q.rep >= 25 ? 3 : 0, () => (fam ? '망원 렌즈에 둘이 찍혔다. 다음 주 잡지 표지였다. ' : '망원 렌즈에 찍혔다. 배가 나왔다는 기사가 붙었다. ') + [h.b('rep', 1), h.b('morale', -2), h.b('dur', 2)].join(' · ')],
+        [1, () => { h.mod('share', -.03); return '첫날 서핑 보드에서 떨어져 발목이 살짝 돌아갔다. 프리시즌 첫 주는 따로 뛴다. ' + h.b('dur', -2); }],
+        [q.trait === 'mood' ? 2 : 1.2, () => { h.mod('form', -.02); return '너무 잘 쉬었다. 체중계 숫자가 늘었다. ' + h.b('morale', 4) + ' · 다음 시즌 폼 ↓'; }],
+        [1.5, () => { h.mod('form', .02); return '해 질 녘마다 혼자 걸었다. 머릿속이 정리됐다. ' + [h.b('morale', 3), h.b('dur', 2)].join(' · ') + ' · 다음 시즌 폼 ↑'; }],
+      ]); } },
+      { label: '개인 코치와 훈련 캠프', hint: '다음 시즌 폼 ↑ · 무리하면 탈 난다', run(x) { const h = H(x); const q = x.p; const old = q.age >= 30 || q.dur < 45; return roll([
+        [5, () => { h.mod('form', ri(3, 5) / 100); return '매일 두 번씩 뛰었다. 프리시즌 첫날 가장 가벼웠다. ' + [h.b('morale', -ri(1, 2)), h.b('dur', -1)].join(' · ') + ' · 다음 시즌 폼 ↑'; }],
+        [q.pos === 'GK' ? 0 : 3, () => { const ks = Object.keys(E.ROLE[q.role]?.w || {}).filter(k => q.attrs[k] != null); const lo = ks.sort((a, b) => q.attrs[a] - q.attrs[b])[0]; if (!lo) { h.mod('form', .03); return '매일 두 번씩 뛰었다. ' + h.b('dur', -1) + ' · 다음 시즌 폼 ↑'; } q.attrs[lo] = Math.min(99, q.attrs[lo] + 1); h.mod('form', .02); return `약점만 팠다. ${E.ATTR_NAME[lo]} +1 · ` + h.b('morale', -1); }],
+        [old ? 3 : 1.2, () => { h.mod('share', -.04); h.mod('form', .01); return '욕심을 냈다. 셋째 주에 햄스트링이 당겼다. ' + h.b('dur', -3); }],
+        [q.rep >= 20 ? 1.5 : .5, () => { const o = NAMES.gen(pick(E.NATIONS.filter(n => n.str >= 72)).name); h.mod('form', .03); return `같은 캠프에 ${J(o, '가')} 있었다. 매일 1대1을 붙었다. ` + [h.b('morale', 2), h.b('rep', 1)].join(' · ') + ' · 다음 시즌 폼 ↑'; }],
+      ]); } },
+    ];
+    if (kids || fam) opts.splice(2, 0, { label: kids ? '아이들과 놀이공원' : '둘이서 긴 여행', hint: '사기 ↑ · 그때그때 다르다', run(x) { const h = H(x); return roll([
+      [5, () => (kids ? '아이들이 회전목마에서 내려오지 않았다. ' : '계획 없이 기차를 탔다. ') + h.b('morale', ri(5, 8))],
+      [x.p.rep >= 28 ? 3 : .5, () => '알아보는 사람들이 몰렸다. 반나절은 사인만 했다. ' + [h.b('morale', 2), h.b('fans', 2)].join(' · ')],
+      [kids ? 1.5 : 1, () => (kids ? '둘째 날 막내가 열이 났다. 호텔 방에서 만화만 봤다. 그래도 같이 있었다. ' : '사소한 걸로 크게 싸웠다. 마지막 날에 화해했다. ') + h.b('morale', 2)],
+    ]); } });
+    return { title: '여름 휴가', tone: 'life', text, options: opts };
   } });
   def({ id: 'checkup', phase: 'post', cd: 5, w: (c) => pro(c.p) && c.p.age >= 29 ? 4 : 0, make(c) {
     return { title: '정밀 검진', tone: 'neutral', text: '시즌 후 검진에서 무릎 연골에 작은 이상이 보인다. 지금 청소 수술을 하면 프리시즌 일부를 날린다.', options: [
@@ -5171,8 +5381,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'snubboo', phase: 'mid', cd: 3, w: (c) => pro(c.p) && snubbed(c.p) ? 30 : 0, make(c) {
     const p = c.p; const id = snubbed(p);
     return { title: `${club(id)} 원정`, tone: 'bad', text: `러브콜을 일축한 뒤 처음 찾는 옛 홈구장. 몸을 풀 때부터 야유가 쏟아진다. 관중석에 "${p.number || ''}번은 죽었다"는 걸개가 걸렸다.`, options: [
-      { label: '골을 넣고 세리머니를 참는다', hint: '해 봐야 안다', run(x) { const h = H(x); if (chance(.45)) { E.bump(x.p, 'fans', 6, id); h.note(`${club(id)} 원정에서 득점, 세리머니 자제`); return '골을 넣고 두 손을 들었다. 야유 사이로 박수가 섞였다.'; } return '골은 없었다. 야유만 남았다. ' + h.b('morale', -3); } },
-      { label: '골을 넣고 그들 앞에서 포효한다', hint: '해 봐야 안다', run(x) { const h = H(x); E.bump(x.p, 'fans', -15, id); if (chance(.5)) { h.mod('form', .03); h.note(`${club(id)} 원정 도발 세리머니`); return '골을 넣고 원정석 앞을 달렸다. 지금 팀 팬들은 그 장면을 프로필 사진으로 걸었다. ' + h.b('fans', 6); } return '골은 없었다. 경기 내내 공을 잡을 때마다 귀가 먹먹했다. ' + h.b('morale', -5); } },
+      { label: p.pos === 'GK' ? '무실점으로 막고 담담히 돌아선다' : '골을 넣고 세리머니를 참는다', hint: '해 봐야 안다', run(x) { const h = H(x); if (x.p.pos === 'GK') { if (chance(.45)) { E.bump(x.p, 'fans', 6, id); h.note(`${club(id)} 원정 무실점`); return '마지막 슈팅까지 막고 장갑을 벗어 옛 관중석에 고개를 숙였다. 야유 사이로 박수가 섞였다.'; } return '두 골을 내줬다. 실점할 때마다 함성이 더 컸다. ' + h.b('morale', -3); } if (chance(.45)) { h.goal(); E.bump(x.p, 'fans', 6, id); h.note(`${club(id)} 원정에서 득점, 세리머니 자제`); return '골을 넣고 두 손을 들었다. 야유 사이로 박수가 섞였다.'; } return '골은 없었다. 야유만 남았다. ' + h.b('morale', -3); } },
+      { label: p.pos === 'GK' ? '선방할 때마다 그들 쪽으로 포효한다' : '골을 넣고 그들 앞에서 포효한다', hint: '해 봐야 안다', run(x) { const h = H(x); E.bump(x.p, 'fans', -15, id); if (x.p.pos === 'GK') { if (chance(.5)) { h.mod('form', .03); h.note(`${club(id)} 원정 도발`); return '페널티킥까지 막고 원정석 앞에서 주먹을 쥐었다. 지금 팀 팬들은 그 장면을 프로필 사진으로 걸었다. ' + h.b('fans', 6); } return '세 골을 먹었다. 포효할 틈이 없었다. ' + h.b('morale', -5); } if (chance(.5)) { h.mod('form', .03); h.goal(); h.note(`${club(id)} 원정 도발 세리머니`); return '골을 넣고 원정석 앞을 달렸다. 지금 팀 팬들은 그 장면을 프로필 사진으로 걸었다. ' + h.b('fans', 6); } return '골은 없었다. 경기 내내 공을 잡을 때마다 귀가 먹먹했다. ' + h.b('morale', -5); } },
       { label: '경기 전 그 팬들에게 인사한다', hint: '해 봐야 안다', run(x) { const h = H(x); if (chance(.35)) { E.bump(x.p, 'fans', 10, id); x.p.flags['snub_' + id] = null; return '야유가 조금씩 잦아들었다. 누군가 이름을 불렀다.'; } return '돌아온 건 물병이었다. ' + h.b('morale', -2); } },
     ] };
   } });
@@ -5272,7 +5482,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const idol = NAMES.gen(pick(E.NATIONS.filter(n => n.str >= 75)).name);
     return { title: '우상과 같은 경기장', tone: 'good', text: `어릴 적 방에 포스터를 붙여 둔 ${J(idol, '가')} 상대 팀 주장으로 나온다. 서른여섯, 아마 마지막 시즌이다.`, options: [
       { label: '경기 후 유니폼을 바꿔 달라고 한다', hint: '사기 +6', run(x) { x.p.flags.idol = idol; const h = H(x); h.note(`우상 ${J(idol, '와')} 유니폼 교환`); return '그가 먼저 다가왔다. "네 경기 봤다." ' + h.b('morale', 6); } },
-      { label: '경기에서 그를 넘어선다', hint: '해 봐야 안다', run(x) { x.p.flags.idol = idol; const h = H(x); if (chance(.5)) { h.mod('rating', .03); return '그의 앞에서 골을 넣었다. 그는 박수를 쳤다.'; } return '그는 여전히 그였다. 한 수 배웠다. ' + h.b('morale', 2); } },
+      { label: '경기에서 그를 넘어선다', hint: '해 봐야 안다', run(x) { x.p.flags.idol = idol; const h = H(x); if (chance(.5)) { h.mod('rating', .03); if (x.p.pos === 'GK') return '그의 슈팅을 두 번 막았다. 그는 웃으며 고개를 저었다.'; h.goal(); return '그의 앞에서 골을 넣었다. 그는 박수를 쳤다.'; } return '그는 여전히 그였다. 한 수 배웠다. ' + h.b('morale', 2); } },
     ] };
   } });
   def({ id: 'heat', phase: 'mid', cd: 6, w: (c) => pro(c.p) && ['KSA', 'BRA', 'USA', 'ESP', 'ITA', 'TUR', 'GRE'].includes(E.CLUB[c.p.club].lg) ? 3 : 0, make(c) {
@@ -5311,7 +5521,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const p = c.p; fate(p, 'f_parent'); const who = pick(['아버지', '아버지', '어머니']);
     press(p, PR('both', 'loss', p, { who }));
     return { title: `${J(who, '가')} 돌아가셨다`, tone: 'bad', major: true, text: `새벽에 고향에서 전화가 왔다. ${J(who, '가')} 쓰러졌고, 다시 일어나지 못했다. 처음 축구공을 사 준 사람이었다.`, options: [
-      { label: '장례를 치르고 바로 돌아온다', hint: '해 봐야 안다', run(x) { const q = x.p; const h = H(x); h.mod('miss', 2); if (chance(.4)) { E.addArc(q, { id: 'grief', from: q.year, to: q.year, form: .04, note: `${J(who, '를')} 위해 뛴 시즌` }); return '첫 골을 넣고 하늘을 가리켰다.'; } E.addArc(q, { id: 'grief', from: q.year, to: q.year + 1, fade: .6, form: -.04, morale: -6, note: `${J(who, '를')} 잃은 시즌`, later: '아직 가시지 않은 슬픔' }); return '경기장에 돌아왔다. 몸만 돌아왔다.'; } },
+      { label: '장례를 치르고 바로 돌아온다', hint: '해 봐야 안다', run(x) { const q = x.p; const h = H(x); h.mod('miss', 2); if (chance(.4)) { E.addArc(q, { id: 'grief', from: q.year, to: q.year, form: .04, note: `${J(who, '를')} 위해 뛴 시즌` }); if (q.pos === 'GK') return '복귀전을 무실점으로 막고 하늘을 가리켰다.'; h.goal(); return '첫 골을 넣고 하늘을 가리켰다.'; } E.addArc(q, { id: 'grief', from: q.year, to: q.year + 1, fade: .6, form: -.04, morale: -6, note: `${J(who, '를')} 잃은 시즌`, later: '아직 가시지 않은 슬픔' }); return '경기장에 돌아왔다. 몸만 돌아왔다.'; } },
       { label: '한동안 고향에 머문다', hint: '감독 신뢰 −3 · 한 달 결장', run(x) { const q = x.p; const h = H(x); h.mod('miss', 6); E.addArc(q, { id: 'grief', from: q.year, to: q.year, form: -.02, note: `${J(who, '를')} 보낸 시즌` }); return '가족과 함께 있었다. ' + [h.b('trust', -3), h.b('morale', 2)].join(' · '); } },
       { label: '아무에게도 말하지 않고 견딘다', hint: '해 봐야 안다', run(x) { const q = x.p; const h = H(x); h.mod('miss', 1); if (chance(q.trait === 'pro' ? .3 : .6)) { q.flags.dark = q.year; q.flags.darkWho = who; E.addArc(q, { id: 'dark', from: q.year, to: q.year + 3, fade: .3, growth: .8, decay: 1.4, allAttr: -1.9, form: -.06, rating: -.1, ceil: -1.2, morale: -7, dur: -3, attr: { STA: -1.5, PAC: -1 }, note: `${J(who, '를')} 잃은 뒤`, later: '길어진 밤' }); return '괜찮다고 말했다. 다들 믿었다.'; } E.addArc(q, { id: 'grief', from: q.year, to: q.year + 1, fade: .5, form: -.03, morale: -4, note: `${J(who, '를')} 잃은 시즌` }); return '혼자 견뎠다. 조금씩 괜찮아졌다.'; } },
     ] };
@@ -5404,7 +5614,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'fatemove', phase: 'window', cd: 0, w: (c) => c.p.flags.fateMove && c.p.flags.fateMove.year < c.p.year ? 100 : 0, make(c) {
     const p = c.p; const fm = p.flags.fateMove; p.flags.fateMove = null;
     return { title: '떠나야 한다', tone: 'bad', text: `${fm.why}. 새 팀을 찾아야 한다.`, options: [
-      { label: '새 팀을 찾는다', hint: '제안 중 하나를 골라야 한다', run(x) { const q = x.p; q.contract = 0; q.loanFrom = null; const banIta = fm.why.includes('규정'); let L = E.offers(q, x.world, { force: true }).filter(o => o.club !== q.club && o.club !== fm.fold && !(banIta && (E.CLUB[o.club]?.lg || '').startsWith('ITA'))); if (fm.homeward) { const hc = homeLgClubs(q).filter(x => x.id !== q.club).slice().sort(() => R() - .5).slice(0, 2); hc.forEach(hh => L.unshift(E.offerTerms(q, { club: hh.id, type: 'free', expect: E.expectRole(ovr(q), E.clubStr(hh.id, q.year)), years: 2, home: true }))); } if (fm.abroad) L = L.filter(o => !E.homeLeagues(q.nation).includes(E.CLUB[o.club]?.lg)).concat(L.filter(o => E.homeLeagues(q.nation).includes(E.CLUB[o.club]?.lg))).slice(0, 6); q.pendingOffers = L.filter(o => o.club !== q.club); q.released = true; return '짐을 쌌다.'; } },
+      { label: '새 팀을 찾는다', hint: '제안 중 하나를 골라야 한다', run(x) { const q = x.p; q.contract = 0; q.loanFrom = null; q.flags.forcedOut = q.year; const banIta = fm.why.includes('규정'); let L = E.offers(q, x.world, { force: true }).filter(o => o.club !== q.club && o.club !== fm.fold && !(banIta && (E.CLUB[o.club]?.lg || '').startsWith('ITA'))); if (fm.homeward) { const hc = homeLgClubs(q).filter(x => x.id !== q.club).slice().sort(() => R() - .5).slice(0, 2); hc.forEach(hh => L.unshift(E.offerTerms(q, { club: hh.id, type: 'free', expect: E.expectRole(ovr(q), E.clubStr(hh.id, q.year)), years: 2, home: true }))); } if (fm.abroad) L = L.filter(o => !E.homeLeagues(q.nation).includes(E.CLUB[o.club]?.lg)).concat(L.filter(o => E.homeLeagues(q.nation).includes(E.CLUB[o.club]?.lg))).slice(0, 6); q.pendingOffers = L.filter(o => o.club !== q.club); q.released = true; return '짐을 쌌다.'; } },
     ] };
   } });
 
@@ -6404,11 +6614,19 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const me = f.played ? ((f.g || f.as || f.tk || f.it || f.sv) ? ` · ${finalMe(f, pos || (f.sv ? 'GK' : 'CM'))}` : '') + (f.motm ? ' · MOTM' : '') + (f.pkMiss ? ' · 승부차기 실축' : '') : ' · 결장';
     return `${f.comp} 결승 ${f.won ? '우승' : '준우승'} vs ${opp}${f.oppStar ? `(${f.oppStar})` : ''} ${sc}${me}`;
   }
+  // 득점 루트 막대: 주발 → 약발 → 헤더 → 중거리 → 프리킥 → PK 순서
+  function routeBlock(gt, foot, opt = {}) {
+    if (!gt) return ''; const keys = foot === 'L' ? ['l', 'r', 'h', 'ls', 'fk', 'pk'] : ['r', 'l', 'h', 'ls', 'fk', 'pk'];
+    const T = keys.reduce((a, k) => a + (gt[k] || 0), 0); if (!T) return '';
+    const on = keys.filter(k => gt[k]); const st = opt.style ? E.routeStyle(gt, foot) : null;
+    return `<div class="groute${opt.cls ? ' ' + opt.cls : ''}">${opt.title ? `<p class="gr-t">${esc(opt.title)}${st ? ` <span class="gr-style">${esc(st)}</span>` : ''}</p>` : ''}<div class="gr-bar" aria-hidden="true">${on.map(k => `<i class="gr-${k}" style="flex:${gt[k]}"></i>`).join('')}</div><p class="gr-leg">${on.map(k => `<span class="gr-${k}">${E.GR_NAME[k]} <b>${gt[k]}</b>${opt.pct ? `<small>${Math.round(gt[k] / T * 100)}%</small>` : ''}</span>`).join('')}</p></div>`;
+  }
   function seasonResult(r, p, compact) {
     const isGK = p.pos === 'GK';
     return `<section class="${compact ? '' : 'panel '}result"><div class="ptitle"><h2>${sl(r.year)} 시즌</h2><span class="muted small">${crest(r.club, 'xs')} ${esc(club(r.club).name)} · ${esc(E.ROLE[r.role]?.name || '')}${r.number ? ` · ${r.number}번` : ''}</span></div>
       <div class="sgrid"><div><b>${r.apps}${r.youthTeam ? `<small>+${r.youthApps}</small>` : ''}</b><span>출전</span></div>${isGK ? `<div><b>${r.cs}${r.youthTeam && r.youthCs != null ? `<small>+${r.youthCs}</small>` : ''}</b><span>클린시트</span></div>` : `<div><b>${r.goals}${r.youthTeam && r.youthGoals != null ? `<small>+${r.youthGoals}</small>` : ''}</b><span>골</span></div><div><b>${r.assists}${r.youthTeam && r.youthAssists != null ? `<small>+${r.youthAssists}</small>` : ''}</b><span>도움</span></div>`}<div><b>${r.rating.toFixed(2)}</b><span>평점</span></div><div><b>${r.ovrEnd}<small class="${r.growth >= 0 ? 'pos' : 'neg'}">${r.growth >= .5 ? '▲' : r.growth <= -.5 ? '▼' : ''}</small></b><span>OVR</span></div></div>
       ${!r.youthTeam ? `<p class="small muted">${shareWord(r.share ?? 0)}${r.assigned ? ` · ${esc(E.ROLE[r.role]?.name || '')} (${E.FAM_NAME[r.fam ?? 2]})` : ''}${r.injuryWeeks ? ` · 부상 ${r.injuryWeeks}주` : ''}</p>` : ''}
+      ${!isGK && r.goals ? routeBlock(E.routesOf(p, r), p.foot, { title: '득점 루트' }) : ''}
       ${pressBlock(r.press)}
       <ul class="lines">${seasonLines(r).map(([c, t]) => `<li class="${c}">${esc(t)}</li>`).join('')}</ul>${r.memo ? `<p class="memo">${esc(r.memo)}</p>` : ''}</section>`;
   }
@@ -6420,7 +6638,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function viewRecords(p, live, only) {
     const tabs = REC_TABS;
     const t = only || (S.rtab === 'life' ? 'story' : S.rtab); const isGK = p.pos === 'GK'; let inner = '';
-    if (t === 'season') inner = `<div class="tblwrap"><table class="tbl"><thead><tr><th>시즌</th><th>나이</th><th>구단</th><th>#</th><th>포지션</th><th>역할</th><th class="num">출전</th>${isGK ? '<th class="num">선방</th><th class="num">CS</th>' : '<th class="num">골</th><th class="num">도움</th>'}<th class="num">평점</th><th class="num">OVR</th><th class="num">연봉</th><th>성과</th></tr></thead><tbody>${p.seasons.map(r => `<tr><td class="num">${sl(r.year)}</td><td class="num">${r.age}</td><td>${crest(r.club, 'xs')} ${esc(club(r.club).name)}${r.youthTeam ? ' <span class="muted small">유스</span>' : r.loan ? ' <span class="muted small">임대</span>' : ''}</td><td class="num">${r.number || ''}</td><td>${r.pos || p.pos}</td><td class="rolecell">${roleCell(r)}</td><td class="num">${r.apps}${r.youthTeam ? `<span class="muted small">+${r.youthApps}</span>` : ''}</td>${isGK ? `<td class="num">${r.saves}${r.youthTeam && r.youthSaves != null ? `<span class="muted small">+${r.youthSaves}</span>` : ''}</td><td class="num">${r.cs}${r.youthTeam && r.youthCs != null ? `<span class="muted small">+${r.youthCs}</span>` : ''}</td>` : `<td class="num">${r.goals}${r.youthTeam && r.youthGoals != null ? `<span class="muted small">+${r.youthGoals}</span>` : ''}</td><td class="num">${r.assists}${r.youthTeam && r.youthAssists != null ? `<span class="muted small">+${r.youthAssists}</span>` : ''}</td>`}<td class="num">${r.rating.toFixed(2)}</td><td class="num">${r.ovrEnd} <span class="${r.growth >= 0 ? 'pos' : 'neg'} small">${r.growth >= 0 ? '+' : ''}${r.growth}</span></td><td class="num small">${r.wage ? E.fmtWon(r.wage) : ''}</td><td class="ach">${r.trophies.map(x => `<span class="achi tr">${esc(x.comp)}</span>`).join('')}${r.awards.map(x => `<span class="achi">${esc(x)}</span>`).join('')}${r.weakUp ? `<span class="achi up">약발 ★${r.weakUp}</span>` : ''}${r.move ? `<span class="achi ${r.move === 'up' ? 'up' : ''}">${r.move === 'up' ? '승격' : '강등'}</span>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
+    if (t === 'season') inner = `<div class="tblwrap"><table class="tbl"><thead><tr><th>시즌</th><th>나이</th><th>구단</th><th>#</th><th>포지션</th><th>역할</th><th class="num">출전</th>${isGK ? '<th class="num">선방</th><th class="num">CS</th>' : '<th class="num">골</th><th class="num">도움</th>'}<th class="num">평점</th><th class="num">OVR</th><th class="num">연봉</th><th>성과</th></tr></thead><tbody>${p.seasons.map(r => `<tr><td class="num">${sl(r.year)}</td><td class="num">${r.age}</td><td>${crest(r.club, 'xs')} ${esc(club(r.club).name)}${r.youthTeam ? ' <span class="muted small">유스</span>' : r.loan ? ' <span class="muted small">임대</span>' : ''}</td><td class="num">${r.number || ''}</td><td>${r.pos || p.pos}</td><td class="rolecell">${roleCell(r)}</td><td class="num">${r.apps}${r.youthTeam ? `<span class="muted small">+${r.youthApps}</span>` : ''}</td>${isGK ? `<td class="num">${r.saves}${r.youthTeam && r.youthSaves != null ? `<span class="muted small">+${r.youthSaves}</span>` : ''}</td><td class="num">${r.cs}${r.youthTeam && r.youthCs != null ? `<span class="muted small">+${r.youthCs}</span>` : ''}</td>` : `<td class="num">${r.goals}${r.youthTeam && r.youthGoals != null ? `<span class="muted small">+${r.youthGoals}</span>` : ''}</td><td class="num">${r.assists}${r.youthTeam && r.youthAssists != null ? `<span class="muted small">+${r.youthAssists}</span>` : ''}</td>`}<td class="num">${r.rating.toFixed(2)}</td><td class="num">${r.ovrEnd} <span class="${r.growth >= 0 ? 'pos' : 'neg'} small">${r.growth >= 0 ? '+' : ''}${r.growth}</span></td><td class="num small">${r.wage ? E.fmtWon(r.wage) : ''}</td><td class="ach">${r.trophies.map(x => `<span class="achi tr">${esc(x.comp)}</span>`).join('')}${r.awards.map(x => `<span class="achi">${esc(x)}</span>`).join('')}${r.weakUp ? `<span class="achi up">약발 ★${r.weakUp}</span>` : ''}${r.move ? `<span class="achi ${r.move === 'up' ? 'up' : ''}">${r.move === 'up' ? '승격' : '강등'}</span>` : ''}</td></tr>`).join('')}</tbody></table></div>` + (!isGK ? routeBlock(E.routeSum(p), p.foot, { title: '커리어 득점 루트', pct: true, style: true, cls: 'gr-rec' }) : '');
     else if (t === 'finals') {
       const ucl = p.finals.filter(f => f.comp === 'UEFA 챔피언스리그');
       inner = (ucl.length ? `<p class="note">챔피언스리그 결승 ${ucl.length}회 · ${ucl.filter(f => f.won).length}승 ${ucl.filter(f => !f.won).length}패 · 결승 공격포인트 ${ucl.reduce((a, f) => a + f.g + f.as, 0)}</p>` : '') + (p.finals.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>연도</th><th>대회</th><th>소속</th><th>상대</th><th>스코어</th><th>결과</th><th>내 기록</th></tr></thead><tbody>${p.finals.map(f => `<tr><td class="num">${f.national ? f.year : sl(f.year)}</td><td>${esc(f.comp)}</td><td>${f.national ? natTag(f.nation || E.natT(p)) : crest(f.club, 'xs') + ' ' + esc(club(f.club).name)}</td><td>${f.oppNation ? natTag(f.opp) : crest(f.opp, 'xs') + ' ' + esc(club(f.opp).name)}</td><td class="num">${f.a}-${f.b}${f.pens ? `<span class="small muted"> PK ${f.pa}-${f.pb}</span>` : ''}</td><td><b class="${f.won ? 'pos' : 'neg'}">${f.won ? '우승' : '준우승'}</b></td><td class="small">${f.played ? `${finalMe(f, p.pos)}${f.rating ? ' · ' + f.rating : ''}${f.motm ? ' · MOTM' : ''}${f.pkMiss ? ' · PK 실축' : f.pk ? ' · PK 성공' : ''}` : '결장'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">아직 결승에 오른 적이 없어요.</p>');
@@ -6510,6 +6728,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       ${sum.ghost ? `<p class="cc-sub small">세계선이 기억하던 ${sum.ghost.Y} 발롱도르의 주인 · ${sum.ghost.kept ? '기억대로 들어 올렸다' : '이번에는 그에게 오지 않았다'}</p>` : ''}
       ${heirBlock}
       <div class="cc-stats"><div><b>${nf(sum.apps)}</b><span>출전</span></div>${isGK ? `<div><b>${nf(sum.saves)}</b><span>선방</span></div><div><b>${nf(sum.cs)}</b><span>클린시트</span></div>` : `<div><b>${nf(sum.goals)}</b><span>골</span></div><div><b>${nf(sum.assists)}</b><span>도움</span></div>`}<div><b>${sum.avgRating.toFixed(2)}</b><span>평균 평점</span></div><div><b>${sum.trophies}회</b><span>우승</span></div><div><b>${sum.awards}회</b><span>개인상</span></div></div>
+      ${!isGK && (sum.gt || p?.seasons) ? routeBlock(sum.gt || E.routeSum(p), sum.foot ?? p?.foot, { title: '득점 루트', pct: true, style: true, cls: 'gr-cc' }) : ''}
       </div><div class="cc-r">
       <div class="cc-badges">${badges.map(([k, v]) => `<span class="pill gold">${esc(k)}${v > 1 ? ' ' + v : ''}</span>`).join('')}${retN.map(x => `<span class="pill">${esc(x)} 영구결번</span>`).join('')}${hofN.map(x => `<span class="pill">${esc(x)} 명예의 전당</span>`).join('')}</div>
       ${(sum.legends || []).length || (sum.feats || []).length ? `<div class="cc-legend"><span>사람들이 기억하는 장면</span>${(sum.feats || []).map(e => `<p><b class="cc-feat">${esc(e.title)}</b> ${esc(e.line || E.featLine(e))}</p>`).join('')}${(sum.legends || []).map(e => `<p>${esc(e.line || E.legendLine(e))}</p>`).join('')}</div>` : ''}
@@ -7194,7 +7413,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const p = S.p; keepMemo();
     const offers = p.pendingOffers || [];
     const of = S.offerPick >= 0 ? offers[S.offerPick] : null;
-    if (of && !of.blocked && !of.withdrawn) { const from = p.club; E.applyMove(p, of); try { const kind = of.type === 'loan' ? 'loan' : of.buyout ? 'buyout' : p.flags.renewLeave?.year === p.year && p.flags.renewLeave.to === of.club ? 'renewleave' : E.isRival(from, of.club) ? 'rival' : 'transfer'; PRESS.queue(p, PRESS.both(kind, p, { to: club(of.club).name, from: club(from).name })); const ls = p.seasons[p.seasons.length - 1]; const stay = p.seasons.filter(x => x.club === from && !x.youthTeam).length; if (of.type !== 'loan' && ls && !ls.youthTeam && (stay >= 4 || ls.awards?.length || ls.rating >= 7.2)) { const fw = PRESS.make('farewell', p, { from: club(from).name, to: club(of.club).name, n: (p.numbers || []).filter(x => x.club === from).pop()?.num || '' }, PRESS.outletsFor(from)[0]); if (fw) PRESS.queue(p, [fw]); } } catch (e) { } }
+    if (of && !of.blocked && !of.withdrawn) { const from = p.club; E.applyMove(p, of); try { const kind = PRESS.transferKind(p, of, from, p.flags.leftPushed === p.year); PRESS.queue(p, PRESS.both(kind, p, { to: club(of.club).name, from: club(from).name, fee: of.fee ? E.fmtFee(of.fee) : '' })); const ls = p.seasons[p.seasons.length - 1]; const stay = p.seasons.filter(x => x.club === from && !x.youthTeam).length; if (of.type !== 'loan' && ls && !ls.youthTeam && (stay >= 4 || ls.awards?.length || ls.rating >= 7.2)) { const fw = PRESS.make('farewell', p, { from: club(from).name, to: club(of.club).name, n: (p.numbers || []).filter(x => x.club === from).pop()?.num || '' }, PRESS.outletsFor(from)[0]); if (fw) PRESS.queue(p, [fw]); } } catch (e) { } }
     else if (!p.youth && p.contract <= 0 && !p.loanFrom) { p.contract = 2; p.wage = p.renewOffer ?? E.renewWage(p); p.wageHist = (p.wageHist || []).concat({ year: p.year, club: p.club, wage: p.wage, years: 2, renew: true }); p.pendingEvents = (p.pendingEvents || []).concat(`2년 재계약 · 연봉 ${E.fmtWon(p.wage)}`); }
     if (S.pendingNumber && (p.needNumber || of || !p.number)) E.setNumber(p, S.pendingNumber);
     if (S.numAsk && of && of.club === S.numAsk.club && S.numAsk.pr) { try { const q = S.numAsk.pr; PRESS.queue(p, q.k ? PRESS.make(q.k, p, q.v) : q); } catch { } } /* 새 구단에 온 뒤 그 동네 신문이 쓴다 */ S.numAsk = null;
