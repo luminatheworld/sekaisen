@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v58'</script>
+<script>window.SK_VER='v59'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2672,7 +2672,7 @@ const ENGINE = (() => {
     }
     if (p.fans[offer.club] == null) p.fans[offer.club] = 30;
     p.trust = offer.type === 'loan' ? 52 : 48 + (p.trait === 'lead' ? 5 : 0);
-    if (offer.type !== 'loan') { offerTerms(p, offer); p.wage = offer.wage; p.release = offer.release || null; p.wageHist = (p.wageHist || []).concat({ year: p.year, club: offer.club, wage: offer.wage, years: offer.years, release: offer.release || null }); if (offer.minutes) { p.nextMods = p.nextMods || {}; p.nextMods.share = (p.nextMods.share || 0) + .6; p.trust -= 6; p.promise = p.year; } }
+    if (offer.type !== 'loan') { offerTerms(p, offer); p.wage = offer.wage; p.release = offer.release || null; p.wageHist = (p.wageHist || []).concat({ year: p.year, club: offer.club, wage: offer.wage, years: offer.years, release: offer.release || null, fee: offer.fee || 0, free: offer.type === 'free' }); if (offer.minutes) { p.nextMods = p.nextMods || {}; p.nextMods.share = (p.nextMods.share || 0) + .6; p.trust -= 6; p.promise = p.year; } }
     p.captain = false; p.youth = false; p.pendingOffers = []; p.needNumber = true;
   }
   function setNumber(p, n) { p.number = n; p.needNumber = false; p.numbers.push({ club: p.club, num: n, year: p.year }); }
@@ -5712,6 +5712,13 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   }
 
   // ---------- NEW CAREER ----------
+  // 계약 기록 한 줄에 붙는 이적 방식: 이적료 또는 자유 이적
+  function moveTag(p, wh, i) {
+    const w = wh[i]; if (w.renew || w.cut) return '';
+    const fee = w.fee || (p.fees || []).find(f => f.year === w.year && f.to === w.club)?.fee || 0;
+    if (fee) return '이적료 ' + E.fmtFee(fee);
+    return w.free || (w.free == null && (i > 0 ? wh[i - 1].club !== w.club : !!p.homeClub && w.club !== p.homeClub)) ? '자유 이적' : '';
+  }
   function viewNew() {
     const f = S.newForm; const retired = S.world.careers;
     const nationOpts = E.NATIONS.map(n => `<option ${n.name === f.nation ? 'selected' : ''}>${esc(n.name)}</option>`).join('');
@@ -6169,11 +6176,11 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     } else if (t === 'story') {
       const rows = p.seasons.filter(s => (s.notes || []).length || s.events.length || s.memo || s.branch);
       const inj = p.injuries || []; const wh = p.wageHist || []; const majorN = inj.filter(i => i.major).length;
-      const life = `<div class="lifebox"><p><b>가족</b> ${p.flags.partner ? `${p.flags.married ? '배우자' : '연인'} ${p.flags.partnerName ? `${esc(p.flags.partnerName)} (${esc(p.flags.partner)}${p.flags.partnerNation ? ' · ' + esc(p.flags.partnerNation) : ''})` : esc(p.flags.partner)}${p.flags.married ? ` · ${p.flags.married}년 결혼` : ''}` : '공개된 연인 없음'}${(p.kids || []).length ? ` · 자녀 ${p.kids.map(k => `${esc(k.name)}(${k.born})`).join(', ')}` : ''}${p.flags.pet ? ` · 반려동물 ${esc(p.flags.pet)}` : ''}</p>${wh.length ? `<p><b>계약</b> ${wh.map(w => `${esc(club(w.club).name)} ${E.fmtWon(w.wage)}(${w.year} ${w.renew ? '재계약' : '입단'} ${w.years}년${w.release ? ' · 바이아웃 ' + E.fmtFee(w.release) : ''})`).join(' → ')}</p>` : ''}<p class="muted small">커리어 총수입 ${E.fmtWon(p.earned || 0)} · 부상 ${inj.length}회${majorN ? ` (장기 ${majorN})` : ''}${(p.kids || []).length ? ' · 아이로 은퇴 후 후손 커리어를 시작할 수 있어요' : ''}</p></div>`;
+      const life = `<div class="lifebox"><p><b>가족</b> ${p.flags.partner ? `${p.flags.married ? '배우자' : '연인'} ${p.flags.partnerName ? `${esc(p.flags.partnerName)} (${esc(p.flags.partner)}${p.flags.partnerNation ? ' · ' + esc(p.flags.partnerNation) : ''})` : esc(p.flags.partner)}${p.flags.married ? ` · ${p.flags.married}년 결혼` : ''}` : '공개된 연인 없음'}${(p.kids || []).length ? ` · 자녀 ${p.kids.map(k => `${esc(k.name)}(${k.born})`).join(', ')}` : ''}${p.flags.pet ? ` · 반려동물 ${esc(p.flags.pet)}` : ''}</p>${wh.length ? `<p><b>계약</b> ${wh.map((w, i) => { const t = moveTag(p, wh, i); return `${esc(club(w.club).name)} 연봉 ${E.fmtWon(w.wage)}(${w.year} ${w.renew ? '재계약' : w.cut ? '연봉 삭감' : '입단'}${w.years ? ` ${w.years}년` : ''}${t ? ' · ' + t : ''}${w.release ? ' · 바이아웃 ' + E.fmtFee(w.release) : ''})`; }).join(' → ')}</p>` : ''}<p class="muted small">커리어 총수입 ${E.fmtWon(p.earned || 0)} · 부상 ${inj.length}회${majorN ? ` (장기 ${majorN})` : ''}${(p.kids || []).length ? ' · 아이로 은퇴 후 후손 커리어를 시작할 수 있어요' : ''}</p></div>`;
       inner = life + (rows.length ? `<ul class="memos">${rows.map(s => `<li><span class="num">${sl(s.year)}</span> <span class="muted small">${esc(club(s.club).name)} · ${s.age}세</span><p>${[...(s.branch ? ['세계선 분기: ' + s.branch.what] : []), ...s.events, ...(s.notes || [])].map(esc).join(' · ')}</p>${s.memo ? `<p class="memo">${esc(s.memo)}</p>` : ''}</li>`).join('')}</ul>` : '<p class="muted">아직 기록된 사건이 없어요.</p>');
     } else {
       const inj = p.injuries || []; const wh = p.wageHist || [];
-      inner = `${wh.length || p.earned ? `<h3 class="h3">계약</h3><ul class="trophies">${wh.map(w => `<li><b>${esc(club(w.club).name)}</b><span class="num">${E.fmtWon(w.wage)}</span><span class="muted small">${w.year}년 ${w.renew ? '재계약' : '입단'} · ${w.years}년${w.release ? ' · 바이아웃 ' + E.fmtFee(w.release) : ''}</span></li>`).join('')}</ul><p class="muted small">커리어 총수입 ${E.fmtWon(p.earned || 0)}</p>` : ''}<h3 class="h3">부상 ${inj.length}회</h3>${inj.length ? `<ul class="trophies">${inj.map(i => `<li><b>${esc(i.name)}</b><span class="num">${i.weeks}주</span><span class="muted small">${sl(i.year)}${i.major ? ' · 장기 부상' : ''}</span></li>`).join('')}</ul>` : '<p class="muted">큰 부상 없이 보내고 있어요.</p>'}
+      inner = `${wh.length || p.earned ? `<h3 class="h3">계약</h3><ul class="trophies">${wh.map((w, i) => { const t = moveTag(p, wh, i); return `<li><b>${esc(club(w.club).name)}</b><span class="num">연봉 ${E.fmtWon(w.wage)}</span><span class="muted small">${w.year}년 ${w.renew ? '재계약' : w.cut ? '연봉 삭감' : '입단'}${w.years ? ` · ${w.years}년` : ''}${t ? ' · ' + t : ''}${w.release ? ' · 바이아웃 ' + E.fmtFee(w.release) : ''}</span></li>`; }).join('')}</ul><p class="muted small">커리어 총수입 ${E.fmtWon(p.earned || 0)}</p>` : ''}<h3 class="h3">부상 ${inj.length}회</h3>${inj.length ? `<ul class="trophies">${inj.map(i => `<li><b>${esc(i.name)}</b><span class="num">${i.weeks}주</span><span class="muted small">${sl(i.year)}${i.major ? ' · 장기 부상' : ''}</span></li>`).join('')}</ul>` : '<p class="muted">큰 부상 없이 보내고 있어요.</p>'}
         <h3 class="h3">가족</h3><p>${p.flags.partner ? `${p.flags.married ? '배우자' : '연인'}: ${p.flags.partnerName ? `<b>${esc(p.flags.partnerName)}</b> (${esc(p.flags.partner)})` : esc(p.flags.partner)}${p.flags.married ? ` · ${p.flags.married}년 결혼` : ''}` : '아직 공개된 연인이 없어요.'}${p.flags.pet ? ` · 반려동물: ${esc(p.flags.pet)}` : ''}</p>
         ${(p.kids || []).length ? `<ul class="trophies">${p.kids.map(k => `<li><b>${esc(k.name)}</b><span class="num">${k.born}년생</span><span class="muted small">은퇴 후 후손 커리어로 시작할 수 있어요</span></li>`).join('')}</ul>` : '<p class="muted small">아이가 태어나면 은퇴 후 그 아이로 후손 커리어를 시작할 수 있어요.</p>'}`;
     }
