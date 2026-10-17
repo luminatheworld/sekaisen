@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v54'</script>
+<script>window.SK_VER='v55'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5582,7 +5582,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function ghostTaken(g) { return S.world.careers.some(c => c.ghost?.id === g.id) || (S.p && S.p.ghost?.id === g.id) ? (S.world.careers.find(c => c.ghost?.id === g.id) || S.p) : null; }
   function ghostBlock(g) {
     (S.ghosts = S.ghosts || {})[g.id] = g; const by = ghostTaken(g); const can = g.birthYear + 16 >= 2026;
-    return `<div class="ghostp">${ava(g.look, g.club, { gk: g.pos === 'GK', age: g.Y - 1 - g.birthYear, cls: 'sm' })}<div class="grow"><p><b>발롱도르 ${g.Y} · ${esc(g.name)}</b></p><p class="small">${flag(g.nation)} ${esc(g.nation)} · ${esc(g.pos)} · ${g.Y - 1 - g.birthYear}세 · ${g.club ? `${crest(g.club, 'xs')} ${esc(club(g.club).name)} · ` : ''}${esc(E.ghostStat(g))}</p><p class="small muted">${g.birthYear}년생 · 이 세계선에 이름만 남은 사람이에요.</p>${by ? `<p class="small">${by === S.p && S.p.status !== 'retired' ? '지금 이 사람으로 살고 있어요.' : `이 사람의 커리어가 있어요. <button class="link" data-card="${by.id}">기록 보기</button>`}</p>` : can ? `<button class="btn sm" data-act="ghoststart" data-g="${g.id}">이 선수로 살아보기</button>` : '<p class="small muted">2026년 이전에 태어난 사람이라 직접 살아볼 수는 없어요.</p>'}</div></div>`;
+    return `<div class="ghostp">${ava(g.look, g.club, { gk: g.pos === 'GK', age: g.Y - 1 - g.birthYear, cls: 'sm' })}<div class="grow"><p><b>발롱도르 ${g.Y} · ${esc(g.name)}</b></p><p class="small">${flag(g.nation)} ${esc(g.nation)} · ${esc(g.pos)} · ${g.Y - 1 - g.birthYear}세 · ${g.club ? `${crest(g.club, 'xs')} ${esc(club(g.club).name)} · ` : ''}${esc(E.ghostStat(g))}</p><p class="small muted">${g.birthYear}년생 · 이 세계선에 이름만 남은 사람이에요.</p>${by ? `<p class="small">${by === S.p && S.p.status !== 'retired' ? '지금 이 사람으로 살고 있어요.' : `이 사람의 커리어가 있어요. <button class="link" data-card="${by.id}">기록 보기</button>`}</p>` : can ? `<button class="btn sm" data-act="ghoststart" data-g="${g.id}">이 선수로 살아보기</button>` : `<p class="small muted">${g.birthYear}년생이라 2026년에 이미 ${2026 - g.birthYear}세예요. 커리어는 2026년 이후 16세 시즌부터만 시작할 수 있어서, 이 사람은 직접 살아볼 수 없어요.</p>`}</div></div>`;
   }
   function viewAlmanac(w, VL, led) {
     const P = almPeople(VL, led); if (!P.length) return '<p class="muted">커리어가 하나라도 쌓이면, 해마다 이 세계선의 주인공들이 어디서 무엇을 했는지 여기에 쌓여요.</p>';
