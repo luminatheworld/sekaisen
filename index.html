@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v49'</script>
+<script>window.SK_VER='v50'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5455,7 +5455,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function almSplits(w, led) { return (led.chain || []).map(c => w.lines?.[c.id]).filter(l => l && l.parent && l.split != null).map(l => ({ y: l.split, what: l.what || '', by: l.byName || '', name: l.name })); }
   function almGhostEntry(x, Y, w) {
     const c = x.c; const age = Y - c.birthYear; const h = (c.hist?.s || []).find(s => s[0] === Y); const home = w.lines?.[c.line]?.name || '원래 세계선';
-    return `<li class="alm-p ghost"><div class="alm-h">${ava(c.look, h ? h[1] : c.topClubs?.[0]?.club || c.homeClub, { gk: c.pos === 'GK', age, cls: 'sm' })}<div><b><button class="link" data-card="${c.id}">${esc(c.name)}</button></b><small>${flag(c.nation)} ${age}세 · ${esc(E.POS[c.pos]?.name || c.pos)}</small></div></div><p class="small">${sl(x.cut)} 시즌에 세계선이 갈라진 뒤, 이 세계선에서 그의 행방은 기록되지 않았다.</p>${h ? `<p class="small muted">${esc(home)}에서는 이 해 ${esc(club(h[1]).name)}에서 뛰고 있었다.</p>` : ''}</li>`;
+    return `<li class="alm-p ghost"><div class="alm-h">${ava(c.look, h ? h[1] : c.topClubs?.[0]?.club || c.homeClub, { gk: c.pos === 'GK', age, cls: 'sm' })}<div><b><button class="link" data-card="${c.id}">${esc(c.name)}</button></b><small>${flag(c.natTeam || c.nation)} ${age}세 · ${esc(E.POS[c.pos]?.name || c.pos)}</small></div></div><p class="small">${sl(x.cut)} 시즌에 세계선이 갈라진 뒤, 이 세계선에서 그의 행방은 기록되지 않았다.</p>${h ? `<p class="small muted">${esc(home)}에서는 이 해 ${esc(club(h[1]).name)}에서 뛰고 있었다.</p>` : ''}</li>`;
   }
   function almDoc(x) { if (x.doc) return x.doc; const d = ALM.docs[x.c.id]; return d === undefined ? undefined : d; }
   function almLoad(list) {
@@ -5475,7 +5475,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const r = doc ? (doc.seasons || []).find(s => s.year === Y) : null; const h = (c.hist?.s || []).find(s => s[0] === Y);
     const clubId = r ? r.club : h ? h[1] : null; const lgK = r ? r.lg : h ? h[2] : null;
     const par = c.parentId ? led.people.find(q => q.id === c.parentId) || S.world.careers.find(q => q.id === c.parentId) : null;
-    const head = `<div class="alm-h">${ava(c.look, clubId || c.topClubs?.[0]?.club || c.homeClub, { gk: c.pos === 'GK', age, cls: 'sm' })}<div><b><button class="link" ${x.live ? 'data-go="career"' : `data-card="${c.id}"`}>${esc(c.name)}</button></b>${x.live ? ' <span class="pill gold">진행 중</span>' : ''}${c.whatIf ? ' <span class="pill wi">만약</span>' : ''}<small>${flag(c.nation)} ${age}세 · ${esc(E.POS[(r && r.pos) || c.pos]?.name || c.pos)}${par ? ` · ${esc(par.name)}의 2세` : ''}</small></div></div>`;
+    const head = `<div class="alm-h">${ava(c.look, clubId || c.topClubs?.[0]?.club || c.homeClub, { gk: c.pos === 'GK', age, cls: 'sm' })}<div><b><button class="link" ${x.live ? 'data-go="career"' : `data-card="${c.id}"`}>${esc(c.name)}</button></b>${x.live ? ' <span class="pill gold">진행 중</span>' : ''}${c.whatIf ? ' <span class="pill wi">만약</span>' : ''}<small>${flag(c.natTeam || c.nation)} ${age}세 · ${esc(E.POS[(r && r.pos) || c.pos]?.name || c.pos)}${par ? ` · ${esc(par.name)}의 2세` : ''}</small></div></div>`;
     if (!clubId && !r) return `<li class="alm-p">${head}<p class="small muted">${doc === undefined ? '기록을 불러오는 중…' : age <= 18 ? '유스 팀에서 이름을 알리기 전이었다.' : '기록이 남지 않은 해.'}</p></li>`;
     const youth = r?.youthTeam; const loan = r?.loan;
     const apps = r ? r.apps : h[3], g = r ? r.goals : h[4], as = r ? r.assists : h[5], rt = r ? r.rating : h[6], rk = r ? r.rank : h[7];
@@ -5582,14 +5582,14 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   // 한 줄 목록: 피크 · 이름 · 포지션 · 기간 · 핵심 기록
   function legendRow(c, led) {
     const isGK = c.pos === 'GK';
-    return `<div class="legrow" role="button" tabindex="0" data-card="${c.id}"><span class="lr-ovr">${c.peakOvr}</span>${crest(c.topClubs[0]?.club, 'xs')}<span class="lr-main"><b>${esc(c.name)}</b>${c.nickname ? ` <span class="muted small">‘${esc(nickT(c))}’</span>` : ''}<span class="lr-sub small muted">${c.pos} · ${natTag(c.nation)} · ${sl(c.startYear)}–${sl(c.endYear)} · ${isGK ? `${nf(c.cs)} CS` : `${nf(c.goals)}골 ${nf(c.assists)}도움`} · 우승 ${c.trophies}</span></span><span class="lr-pills">${c.deceased ? '<span class="pill mourn">추모</span>' : c.medEnd ? '<span class="pill">의학적 은퇴</span>' : ''}${c.whatIf ? '<span class="pill wi">만약</span>' : ''}${c.bdo ? `<span class="pill gold">발롱 ${c.bdo}</span>` : ''}${c.generation > 1 ? `<span class="pill">${c.generation}대</span>` : ''}${c.coach ? '<span class="pill">감독</span>' : ''}</span></div>`;
+    return `<div class="legrow" role="button" tabindex="0" data-card="${c.id}"><span class="lr-ovr">${c.peakOvr}</span>${crest(c.topClubs[0]?.club, 'xs')}<span class="lr-main"><b>${esc(c.name)}</b>${c.nickname ? ` <span class="muted small">‘${esc(nickT(c))}’</span>` : ''}<span class="lr-sub small muted">${c.pos} · ${natTag(c.natTeam || c.nation)} · ${sl(c.startYear)}–${sl(c.endYear)} · ${isGK ? `${nf(c.cs)} CS` : `${nf(c.goals)}골 ${nf(c.assists)}도움`} · 우승 ${c.trophies}</span></span><span class="lr-pills">${c.deceased ? '<span class="pill mourn">추모</span>' : c.medEnd ? '<span class="pill">의학적 은퇴</span>' : ''}${c.whatIf ? '<span class="pill wi">만약</span>' : ''}${c.bdo ? `<span class="pill gold">발롱 ${c.bdo}</span>` : ''}${c.generation > 1 ? `<span class="pill">${c.generation}대</span>` : ''}${c.coach ? '<span class="pill">감독</span>' : ''}</span></div>`;
   }
   function legendCard(c, led) {
     const isGK = c.pos === 'GK'; const partial = led && led.cut?.[c.id] != null && led.cut[c.id] !== Infinity && led.cut[c.id] <= c.endYear;
     return `<button class="lcard" data-card="${c.id}"><div class="lc-row">${ava(c.look, c.topClubs[0]?.club, { gk: isGK, age: c.retireAge, cls: 'sm' })}<div class="lc-main">
       <div class="lc-top"><span class="lc-ovr">${c.peakOvr}</span><span class="lc-pos">${c.pos}</span>${c.bdo ? `<span class="pill gold">발롱 ${c.bdo}</span>` : ''}${c.coach ? '<span class="pill">감독</span>' : ''}${c.generation > 1 ? `<span class="pill">${c.generation}대</span>` : ''}${partial ? `<span class="pill quiet" title="이 세계선에선 ${led.cut[c.id]}년 이후의 기록이 정해져 있지 않아요">${led.cut[c.id] - 1}년까지</span>` : ''}</div>
       <div class="lc-name">${esc(c.name)}</div>${c.nickname ? `<div class="small muted">‘${esc(nickT(c))}’</div>` : ''}${c.temper ? `<div class="lc-tmp">${esc(c.temper.big)}${c.temper.nat ? ' · ' + esc(c.temper.nat) : ''}</div>` : ''}
-      <div class="muted small">${natTag(c.nation)} · ${sl(c.startYear)}–${sl(c.endYear)} · ${c.retireAge}세 은퇴</div></div></div>
+      <div class="muted small">${natTag(c.natTeam || c.nation)} · ${sl(c.startYear)}–${sl(c.endYear)} · ${c.retireAge}세 은퇴</div></div></div>
       <div class="lc-stats"><span><b>${nf(c.apps)}</b>경기</span>${isGK ? `<span><b>${nf(c.cs)}</b>클린시트</span>` : `<span><b>${nf(c.goals)}</b>골</span><span><b>${nf(c.assists)}</b>도움</span>`}<span><b>${c.trophies}</b>우승</span></div>
       <div class="lc-clubs">${c.topClubs.slice(0, 4).map(t => `${crest(t.club, 'xs')}<span class="small">${t.n}</span>`).join('')}</div></button>`;
   }
@@ -6105,7 +6105,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return `<section class="careercard${sum.deceased ? ' mourn' : ''}">
       <div class="cc-top"><span class="eyebrow">${sum.severity && sum.severity !== 'normal' ? `<span class="cc-sev ${sum.severity}">${esc(E.SEVERITY[sum.severity]?.name || '')}</span> ` : ''}세계선 커리어${Object.keys(S.world.lines || {}).length > 1 && S.world.lines[sum.line] ? ' · ' + esc(S.world.lines[sum.line].name) : ''}</span><span class="num">${sl(sum.startYear)}–${sl(sum.endYear)}</span></div>
       <div class="cc-cols"><div class="cc-l">
-      <div class="cc-mid"><div><span class="cc-ovr">${sum.peakOvr}</span><span class="cc-lbl">PEAK OVR</span><span class="cc-pos">${sum.pos}</span>${(sum.roles || []).length ? `<span class="cc-roles">${sum.roles.map(r => esc(r.name)).join(' · ')}</span>` : ''}<span class="small">${natTag(sum.nation)}${(sum.nations || []).filter(n => n !== sum.nation).map(n => ' ' + flag(n)).join('')}</span>${sum.natTeam && sum.natTeam !== sum.nation ? `<span class="small muted">대표팀 ${esc(sum.natTeam)}</span>` : ''}${sum.body ? `<span class="small muted">${sum.body.h}cm · ${E.BUILD[sum.body.b] || ''}</span>` : ''}${sum.foot ? `<span class="small muted">${E.FOOT_NAME[sum.foot]} · 약발 ${sum.weak || 3}</span>` : ''}</div>
+      <div class="cc-mid"><div><span class="cc-ovr">${sum.peakOvr}</span><span class="cc-lbl">PEAK OVR</span><span class="cc-pos">${sum.pos}</span>${(sum.roles || []).length ? `<span class="cc-roles">${sum.roles.map(r => esc(r.name)).join(' · ')}</span>` : ''}${(() => { const nt = sum.natTeam || sum.nation; const ex = (sum.nations || []).filter(n => n !== sum.nation && n !== nt); return `<span class="small">${natTag(nt)}</span>${nt !== sum.nation ? `<span class="small muted">${esc(sum.nation)} 출생</span>` : ''}${ex.length ? `<span class="small muted">이중국적 ${ex.map(esc).join(' · ')}</span>` : ''}`; })()}${sum.body ? `<span class="small muted">${sum.body.h}cm · ${E.BUILD[sum.body.b] || ''}</span>` : ''}${sum.foot ? `<span class="small muted">${E.FOOT_NAME[sum.foot]} · 약발 ${sum.weak || 3}</span>` : ''}</div>
         <div class="cc-ava">${ava(sum.look, sum.topClubs[0]?.club, { gk: isGK, age: 28, cls: 'lg' })}</div>
         <div class="right">${sum.bdo ? `<span class="cc-ovr">${sum.bdo}</span><span class="cc-lbl">BALLON D'OR</span>` : ''}</div></div>
       ${sum.whatIf ? `<p class="cc-wi">만약 · ${esc(sum.whatIf.label)}</p>` : ''}<h2 class="cc-name">${esc(sum.name)}</h2>${sum.nickname ? `<p class="cc-sub">‘${esc(nickT(sum))}’</p>` : ''}
@@ -6203,7 +6203,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const W = S.wi; const doc = W.doc; const sum = S.world.careers.find(c => c.id === W.id) || null;
     if (!doc) return `<section class="panel"><p class="muted">기록을 불러오지 못했어요.</p><button class="btn" data-act="wiback">돌아가기</button></section>`;
     const pts = W.pts; const sel = W.sel != null ? pts[W.sel] : null; let pv = null; try { pv = sel ? E.rewind(doc, sel) : null; } catch (e) { console.warn(e); pv = null; }
-    const head = `<section class="panel"><p class="eyebrow">만약 · What If</p><div class="alm-h">${ava(doc.look, doc.seasons[doc.seasons.length - 1]?.club, { gk: doc.pos === 'GK', age: 26, cls: 'md' })}<div><b style="font-size:20px">${esc(doc.name)}</b><small>${flag(doc.nation)} ${sl(doc.startYear)}–${sl((sum?.endYear) ?? doc.year - 1)} · 피크 ${doc.peakOvr}</small></div></div>
+    const head = `<section class="panel"><p class="eyebrow">만약 · What If</p><div class="alm-h">${ava(doc.look, doc.seasons[doc.seasons.length - 1]?.club, { gk: doc.pos === 'GK', age: 26, cls: 'md' })}<div><b style="font-size:20px">${esc(doc.name)}</b><small>${flag(E.natT(doc))} ${sl(doc.startYear)}–${sl((sum?.endYear) ?? doc.year - 1)} · 피크 ${doc.peakOvr}</small></div></div>
       <p class="small muted" style="margin-top:10px">갈림길을 하나 고르면, 그 시점의 그를 되살려 다른 인생을 살아요. 바뀌는 건 고른 일 하나뿐이고, 그 뒤로는 주사위가 새로 굴러요. 원래 기록은 그대로 남아요.</p></section>`;
     const list = pts.length ? `<section class="panel"><h2>갈림길</h2><ul class="wi-pts">${pts.map((x, i) => `<li><button class="wi-pt${W.sel === i ? ' on' : ''}" data-act="wisel" data-i="${i}"><b>${esc(x.label)}</b><small>${esc(x.sub)}</small></button></li>`).join('')}</ul></section>` : `<section class="panel"><p class="muted">이 커리어에서는 되돌아갈 갈림길을 찾지 못했어요.</p></section>`;
     let conf = '';
