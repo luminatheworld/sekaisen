@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v50'</script>
+<script>window.SK_VER='v51'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -833,6 +833,9 @@ const ENGINE = (() => {
   // ---------- FOOT ----------
   // 주발(L/R)과 약발 등급(1~5). 측면 역할은 발 방향이 맞으면 보너스, 안 맞으면 약발이 낮을수록 손해.
   const FOOT_NAME = { L: '왼발', R: '오른발' };
+  // 타고난 양발잡이: 만들 때 약 1%로만 나온다. 약발 ★5와 같고, 주발 개념이 없어 반대발 역할 보정이 조금 더 크다
+  const AMBI_P = .01;
+  const footLabel = (p) => p?.ambi ? '양발' : FOOT_NAME[p?.foot] || '';
   const SIDE = { LB: 'L', LWB: 'L', LW: 'L', RB: 'R', RWB: 'R', RW: 'R' };
   const FOOT_INV = new Set(['insidef', 'invwinger', 'invfb', 'invwb', 'underlap', 'wide10', 'iso']);
   const FOOT_NAT = new Set(['winger', 'overlapfb', 'attwb', 'compwb', 'widetm', 'farpost', 'defwb', 'wbplay']);
@@ -843,7 +846,7 @@ const ENGINE = (() => {
   function roleFoot(pos, roleId) { const sd = SIDE[pos]; if (!sd) return FOOT_LCB.has(roleId) ? 'L' : null; if (FOOT_INV.has(roleId)) return sd === 'L' ? 'R' : 'L'; if (FOOT_NAT.has(roleId)) return sd; return null; }
   function footAdj(p, roleId) {
     if (!p.foot || p.pos === 'GK') return 0;
-    const weak = p.weak || 3; let adj = (weak - 3) * (WEAK_K[roleGroup(p.pos)] ?? .3);
+    const weak = p.ambi ? 5 : p.weak || 3; let adj = (weak - 3 + (p.ambi ? .4 : 0)) * (WEAK_K[roleGroup(p.pos)] ?? .3);
     const want = roleFoot(p.pos, roleId);
     if (want) {
       if (!SIDE[p.pos]) { if (p.foot === 'L') adj += .7; }
@@ -1582,7 +1585,7 @@ const ENGINE = (() => {
     const b = (a.STR ?? mean) - mean > 6 ? 'stocky' : (a.PAC ?? mean) - mean > 6 ? 'lean' : 'normal';
     return { h, b, g: 0, inferred: true };
   }
-  function createPlayer(opt) { const p = createPlayer0(opt); p.nations = [...new Set([p.nation, ...(opt.nations || [])].filter(n => NATION[n]))]; p.body = rollBody(opt.nation, opt.pos, opt.parent); bodyInit(p); initTemper(p, R, opt.parent); p.leftAt = {}; p.pkLog = []; p.bigLog = []; return p; }
+  function createPlayer(opt) { const p = createPlayer0(opt); p.nations = [...new Set([p.nation, ...(opt.nations || [])].filter(n => NATION[n]))]; p.body = rollBody(opt.nation, opt.pos, opt.parent); bodyInit(p); initTemper(p, R, opt.parent); if (!opt.weak && R() < (opt.parent?.ambi ? .15 : AMBI_P)) { p.ambi = true; p.weak = 5; } p.leftAt = {}; p.pkLog = []; p.bigLog = []; return p; }
 
   // ---------- HELPERS ----------
   const ovr = (p) => ovrOf(p.attrs, p.pos);
@@ -2539,7 +2542,7 @@ const ENGINE = (() => {
       if (big(c)) { if (o >= 83) pr = .05 + (o - 83) * .03 + (form - 7) * .08 + p.rep / 800; else if (p.age <= 20 && o >= s - 13 && form >= 7.2) pr = .03; }
       else if (rel >= -6 && rel <= 14) pr = .025 + (6 - Math.abs(rel - 2)) * .006 + (form - 6.9) * .03;
       if (p.wantOut || extra.boost) pr *= 1.8; if (free) pr *= 1.6; if (benched && !big(c)) pr *= 1.5; if (p.trait === 'amb' && big(c)) pr *= 1.4;
-      if (p.foot === 'L' && ['CB', 'LB', 'LWB'].includes(p.pos)) pr *= 1.25; if ((p.weak || 3) >= 5) pr *= 1.1;
+      if (p.foot === 'L' && ['CB', 'LB', 'LWB'].includes(p.pos)) pr *= 1.25; if ((p.weak || 3) >= 5) pr *= p.ambi ? 1.15 : 1.1;
       if (p.age >= 32) pr *= big(c) ? .3 : .7;
       if (p.flags.scandal && year <= p.flags.scandal.until) pr *= big(c) ? .45 : .75; // 스캔들 여파: 빅클럽부터 발을 뺀다
       if (LEAGUES[c.lg].tier >= 3 && p.age >= 30) pr *= 1.6;
@@ -2622,7 +2625,7 @@ const ENGINE = (() => {
       trophies: p.trophies.filter(t => t.type !== 'youth').length, youthTrophies: p.trophies.filter(t => t.type === 'youth').length, awards: p.awards.length, awardCount, bdo: p.bdoYears.length, bdoYears: p.bdoYears.slice(),
       topClubs, stints, familyId: p.familyId || p.id, parentId: p.parentId, generation: p.generation, caps: p.caps, intlGoals: p.intlGoals,
       uclFinals: p.finals.filter(f => f.comp === 'UEFA 챔피언스리그').length, uclWins: p.finals.filter(f => f.comp === 'UEFA 챔피언스리그' && f.won).length,
-      homeClub: p.homeClub, talent: p.talent, curve: p.curve, custom: !!p.custom, kids: (p.kids || []).slice(), numByClub, fans: { ...p.fans }, injuries: (p.injuries || []).length, majorInj: (p.injuries || []).filter(i => i.major).length, number: p.number, foot: p.foot, weak: p.weak,
+      homeClub: p.homeClub, talent: p.talent, curve: p.curve, custom: !!p.custom, kids: (p.kids || []).slice(), numByClub, fans: { ...p.fans }, injuries: (p.injuries || []).length, majorInj: (p.injuries || []).filter(i => i.major).length, number: p.number, foot: p.foot, weak: p.weak, ambi: !!p.ambi,
       earned: Math.round(p.earned || 0), peakWage: Math.max(0, ...(p.wageHist || []).map(w => w.wage), p.wage || 0), early: p.flags.early || null, P: p.P,
       temper: temperament(p), tmp: { big: +T(p).big.toFixed(2), nat: +T(p).nat.toFixed(2) },
       hist: histOf(p), scars: scarsOf(p), nations: nationsOf(p), natTeam: natT(p), natPick: p.flags.natPick || null, spouse: p.flags.partner ? { name: p.flags.partnerName || '', job: p.flags.partner, nation: p.flags.partnerNation || null, married: p.flags.married || null } : null, severity: p.severity || 'normal', medEnd: p.flags.medEnd || null, deceased: p.flags.deceased || null, whatIf: p.whatIf ? { of: p.whatIf.of, y: p.whatIf.y, kind: p.whatIf.kind, label: p.whatIf.label } : null, line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
@@ -2772,7 +2775,7 @@ const ENGINE = (() => {
   return {
     LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
-    FOOT_NAME, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
+    FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
     summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
@@ -4640,7 +4643,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   def({ id: 'setpiece', phase: 'pre', cd: 3, w: (c) => pro(c.p) && ['FW', 'MF'].includes(grp(c.p)) && c.p.age >= 20 ? 6 : 0, make(c) {
     const m = mate();
     return { title: '프리킥은 누가 차나', tone: 'neutral', text: `전담 키커가 떠났다. 훈련 때마다 ${J(m, '와')} 둘이 공 앞에 선다.`, options: [
-      { label: '내가 차겠다고 한다', hint: '평점 소폭 상승 · 실패하면 부담', run(x) { const h = H(x); if (chance(.6)) { h.mod('rating', .05); x.p.flags.fk = (x.p.flags.fk || 0) + 1; return '첫 경기에서 감아 찬 공이 구석에 꽂혔다. 이제 네 공이다.'; } h.mod('rating', -.03); return '세 번 연속 벽에 맞았다. 관중석에서 한숨이 나온다.'; } },
+      { label: '내가 차겠다고 한다', hint: '평점 소폭 상승 · 실패하면 부담', run(x) { const h = H(x); if (chance(x.p.ambi ? .75 : .6)) { h.mod('rating', .05); x.p.flags.fk = (x.p.flags.fk || 0) + 1; return x.p.ambi ? '왼쪽 프리킥은 오른발로, 오른쪽 프리킥은 왼발로 감았다. 키퍼는 어느 쪽으로 올지 몰랐다. 이제 네 공이다.' : '첫 경기에서 감아 찬 공이 구석에 꽂혔다. 이제 네 공이다.'; } h.mod('rating', -.03); return '세 번 연속 벽에 맞았다. 관중석에서 한숨이 나온다.'; } },
       { label: `${m}에게 양보한다`, hint: '감독 신뢰 +2 · 사기 −1', run(x) { const h = H(x); return [h.b('trust', 2), h.b('morale', -1)].join(' · '); } },
     ] };
   } });
@@ -5294,9 +5297,9 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   }
   const crest = (id, cls = '') => `<img class="crest ${cls}" src="${crestURL(id)}" alt="" title="${esc(club(id).name)}">`;
   const wstars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
-  const footTag = (p) => p.foot ? `${E.FOOT_NAME[p.foot]} · 약발 ${wstars(p.weak || 3)}` : '';
+  const footTag = (p) => p.ambi ? '양발' : p.foot ? `${E.FOOT_NAME[p.foot]} · 약발 ${wstars(p.weak || 3)}` : '';
   function footHint(f) {
-    const base = '약발 등급(★1~5)은 시작할 때 운으로 정해지고, 시즌 계획의 약발 훈련으로 올릴 수 있어요.';
+    const base = '약발 등급(★1~5)은 시작할 때 운으로 정해지고, 시즌 계획의 약발 훈련으로 올릴 수 있어요. 아주 드물게 주발이 없는 양발잡이로 태어나기도 해요.';
     if (f.pos === 'GK') return base;
     const side = { LB: 'L', LWB: 'L', LW: 'L', RB: 'R', RWB: 'R', RW: 'R' }[f.pos];
     if (side && f.foot) return (f.foot === side ? '측면과 같은 발이라 정통 윙어·오버래핑 계열이 편해요. ' : '측면과 반대 발이라 인버티드·인사이드 계열이 편해요. ') + base;
@@ -5665,7 +5668,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <div class="ph-left">${ava(p.look, p.club, { gk: p.pos === 'GK', age: p.age, cls: 'md' })}<div class="ph-txt">
         <h1 class="pname">${esc(p.name)}${p.number ? ` <span class="pnum">${p.number}</span>` : ''}</h1>
         <p class="ph-sub">${crest(p.club, 'xs')} <b>${esc(c.name)}</b>${p.captain ? ' <span class="pill gold">C</span>' : ''} ${p.youth ? '<span class="muted small">유스</span>' : lgTag(p.club, p.year, p)}</p>
-        <p class="ph-sub muted">${sl(p.year)} · ${p.age}세 · ${p.pos} · ${flag(E.natT(p))}${p.body ? ` · ${E.heightAt(p)}cm${(() => { const f = E.bodyForecast(p); return f ? ` (다 크면 ${f[0]}~${f[1]})` : ''; })()} · ${E.BUILD[p.body.b] || ''}` : ''}${p.foot ? ` · <span class="foot" title="약발 등급 ${p.weak || 3}/5">${E.FOOT_NAME[p.foot]} <span class="wstar">${wstars(p.weak || 3)}</span></span>` : ''}</p></div></div>
+        <p class="ph-sub muted">${sl(p.year)} · ${p.age}세 · ${p.pos} · ${flag(E.natT(p))}${p.body ? ` · ${E.heightAt(p)}cm${(() => { const f = E.bodyForecast(p); return f ? ` (다 크면 ${f[0]}~${f[1]})` : ''; })()} · ${E.BUILD[p.body.b] || ''}` : ''}${p.ambi ? ` · <span class="foot" title="타고난 양발잡이"><b>양발</b></span>` : p.foot ? ` · <span class="foot" title="약발 등급 ${p.weak || 3}/5">${E.FOOT_NAME[p.foot]} <span class="wstar">${wstars(p.weak || 3)}</span></span>` : ''}</p></div></div>
       <div class="ph-ovr"><span class="big">${o}</span>${last && !last.youthTeam ? `<span class="delta ${last.growth >= 0 ? 'up' : 'down'}">${last.growth >= 0 ? '▲' : '▼'}</span>` : ''}</div>
     </section>
     <section class="meters">${meter('사기', p.morale)}${meter('신뢰', p.trust)}${meter('팬심', p.fans[p.club] ?? 0)}${meter('명성', p.rep)}${meter('몸', p.dur)}<span class="pill quiet">${ct}</span>${p.release && !p.youth ? `<span class="pill quiet">바이아웃 ${E.fmtFee(p.release)}</span>` : ''}</section>`;
@@ -6105,7 +6108,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return `<section class="careercard${sum.deceased ? ' mourn' : ''}">
       <div class="cc-top"><span class="eyebrow">${sum.severity && sum.severity !== 'normal' ? `<span class="cc-sev ${sum.severity}">${esc(E.SEVERITY[sum.severity]?.name || '')}</span> ` : ''}세계선 커리어${Object.keys(S.world.lines || {}).length > 1 && S.world.lines[sum.line] ? ' · ' + esc(S.world.lines[sum.line].name) : ''}</span><span class="num">${sl(sum.startYear)}–${sl(sum.endYear)}</span></div>
       <div class="cc-cols"><div class="cc-l">
-      <div class="cc-mid"><div><span class="cc-ovr">${sum.peakOvr}</span><span class="cc-lbl">PEAK OVR</span><span class="cc-pos">${sum.pos}</span>${(sum.roles || []).length ? `<span class="cc-roles">${sum.roles.map(r => esc(r.name)).join(' · ')}</span>` : ''}${(() => { const nt = sum.natTeam || sum.nation; const ex = (sum.nations || []).filter(n => n !== sum.nation && n !== nt); return `<span class="small">${natTag(nt)}</span>${nt !== sum.nation ? `<span class="small muted">${esc(sum.nation)} 출생</span>` : ''}${ex.length ? `<span class="small muted">이중국적 ${ex.map(esc).join(' · ')}</span>` : ''}`; })()}${sum.body ? `<span class="small muted">${sum.body.h}cm · ${E.BUILD[sum.body.b] || ''}</span>` : ''}${sum.foot ? `<span class="small muted">${E.FOOT_NAME[sum.foot]} · 약발 ${sum.weak || 3}</span>` : ''}</div>
+      <div class="cc-mid"><div><span class="cc-ovr">${sum.peakOvr}</span><span class="cc-lbl">PEAK OVR</span><span class="cc-pos">${sum.pos}</span>${(sum.roles || []).length ? `<span class="cc-roles">${sum.roles.map(r => esc(r.name)).join(' · ')}</span>` : ''}${(() => { const nt = sum.natTeam || sum.nation; const ex = (sum.nations || []).filter(n => n !== sum.nation && n !== nt); return `<span class="small">${natTag(nt)}</span>${nt !== sum.nation ? `<span class="small muted">${esc(sum.nation)} 출생</span>` : ''}${ex.length ? `<span class="small muted">이중국적 ${ex.map(esc).join(' · ')}</span>` : ''}`; })()}${sum.body ? `<span class="small muted">${sum.body.h}cm · ${E.BUILD[sum.body.b] || ''}</span>` : ''}${sum.ambi ? `<span class="small muted">양발 · 주발 없음</span>` : sum.foot ? `<span class="small muted">${E.FOOT_NAME[sum.foot]} · 약발 ${sum.weak || 3}</span>` : ''}</div>
         <div class="cc-ava">${ava(sum.look, sum.topClubs[0]?.club, { gk: isGK, age: 28, cls: 'lg' })}</div>
         <div class="right">${sum.bdo ? `<span class="cc-ovr">${sum.bdo}</span><span class="cc-lbl">BALLON D'OR</span>` : ''}</div></div>
       ${sum.whatIf ? `<p class="cc-wi">만약 · ${esc(sum.whatIf.label)}</p>` : ''}<h2 class="cc-name">${esc(sum.name)}</h2>${sum.nickname ? `<p class="cc-sub">‘${esc(nickT(sum))}’</p>` : ''}
@@ -6272,7 +6275,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
         <li><b>18~25세 출전 보너스.</b> 출전 비율 65% 이상인 시즌마다 천장 +0.75(최대 +5), 30% 미만이면 −0.9.</li>
         <li><b>훈련 초점.</b> 고른 능력치는 1.7배, 나머지는 0.78배로 자라요. 능력치 창에서 막대 하나를 누르면 그 능력치만 2배로 집중해요(다시 누르면 포지션 맞춤으로).</li>
         <li><b>주발과 약발.</b> 주발은 만들 때 고르고(랜덤이면 왼발 24%), 약발 등급 ★1~5는 운으로 정해져요(★2·★3이 대부분, ★5는 3%). 측면 포지션에서 역할이 원하는 발(정통 윙어·오버래핑 계열은 같은 쪽 발, 인버티드·인사이드 계열은 반대 발)이면 역할 적성 +1.2, 아니면 약발이 낮을수록 최대 −2.4. ★5는 어느 쪽이든 +1.2. 약발 등급 자체도 역할 적성에 (등급 − 3) × 0.2~0.6을 더해요. 왼발 센터백·풀백은 이적 제안이 1.25배.</li>
-        <li><b>약발 훈련.</b> 훈련 초점에서 고르면 다른 능력치는 모두 0.8배로 자라고, 시즌 끝에 약발이 한 등급 오를 확률이 생겨요. 17세 이하 60% · 19세 이하 50% · 21세 이하 40% · 23세 이하 26% · 25세 이하 15% · 28세 이하 7% · 그 위 2%에, 다음 등급이 ★3 이하면 ×1.05~1.15, ★4면 ×0.85, ★5면 ×0.5. 감독 능력에 따라 조금 달라져요. 훈련하지 않으면 약발은 오르지 않아요.</li>
+        <li><b>타고난 양발잡이.</b> 새로 만든 선수의 약 1%(부모가 양발잡이면 15%)는 주발이 따로 없는 양발잡이로 태어나요. 고를 수 없고, 약발 등급을 직접 정해 만든 선수에게는 나오지 않아요. 약발 ★5와 같고, 역할 적성에 포지션별 약발 계수 × 0.4가 더해져요(AM +0.24 · 윙어·ST +0.2). 이적 관심은 ★5의 ×1.1 대신 ×1.15, 프리킥 키커 자리를 놓고 경쟁할 때 성공률은 60% 대신 75%예요.</li><li><b>약발 훈련.</b> 훈련 초점에서 고르면 다른 능력치는 모두 0.8배로 자라고, 시즌 끝에 약발이 한 등급 오를 확률이 생겨요. 17세 이하 60% · 19세 이하 50% · 21세 이하 40% · 23세 이하 26% · 25세 이하 15% · 28세 이하 7% · 그 위 2%에, 다음 등급이 ★3 이하면 ×1.05~1.15, ★4면 ×0.85, ★5면 ×0.5. 감독 능력에 따라 조금 달라져요. 훈련하지 않으면 약발은 오르지 않아요.</li>
         <li>시야·침투·수비 지능·위치선정 같은 두뇌 능력치는 26~32세에도 조금씩 오르고, 속도·피지컬은 27세부터 정체되다가 30세 이후 1.5배로 떨어져요.</li></ul>
       <h2>신체</h2><ul>
         <li><b>키</b>는 국적 평균에 포지션 보정(골키퍼 +8, 센터백 +6, 윙어 −3 등)을 더한 값을 중심으로 표준편차 6cm로 정해져요. 후손은 부모 키와 국적 평균의 중간쯤에서 표준편차 4.5cm. 16세 뒤로 2~8cm 더 자라서 19세에 다 커요.</li>
