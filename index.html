@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v64'</script>
+<script>window.SK_VER='v65'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -445,10 +445,14 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 /* 기질 공개 */
 .tmp { border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
 .tmp-l { font-size: 11px; font-weight: 900; letter-spacing: .1em; color: var(--muted); white-space: nowrap; }
-.tmp-n { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.tmp-n { display: flex; gap: 10px 18px; flex-wrap: wrap; justify-content: center; }
+.tmp-t { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.tmp-g { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; padding-top: 10px; margin-top: 2px; border-top: 1px dashed var(--line); }
+.tmp-gl { font-size: 10.5px; font-weight: 900; letter-spacing: .08em; color: var(--muted); white-space: nowrap; margin-bottom: 2px; }
+.tmp-s { margin: 2px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); text-align: center; }
 .tmp-n b { font-family: var(--f-serif); font-size: 22px; font-weight: 900; color: var(--gold); padding: 2px 14px; border-radius: 10px; background: var(--gold-bg); }
 .tmp-d { font-size: 12px; color: var(--muted); }
-.tmp-e { font-size: 12.5px; color: var(--ink); opacity: .85; text-align: center; line-height: 1.5; }
+.tmp-e { margin: 0; font-size: 12.5px; color: var(--ink); opacity: .85; text-align: center; line-height: 1.55; }
 .lc-tmp { font-size: 11px; font-weight: 900; color: var(--gold); }
 .hoflist .retnum { font-size: 15px; }
 
@@ -6295,7 +6299,10 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const bestBlock = bs ? `<div class="cc-best">${bs.season ? `<div><span>최고의 시즌</span><b>${sl(bs.season.year)}</b><small>${esc(club(bs.season.club).name)} · ${isGK ? `CS ${bs.season.cs}` : `${bs.season.g}골 ${bs.season.a}도움`} · 평점 ${(+bs.season.rating).toFixed(2)}${bs.season.aw.length ? ' · ' + esc(bs.season.aw.slice(0, 2).join(' · ')) : bs.season.tro.length ? ' · ' + esc(bs.season.tro[0]) : ''}</small></div>` : ''}${bs.form ? `<div><span>최고의 폼</span><b>${sl(bs.form.from)}–${String(bs.form.to).slice(2)}/${String(bs.form.to + 1).slice(2)}</b><small>3시즌 평균 평점 ${bs.form.avg.toFixed(2)} · ${isGK ? `CS ${bs.form.cs}` : `${bs.form.g}골 ${bs.form.a}도움`}</small></div>` : ''}${bs.peak ? `<div><span>커리어 정점</span><b>OVR ${bs.peak.ovr}</b><small>${sl(bs.peak.year)} · ${bs.peak.age}세 · ${esc(club(bs.peak.club).name)}</small></div>` : ''}</div>` : '';
     const heirBlock = (sum.heirLines || []).length ? `<p class="cc-sub small"><b>아버지와 다른 길</b> · ${sum.heirLines.map(esc).join(' · ')}</p>` : '';
     const lineBlock = (sum.branches || []).length ? `<p class="small cc-line">세계선을 바꾼 순간 · ${sum.branches.map(b => esc(b.what)).join(' / ')}</p>` : '';
-    const tmBlock = tm ? `<div class="tmp"><span class="tmp-l">숨겨져 있던 기질</span><div class="tmp-n"><b>${esc(tm.big)}</b>${tm.nat ? `<b>${esc(tm.nat)}</b>` : ''}</div><span class="tmp-d">${esc(TMP_DESC[tm.big] || '')}${tm.nat ? ' · ' + esc(TMP_DESC[tm.nat] || '') : ''}</span>${[...(tm.bigLines || []), ...(tm.natLines || [])].map(l => `<p class="tmp-e">${esc(l)}</p>`).join('')}</div>` : '';
+    // 기질: 태그와 한 줄 뜻, 그 아래 큰 경기·대표팀을 나눠 해설 문장과 숫자 줄을 따로
+    const tmStat = (l) => /\d/.test(l) && l.includes('·');
+    const tmGroup = (lbl, L) => (L || []).length ? `<div class="tmp-g"><span class="tmp-gl">${lbl}</span>${L.filter(l => !tmStat(l)).map(l => `<p class="tmp-e">${esc(l)}</p>`).join('')}${L.filter(tmStat).map(l => `<p class="tmp-s num">${esc(l)}</p>`).join('')}</div>` : '';
+    const tmBlock = tm ? `<div class="tmp"><span class="tmp-l">숨겨져 있던 기질</span><div class="tmp-n"><span class="tmp-t"><b>${esc(tm.big)}</b><span class="tmp-d">${esc(TMP_DESC[tm.big] || '')}</span></span>${tm.nat ? `<span class="tmp-t"><b>${esc(tm.nat)}</b><span class="tmp-d">${esc(TMP_DESC[tm.nat] || '')}</span></span>` : ''}</div>${tmGroup('큰 경기', tm.bigLines)}${tmGroup('대표팀', tm.natLines)}</div>` : '';
     return `<section class="careercard${sum.deceased ? ' mourn' : ''}">
       <div class="cc-top"><span class="eyebrow">${sum.severity && sum.severity !== 'normal' ? `<span class="cc-sev ${sum.severity}">${esc(E.SEVERITY[sum.severity]?.name || '')}</span> ` : ''}세계선 커리어${Object.keys(S.world.lines || {}).length > 1 && S.world.lines[sum.line] ? ' · ' + esc(S.world.lines[sum.line].name) : ''}</span><span class="num">${sl(sum.startYear)}–${sl(sum.endYear)}</span></div>
       <div class="cc-cols"><div class="cc-l">
