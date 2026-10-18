@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v82'</script>
+<script>window.SK_VER='v83'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -326,7 +326,9 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .careercard { --ink: #edf0f7; --muted: #8b95ae; --faint: #5e6884; --line: rgba(255, 255, 255, .1); --soft: rgba(255, 255, 255, .06); --panel-2: #1b2440; --panel-3: #232e50; --gold: #e9bc55; --gold-bg: rgba(233, 188, 85, .14); --gold-ink: #1c1406; --pos: #5ad59b; --red: #ff7a6d; background: #0c1222; color: var(--ink); border-radius: 22px; padding: 24px 22px; display: flex; flex-direction: column; gap: 12px; max-width: 480px; width: 100%; margin: 0 auto; box-shadow: inset 0 0 0 1.5px rgba(233, 188, 85, .6); background-image: repeating-linear-gradient(135deg, transparent 0 18px, rgba(255, 255, 255, .025) 18px 36px); }
 .careercard .eyebrow { color: var(--gold); }
 .cc-cols { display: flex; flex-direction: column; gap: 12px; }
-.shotholder { position: fixed; left: -12000px; top: 0; } .shotin { overflow: visible; padding: 20px 20px 28px; background: var(--bg, #f1f3f7); box-sizing: border-box; }
+/* 이미지 저장: 웹폰트는 그림 안으로 따라 들어가지 못한다. 재는 글꼴과 그리는 글꼴이 같도록 기기에 깔린 글꼴로 맞춘다(안 그러면 글자가 넘쳐 겹친다) */
+.shotholder { position: fixed; left: -12000px; top: 0; --f-body: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; --f-serif: "AppleMyungjo", "Batang", "바탕", "Times New Roman", serif; font-family: var(--f-body); }
+.shotholder .gr-t, .shotholder .wi-eye { white-space: nowrap; } .shotin { overflow: visible; padding: 20px 20px 28px; background: var(--bg, #f1f3f7); box-sizing: border-box; }
 .shotholder .careercard { margin: 0; }
 .careercard.force-wide { max-width: 920px; width: 920px; padding: 22px 26px; }
 .careercard.force-wide .cc-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 26px; align-items: start; }
@@ -7777,7 +7779,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return () => { alive = false; cancelAnimationFrame(raf); };
   }
   function showCuts() {
-    if (cutOn || !CUTQ.length) return;
+    if (cutOn || !CUTQ.length || REEL) return; // 시즌 연출이 끝난 뒤에 컷씬
     const c = CUTQ.shift(); cutOn = true;
     const el = $('#cut'); const p = S.p;
     const cc = c.club ? club(c.club) : null;
@@ -7895,7 +7897,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     document.body.appendChild(el);
     const yr = el.querySelector('.reel-year'), bar = el.querySelector('.reel-bar i'), ln = el.querySelector('.reel-line');
     const T = reduce ? 2800 : 4800; const step = T / lines.length; let i = 0, done = false, timer = null, ytimer = null;
-    const finish = () => { if (done) return; done = true; clearTimeout(timer); clearInterval(ytimer); document.removeEventListener('visibilitychange', vis); el.classList.add('out'); setTimeout(() => el.remove(), reduce ? 0 : 260); REEL = null; };
+    const finish = () => { if (done) return; done = true; clearTimeout(timer); clearInterval(ytimer); document.removeEventListener('visibilitychange', vis); el.classList.add('out'); setTimeout(() => el.remove(), reduce ? 0 : 260); REEL = null; setTimeout(showCuts, reduce ? 0 : 200); };
     const span = Math.max(1, y1 - y0); let y = y1; const yStep = Math.max(60, Math.floor((T * .8) / span));
     ytimer = setInterval(() => { if (y > y0) { y--; yr.textContent = y; bar.style.width = ((y - y0) / span * 100).toFixed(0) + '%'; } else { clearInterval(ytimer); yr.classList.add('land'); } }, yStep);
     const tick = () => { if (i >= lines.length) { timer = setTimeout(finish, 900); return; } ln.classList.remove('on'); void ln.offsetWidth; ln.textContent = lines[i]; ln.classList.add('on'); i++; timer = setTimeout(tick, step); };
@@ -7918,7 +7920,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const seq = [...sc.fr, sc.end]; const T = reduce ? 3200 : 5200; const step = T / seq.length; let i = 0, timer = null, done = false;
     const stageAt = (f) => sc.stages[Math.min(sc.stages.length - 1, Math.floor(f * (sc.stages.length - .001)))];
     const show = () => { const f = (i + 1) / seq.length; bar.style.width = (f * 100).toFixed(0) + '%'; st.textContent = i === seq.length - 1 ? sc.stages[sc.stages.length - 1] : stageAt(i / (seq.length - 1)); ln.classList.remove('on'); void ln.offsetWidth; ln.textContent = seq[i]; ln.classList.add('on'); };
-    const finish = () => { if (done) return; done = true; clearTimeout(timer); document.removeEventListener('visibilitychange', vis); el.classList.add('out'); setTimeout(() => el.remove(), reduce ? 0 : 260); REEL = null; };
+    const finish = () => { if (done) return; done = true; clearTimeout(timer); document.removeEventListener('visibilitychange', vis); el.classList.add('out'); setTimeout(() => el.remove(), reduce ? 0 : 260); REEL = null; setTimeout(showCuts, reduce ? 0 : 200); };
     const tick = () => { if (i >= seq.length) { timer = setTimeout(finish, 700); return; } show(); i++; timer = setTimeout(tick, step); };
     const vis = () => { if (document.hidden) finish(); };
     el.addEventListener('click', (e) => { if (e.target.closest('.reel-off')) { reelSet(false); toast('시즌 연출을 껐어요. 세계선 탭 아래 세이브 칸에서 다시 켤 수 있어요.'); } finish(); });
@@ -7932,10 +7934,11 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     S.lastRes = res; S.choice.memo = ''; p.stage = 'post'; S.mods = {};
     S.postQ = []; S.evIdx = 0; S.evOut = null; S.summerDone = false;
     if (res.branch) branchCut(res.branch, res.year);
-    if (res.pendingFinal) { S.cfinal = E.clubFinalStart(p, res, S.world); S.postQ.push(cfCard(S.cfinal)); Store.save('career', p); S.phase = 'post'; render(); window.scrollTo(0, 0); try { seasonReel(p, res); } catch (e) { console.warn('reel', e); } return; }
+    if (res.pendingFinal) { S.cfinal = E.clubFinalStart(p, res, S.world); S.postQ.push(cfCard(S.cfinal)); Store.save('career', p); S.phase = 'post'; try { seasonReel(p, res); } catch (e) { console.warn('reel', e); } render(); window.scrollTo(0, 0); return; }
     afterSeason(res, true);
-    S.phase = 'post'; render(); window.scrollTo(0, 0);
+    // 연출을 먼저 덮고 그 아래에서 결과 화면을 그린다: 컷씬(우승 폭죽 등)은 연출이 끝난 뒤에 뜬다
     try { seasonReel(p, res); } catch (e) { console.warn('reel', e); }
+    S.phase = 'post'; render(); window.scrollTo(0, 0);
   }
   // 시즌 결과 확정 뒤: 언론·연출·시즌 후 사건. 결승을 직접 치렀으면 그 뒤에 붙는다
   function afterSeason(res, fresh) {
