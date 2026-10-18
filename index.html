@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v71'</script>
+<script>window.SK_VER='v72'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -108,6 +108,16 @@ textarea.inp { resize: vertical; }
 .groute { margin: 8px 0 4px; } .groute.gr-rec { margin-top: 14px; } .gr-t { font-size: 12.5px; color: var(--muted); margin: 0 0 5px; font-weight: 600; } .gr-style { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 999px; background: var(--gold-bg); color: var(--gold); font-size: 11.5px; font-weight: 700; }
 .gr-bar { display: flex; gap: 2px; height: 7px; border-radius: 4px; overflow: hidden; background: var(--panel-3); } .gr-bar i { display: block; min-width: 3px; height: 100%; background: var(--c); }
 .gr-leg { display: flex; flex-wrap: wrap; gap: 3px 11px; margin: 6px 0 0; font-size: 12px; color: var(--muted); } .gr-leg span { white-space: nowrap; } .gr-leg span::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 2px; background: var(--c); margin-right: 4px; vertical-align: 1px; } .gr-leg b { color: var(--ink); font-weight: 700; } .gr-leg small { margin-left: 3px; color: var(--faint); }
+.gr-row { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 8px; align-items: start; margin-top: 7px; } .gr-lab { font-size: 11.5px; color: var(--faint); line-height: 7px; padding-top: 0; white-space: nowrap; } .gr-shift { margin: 10px 0 0; font-size: 13px; line-height: 1.55; font-style: italic; color: var(--muted); }
+.gs-box { --c: #3d8fa6; } .gs-ls { --c: #8a5ac6; } .gs-fk { --c: #d0721e; } .gs-pk { --c: var(--red); }
+.gr-an { margin-top: 18px; } .grc-w { margin-top: 16px; } .grc { display: flex; align-items: stretch; gap: 3px; height: 128px; padding: 4px 0 0; border-bottom: 1px solid var(--line); }
+.grc-b { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; background: none; border: 0; padding: 0; cursor: pointer; position: relative; font: inherit; color: var(--muted); }
+.grc-b[disabled] { cursor: default; } .grc-c { display: flex; flex-direction: column-reverse; border-radius: 3px 3px 0 0; overflow: hidden; min-height: 0; opacity: .78; } .grc-c i { display: block; background: var(--c); min-height: 1px; }
+.grc-b.on .grc-c, .grc-b:hover .grc-c { opacity: 1; } .grc-b.on .grc-c { box-shadow: 0 0 0 2px var(--ink); }
+.grc-n { font-size: 10px; text-align: center; line-height: 1; margin-bottom: 3px; font-variant-numeric: tabular-nums; } .grc-b:not(.on) .grc-n { visibility: hidden; } .grc-b.on .grc-n { color: var(--ink); font-weight: 700; }
+.grc-b small { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); font-size: 9.5px; color: var(--faint); white-space: nowrap; }
+.grc-leg { margin-top: 22px; } .grc-d { margin-top: 10px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--panel-2); } .grc-d > p { margin: 0; } .grc-d .groute { margin-top: 4px; }
+.gr-roles { margin-top: 16px; } .gr-t .muted { font-weight: 400; margin-left: 6px; font-size: 11.5px; } .faintrow td { opacity: .5; }
 .gr-r { --c: var(--blue); } .gr-l { --c: var(--pos); } .gr-h { --c: var(--gold-hi); } .gr-ls { --c: #8a5ac6; } .gr-fk { --c: #d0721e; } .gr-pk { --c: var(--red); }
 .fit { font-weight: 700; white-space: nowrap; } .fit.good { color: var(--pos); } .fit.bad { color: var(--red); } .fit.mid { color: var(--muted); } .fitbar { display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 2px; } .fitbar i { width: 5px; height: 11px; border-radius: 1.5px; background: currentColor; opacity: .2; } .fitbar i.on { opacity: 1; }
 details.fold > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; font-weight: 700; min-height: 36px; }
@@ -2821,7 +2831,7 @@ const ENGINE = (() => {
     return {
       id: p.id, name: p.name, nation: p.nation, pos: p.pos, origPos: p.origPos, role: p.role, trait: p.trait, look: p.look, nickname: p.nickname, nickLocal: p.nickLocal || null, roles: mainRoles(p), body: p.body ? { h: p.body.h, b: p.body.b } : null, legends: (p.legends || []).map(e => ({ ...e, line: legendLine(e) })), feats: (p.feats || []).map(e => ({ ...e, line: featLine(e) })), birthYear: p.birthYear, startYear: p.startYear, endYear: p.year - 1,
       retireAge: p.age - 1, seasons: s.length, clubs: topClubs.length, peakOvr: p.peakOvr,
-      apps: sum('apps'), goals: sum('goals'), gt: p.pos === 'GK' ? null : routeSum(p, s), assists: sum('assists'), saves: sum('saves'), cs: sum('cs'), avgRating: +avg.toFixed(2),
+      apps: sum('apps'), goals: sum('goals'), gt: p.pos === 'GK' ? null : routeSum(p, s), gtTop: p.pos === 'GK' ? null : routeTop(p), assists: sum('assists'), saves: sum('saves'), cs: sum('cs'), avgRating: +avg.toFixed(2),
       trophies: p.trophies.filter(t => t.type !== 'youth').length, youthTrophies: p.trophies.filter(t => t.type === 'youth').length, awards: p.awards.length, awardCount, bdo: p.bdoYears.length, bdoYears: p.bdoYears.slice(),
       topClubs, stints, familyId: p.familyId || p.id, parentId: p.parentId, generation: p.generation, caps: p.caps, intlGoals: p.intlGoals,
       uclFinals: p.finals.filter(f => f.comp === 'UEFA 챔피언스리그').length, uclWins: p.finals.filter(f => f.comp === 'UEFA 챔피언스리그' && f.won).length,
@@ -2871,21 +2881,84 @@ const ENGINE = (() => {
     const main = p.foot === 'L' ? 'l' : 'r', off = main === 'r' ? 'l' : 'r';
     let open = G - pk - fk; let ls = Math.min(open, ev.long || 0); open -= ls; out.ls = ls;
     for (let i = 0; i < open; i++) { const x = rng(); if (x < ph) out.h++; else if (x < ph + pl) out.ls++; else out[rng() < wkS ? off : main]++; }
-    return out;
+    return Object.assign(out, footSplit(p, r, out));
   }
-  const routesOf = (p, s) => s.gt || goalRoutes(p, s);
-  function routeSum(p, seasons = p.seasons) { const o = { r: 0, l: 0, h: 0, ls: 0, pk: 0, fk: 0 }; for (const s of seasons || []) { const g = routesOf(p, s); if (g) for (const k of GR_KEYS) o[k] += g[k] || 0; } return o; }
+  // 마무리 수단(왼발·오른발·헤더)과 득점 상황(박스 안·중거리·프리킥·PK)은 서로 다른 시선이다.
+  // 박스 안 골은 이미 발이 정해져 있고, 중거리·프리킥·PK가 어느 발이었는지는 따로 뽑는다(앞의 결과는 그대로 둔다).
+  function footSplit(p, r, g) {
+    const rng = seeded('grf|' + (p.id || p.name) + '|' + r.year); const weak = p.ambi ? 5 : p.weak || 3;
+    const wk = p.ambi ? .48 : ({ 1: .04, 2: .09, 3: .17, 4: .28, 5: .42 }[weak] ?? .17);
+    const lp = (mul) => { const off = p.ambi ? .5 : clamp(wk * mul, 0, .5); return p.foot === 'L' ? 1 - off : off; };
+    const draw = (n, q) => { let k = 0; for (let i = 0; i < (n || 0); i++) if (rng() < q) k++; return k; };
+    return { lsl: draw(g.ls, lp(.75)), fkl: draw(g.fk, lp(.35)), pkl: draw(g.pk, lp(.25)) };
+  }
+  const routesOf = (p, s) => { const g = s.gt || goalRoutes(p, s); if (!g) return null; return g.lsl == null ? { ...g, ...footSplit(p, s, g) } : g; };
+  const GR_ALL = ['r', 'l', 'h', 'ls', 'pk', 'fk', 'lsl', 'fkl', 'pkl'];
+  const grZero = () => Object.fromEntries(GR_ALL.map(k => [k, 0]));
+  const grTot = (g) => g ? GR_KEYS.reduce((a, k) => a + (g[k] || 0), 0) : 0;
+  // 마무리 수단: 박스 안 발 골 + 중거리·프리킥·PK의 발
+  const grFin = (g) => { const lsl = g.lsl || 0, fkl = g.fkl || 0, pkl = g.pkl || 0; return { l: (g.l || 0) + lsl + fkl + pkl, r: (g.r || 0) + (g.ls || 0) - lsl + (g.fk || 0) - fkl + (g.pk || 0) - pkl, h: g.h || 0 }; };
+  // 득점 상황
+  const grSit = (g) => ({ box: (g.r || 0) + (g.l || 0) + (g.h || 0), ls: g.ls || 0, fk: g.fk || 0, pk: g.pk || 0 });
+  function routeSum(p, seasons = p.seasons) { const o = grZero(); for (const s of seasons || []) { const g = routesOf(p, s); if (g) for (const k of GR_ALL) o[k] += g[k] || 0; } return o; }
+  // 한 시즌 최다 기록 (세계선 역대 기록용)
+  function routeTop(p) {
+    const t = {}; const off = p.foot === 'L' ? 'r' : 'l';
+    for (const s of p.seasons || []) { const g = routesOf(p, s); if (!g) continue; const f = grFin(g); const v = { h: g.h, ls: g.ls, fk: g.fk, wk: f[off] };
+      for (const [k, n] of Object.entries(v)) if (n && (!t[k] || n > t[k][0])) t[k] = [n, s.year, s.club]; }
+    return t;
+  }
+  // 역할별로 묶은 득점 구성
+  function routeByRole(p) {
+    const m = new Map();
+    for (const s of p.seasons || []) { if (s.youthTeam || !s.role) continue; const g = routesOf(p, s); const e = m.get(s.role) || { role: s.role, seasons: 0, apps: 0, goals: 0, from: s.year, to: s.year, g: grZero() }; e.seasons++; e.apps += s.apps || 0; e.goals += s.goals || 0; e.to = s.year; if (g) for (const k of GR_ALL) e.g[k] += g[k] || 0; m.set(s.role, e); }
+    return [...m.values()].sort((a, b) => a.from - b.from);
+  }
   // 득점 루트로 본 그 선수의 '주무기'
   function routeStyle(o, foot) {
-    const T = GR_KEYS.reduce((a, k) => a + (o[k] || 0), 0); if (T < 12) return null; const sh = (k) => (o[k] || 0) / T;
-    const main = foot === 'L' ? 'l' : 'r', off = main === 'r' ? 'l' : 'r'; const fe = (o.r || 0) + (o.l || 0);
+    const T = grTot(o); if (T < 12) return null; const sh = (k) => (o[k] || 0) / T;
+    const f = grFin(o); const main = foot === 'L' ? 'l' : 'r', off = main === 'r' ? 'l' : 'r'; const fe = f.r + f.l;
     if (sh('fk') >= .08 && (o.fk || 0) >= 5) return '프리킥 스페셜리스트';
     if (sh('h') >= .4) return '공중전의 지배자';
     if (sh('ls') >= .22) return '중거리 슈터';
     if (sh('pk') >= .3) return '페널티 박스의 집행자';
-    if (fe >= 10 && (o[off] || 0) / fe >= .38) return '양발 피니셔';
+    if (fe >= 10 && f[off] / fe >= .38) return '양발 피니셔';
     if (sh('h') >= .25) return '헤더가 강한 골잡이';
     return main === 'l' ? '왼발 피니셔' : '오른발 피니셔';
+  }
+  // 커리어 안에서 득점 방식이 바뀐 지점: 앞뒤 모두 15골 이상, 3시즌 이상일 때만 판정한다
+  function routeShift(p) {
+    const ss = (p.seasons || []).filter(s => !s.youthTeam && s.goals).map(s => ({ s, g: routesOf(p, s) })).filter(x => x.g);
+    if (ss.length < 6 || p.pos === 'GK') return null;
+    const main = p.foot === 'L' ? 'l' : 'r', off = main === 'r' ? 'l' : 'r';
+    const dims = {
+      ls: [(g) => g.ls / grTot(g), .14], h: [(g) => g.h / grTot(g), .14], pk: [(g) => g.pk / grTot(g), .18],
+      wk: [(g) => { const f = grFin(g); return f.r + f.l ? f[off] / (f.r + f.l) : 0; }, .15],
+    };
+    const add = (arr) => { const o = grZero(); arr.forEach(x => GR_ALL.forEach(k => o[k] += x.g[k] || 0)); return o; };
+    const domRole = (arr) => { const c = {}; arr.forEach(x => c[x.s.role] = (c[x.s.role] || 0) + (x.s.goals || 0)); return Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0]; };
+    let best = null;
+    for (let k = 3; k <= ss.length - 3; k++) {
+      const A = add(ss.slice(0, k)), B = add(ss.slice(k)); const ta = grTot(A), tb = grTot(B); if (ta < 15 || tb < 15) continue;
+      for (const [d, [fn, th]] of Object.entries(dims)) { const a = fn(A), b = fn(B); const df = b - a; if (Math.abs(df) < th) continue; const sc = Math.abs(df) * Math.sqrt(Math.min(ta, tb));
+        if (!best || sc > best.sc) best = { sc, dim: d, a, b, k, age: ss[k].s.age, year: ss[k].s.year, A, B, ra: domRole(ss.slice(0, k)), rb: domRole(ss.slice(k)) }; }
+    }
+    return best;
+  }
+  function routeShiftLine(p) {
+    const x = routeShift(p); if (!x) return null;
+    const FN = { l: '왼발', r: '오른발' }; const main = p.foot === 'L' ? 'l' : 'r', off = main === 'r' ? 'l' : 'r';
+    const pc = (v) => Math.round(v * 100) + '%'; const up = x.b > x.a; const when = `${x.age}세 무렵부터`;
+    const early = x.age >= 26 ? '젊은 시절엔' : '커리어 초반엔';
+    const sitA = grSit(x.A), tA = grTot(x.A), finA = grFin(x.A);
+    const descA = x.A.h / tA >= .35 ? '헤더' : sitA.ls / tA >= .28 ? '중거리 슛' : `박스 안 ${FN[finA.l > finA.r ? 'l' : 'r']} 마무리`;
+    let t;
+    if (x.dim === 'ls') t = up ? `${early} ${jo(descA, '이', '가')} 중심이었지만, ${when} 중거리 슛이 새 무기가 됐다 (중거리 비중 ${pc(x.a)} → ${pc(x.b)}).` : `${early} 박스 밖에서도 과감하게 때렸지만, ${when} 문전으로 파고드는 골이 늘었다 (중거리 비중 ${pc(x.a)} → ${pc(x.b)}).`;
+    else if (x.dim === 'h') t = up ? `${early} ${jo(descA === '헤더' ? '발끝 마무리' : descA, '이', '가')} 중심이었지만, ${when} 머리로 해결하는 골이 늘었다 (헤더 비중 ${pc(x.a)} → ${pc(x.b)}).` : `${early} 머리로 넣는 골이 많았지만, ${when} 발끝 마무리가 늘었다 (헤더 비중 ${pc(x.a)} → ${pc(x.b)}).`;
+    else if (x.dim === 'wk') t = up ? `${early} ${FN[main]}에 기댄 골이 대부분이었지만, ${when} 약발인 ${FN[off]}이 터지기 시작했다 (${FN[off]} 비중 ${pc(x.a)} → ${pc(x.b)}).` : `${when} ${FN[main]} 의존이 더 커졌다 (${FN[off]} 비중 ${pc(x.a)} → ${pc(x.b)}).`;
+    else t = up ? `${when} 페널티킥 전담이 됐다 (PK 비중 ${pc(x.a)} → ${pc(x.b)}).` : `${when} 페널티 키커 자리를 내려놨다 (PK 비중 ${pc(x.a)} → ${pc(x.b)}).`;
+    if (x.ra && x.rb && x.ra !== x.rb && ROLE[x.ra] && ROLE[x.rb]) { const rb = ROLE[x.rb].name; const ch = rb.slice(-1); const rl = /[가-힣]/.test(ch) && (ch.charCodeAt(0) - 0xAC00) % 28 === 8 ? '로' : hasJong(rb) ? '으로' : '로'; t += ` ${ROLE[x.ra].name}에서 ${rb}${rl} 옮긴 시기와 겹친다.`; }
+    return t;
   }
 
   // ---------- 영구결번 · 구단 명예의 전당 ----------
@@ -3032,7 +3105,7 @@ const ENGINE = (() => {
   return {
     lgAt, clubsIn, movesAt, setActive, PAIRS, LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
-    goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME,
+    goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
     isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
@@ -5918,7 +5991,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     else if (S.worldTab === 'lines') inner = viewLines(w);
     else {
       const rec = (k, label) => { const b = [...cs].sort((a, b2) => (b2[k] || 0) - (a[k] || 0))[0]; return b && b[k] ? `<div class="rec"><span class="muted small">${label}</span><b>${nf(b[k])}</b><button class="link" data-card="${b.id}">${esc(b.name)}</button></div>` : ''; };
-      inner = `<div class="recs">${rec('peakOvr', '최고 피크 OVR')}${rec('apps', '최다 출전')}${rec('goals', '최다 골')}${rec('assists', '최다 도움')}${rec('saves', '최다 선방')}${rec('trophies', '최다 우승')}${rec('awards', '최다 개인상')}${rec('bdo', '최다 발롱도르')}${rec('uclWins', '챔스 최다 우승')}${rec('caps', '최다 A매치')}${rec('earned', '최다 수입 (억 원)')}${rec('injuries', '최다 부상')}</div>`;
+      inner = `<div class="recs">${rec('peakOvr', '최고 피크 OVR')}${rec('apps', '최다 출전')}${rec('goals', '최다 골')}${rec('assists', '최다 도움')}${rec('saves', '최다 선방')}${rec('trophies', '최다 우승')}${rec('awards', '최다 개인상')}${rec('bdo', '최다 발롱도르')}${rec('uclWins', '챔스 최다 우승')}${rec('caps', '최다 A매치')}${rec('earned', '최다 수입 (억 원)')}${rec('injuries', '최다 부상')}</div>` + worldRouteRecs(cs); gtFill(w);
     }
     const multi = Object.keys(w.lines || {}).length > 1;
     const lineBar = multi ? `<div class="linebar"><label class="fld"><span>보고 있는 세계선</span><select id="viewline" class="inp">${Object.keys(w.lines).map(id => `<option value="${id}" ${id === VL ? 'selected' : ''}>${esc(lineLabel(id))}</option>`).join('')}</select></label><p class="small muted">${esc(lineDesc(VL))}</p></div>` : '';
@@ -6614,19 +6687,62 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const me = f.played ? ((f.g || f.as || f.tk || f.it || f.sv) ? ` · ${finalMe(f, pos || (f.sv ? 'GK' : 'CM'))}` : '') + (f.motm ? ' · MOTM' : '') + (f.pkMiss ? ' · 승부차기 실축' : '') : ' · 결장';
     return `${f.comp} 결승 ${f.won ? '우승' : '준우승'} vs ${opp}${f.oppStar ? `(${f.oppStar})` : ''} ${sc}${me}`;
   }
-  // 득점 루트 막대: 주발 → 약발 → 헤더 → 중거리 → 프리킥 → PK 순서
-  function routeBlock(gt, foot, opt = {}) {
-    if (!gt) return ''; const keys = foot === 'L' ? ['l', 'r', 'h', 'ls', 'fk', 'pk'] : ['r', 'l', 'h', 'ls', 'fk', 'pk'];
-    const T = keys.reduce((a, k) => a + (gt[k] || 0), 0); if (!T) return '';
-    const on = keys.filter(k => gt[k]); const st = opt.style ? E.routeStyle(gt, foot) : null;
-    return `<div class="groute${opt.cls ? ' ' + opt.cls : ''}">${opt.title ? `<p class="gr-t">${esc(opt.title)}${st ? ` <span class="gr-style">${esc(st)}</span>` : ''}</p>` : ''}<div class="gr-bar" aria-hidden="true">${on.map(k => `<i class="gr-${k}" style="flex:${gt[k]}"></i>`).join('')}</div><p class="gr-leg">${on.map(k => `<span class="gr-${k}">${E.GR_NAME[k]} <b>${gt[k]}</b>${opt.pct ? `<small>${Math.round(gt[k] / T * 100)}%</small>` : ''}</span>`).join('')}</p></div>`;
+  // 득점 루트: 마무리 수단(어느 발·머리)과 득점 상황(어디서·어떻게)을 두 줄로. 두 줄은 같은 골을 다른 시선으로 센 것이라 더하지 않는다
+  const GR_FIN_N = { l: '왼발', r: '오른발', h: '헤더' }, GR_SIT_N = { box: '박스 안', ls: '중거리', fk: '프리킥', pk: 'PK' };
+  function grRow(label, obj, keys, names, T, pct, pre) {
+    const on = keys.filter(k => obj[k]); if (!on.length) return '';
+    return `<div class="gr-row"><span class="gr-lab">${label}</span><div><div class="gr-bar" aria-hidden="true">${on.map(k => `<i class="${pre}${k}" style="flex:${obj[k]}"></i>`).join('')}</div><p class="gr-leg">${on.map(k => `<span class="${pre}${k}">${names[k]} <b>${obj[k]}</b>${pct ? `<small>${Math.round(obj[k] / T * 100)}%</small>` : ''}</span>`).join('')}</p></div></div>`;
+  }
+  function routeBlock(g, foot, opt = {}) {
+    if (!g) return ''; const T = E.grTot(g); if (!T) return '';
+    const f = E.grFin(g), st0 = E.grSit(g); const st = opt.style ? E.routeStyle(g, foot) : null;
+    return `<div class="groute${opt.cls ? ' ' + opt.cls : ''}">${opt.title ? `<p class="gr-t">${esc(opt.title)}${st ? ` <span class="gr-style">${esc(st)}</span>` : ''}</p>` : ''}${grRow('마무리', f, foot === 'L' ? ['l', 'r', 'h'] : ['r', 'l', 'h'], GR_FIN_N, T, opt.pct, 'gr-')}${grRow('상황', st0, ['box', 'ls', 'fk', 'pk'], GR_SIT_N, T, opt.pct, 'gs-')}${opt.line ? `<p class="gr-shift">${esc(opt.line)}</p>` : ''}</div>`;
+  }
+  // 시즌별 득점 막대: 높이는 골 수, 색은 루트. 막대를 누르면 그 시즌 상세가 아래에 뜬다
+  function routeChart(p) {
+    const rows = p.seasons.filter(s => !s.youthTeam).map(s => ({ s, g: s.goals ? E.routesOf(p, s) : null })); const has = rows.filter(x => x.g); if (!has.length) return '';
+    const mx = Math.max(...has.map(x => x.s.goals), 1); const sel = has.find(x => x.s.year === S.grSel) || [...has].sort((a, b) => b.s.goals - a.s.goals)[0];
+    const main = p.foot === 'L' ? 'l' : 'r', off = main === 'r' ? 'l' : 'r'; const K = [main, off, 'h', 'ls', 'fk', 'pk'];
+    const NM = { r: '박스 안 오른발', l: '박스 안 왼발', h: '헤더', ls: '중거리', fk: '프리킥', pk: 'PK' }; const every = rows.length > 14 ? 2 : 1;
+    const bars = rows.map((x, i) => `<button class="grc-b${x === sel ? ' on' : ''}" ${x.g ? `data-grsel="${x.s.year}"` : 'disabled'} aria-label="${sl(x.s.year)} ${x.s.goals || 0}골"><span class="grc-n">${x.s.goals || ''}</span><span class="grc-c" style="height:${((x.s.goals || 0) / mx * 100).toFixed(1)}%">${x.g ? K.filter(k => x.g[k]).map(k => `<i class="gr-${k}" style="flex:${x.g[k]}"></i>`).join('') : ''}</span><small>${i % every === 0 ? String(x.s.year).slice(2) : ''}</small></button>`).join('');
+    const s = sel.s; const gpg = s.apps ? (s.goals / s.apps).toFixed(2) : '–';
+    return `<div class="grc-w"><p class="gr-t">시즌별 득점 <span class="muted">막대를 누르면 그 시즌을 볼 수 있어요</span></p><div class="grc">${bars}</div><p class="gr-leg grc-leg">${K.map(k => `<span class="gr-${k}">${NM[k]}</span>`).join('')}</p>
+      <div class="grc-d"><p class="small"><b>${sl(s.year)}</b> · ${crest(s.club, 'xs')} ${esc(club(s.club).name)} · ${esc(E.ROLE[s.role]?.name || '')} · <b>${s.goals}골</b> ${s.apps}경기 (경기당 ${gpg})</p>${routeBlock(sel.g, p.foot, { pct: true })}</div></div>`;
+  }
+  // 역할별 득점 구성: 역할이 바뀌면 골 넣는 방식도 바뀐다
+  function routeRoles(p) {
+    const R = E.routeByRole(p).filter(r => r.goals > 0); if (R.length < 2) return '';
+    const off = p.foot === 'L' ? 'r' : 'l'; const pc = (n, T) => T ? Math.round(n / T * 100) + '%' : '–';
+    return `<div class="gr-roles"><p class="gr-t">역할별 득점 <span class="muted">10골 미만은 흐리게</span></p><div class="tblwrap"><table class="tbl"><thead><tr><th>역할</th><th>시즌</th><th class="num">골</th><th class="num">경기당</th><th class="num">박스 안</th><th class="num">중거리</th><th class="num">헤더</th><th class="num">약발</th><th class="num">PK</th></tr></thead><tbody>${R.map(r => { const T = E.grTot(r.g), f = E.grFin(r.g), st = E.grSit(r.g); return `<tr class="${T < 10 ? 'faintrow' : ''}"><td>${esc(E.ROLE[r.role]?.name || r.role)}</td><td class="num small">${r.seasons}시즌 <span class="muted">${String(r.from).slice(2)}–${String(r.to + 1).slice(2)}</span></td><td class="num">${r.goals}</td><td class="num">${r.apps ? (r.goals / r.apps).toFixed(2) : '–'}</td><td class="num">${pc(st.box, T)}</td><td class="num">${pc(st.ls, T)}</td><td class="num">${pc(f.h, T)}</td><td class="num">${pc(f[off], f.l + f.r)}</td><td class="num">${pc(st.pk, T)}</td></tr>`; }).join('')}</tbody></table></div></div>`;
+  }
+  function routeAnalysis(p) {
+    if (p.pos === 'GK') return ''; const sum = E.routeSum(p); if (!E.grTot(sum)) return '';
+    return `<section class="gr-an"><h3 class="h3">득점 분석</h3>${routeBlock(sum, p.foot, { title: '커리어 득점 루트', pct: true, style: true, cls: 'gr-rec', line: E.routeShiftLine(p) })}${routeChart(p)}${routeRoles(p)}</section>`;
+  }
+  // 예전에 은퇴한 커리어 요약에는 득점 루트가 없다: 커리어 기록을 불러와 한 번 채워 둔다
+  const GTF = new Set();
+  function gtFill(w) {
+    const need = (w.careers || []).filter(c => c.pos !== 'GK' && !c.gtNA && (!c.gt || c.gt.lsl == null || !c.gtTop) && !GTF.has(c.id)); if (!need.length) return;
+    need.forEach(c => GTF.add(c.id));
+    Promise.all(need.map(c => Store.loadCareer(c.id).then(d => { if (d?.seasons?.length) { c.gt = E.routeSum(d); c.gtTop = E.routeTop(d); if (!c.foot) c.foot = d.foot; } else c.gtNA = 1; }, () => { })))
+      .then(() => { Store.save('world', w); if (S.view === 'world' && S.worldTab === 'records') { const y = scrollY; render(); scrollTo(0, y); } });
+  }
+  function worldRouteRecs(cs) {
+    const sc = cs.filter(c => c.gt && E.grTot(c.gt) > 0 && c.pos !== 'GK'); if (!sc.length) return '';
+    const offOf = (c) => { const f = E.grFin(c.gt); return c.foot === 'L' ? f.r : f.l; };
+    const rk = (label, fn) => { const b = sc.map(c => [c, fn(c)]).filter(x => x[1]).sort((a, b2) => b2[1] - a[1])[0]; return b ? `<div class="rec"><span class="muted small">${label}</span><b>${nf(b[1])}</b><button class="link" data-card="${b[0].id}">${esc(b[0].name)}</button></div>` : ''; };
+    const top = (label, k) => { const b = sc.filter(c => c.gtTop?.[k]).sort((a, b2) => b2.gtTop[k][0] - a.gtTop[k][0])[0]; if (!b) return ''; const [n, y, cl] = b.gtTop[k]; return `<div class="rec"><span class="muted small">${label}</span><b>${n}</b><button class="link" data-card="${b.id}">${esc(b.name)}</button><small class="muted">${sl(y)} · ${esc(club(cl).name)}</small></div>`; };
+    const L = sc.filter(c => (c.goals || 0) >= 20).sort((a, b) => b.goals - a.goals).slice(0, 12);
+    const pc = (n, T) => T ? Math.round(n / T * 100) + '%' : '–';
+    const tbl = L.length >= 2 ? `<p class="gr-t" style="margin-top:14px">득점 스타일 비교 <span class="muted">통산 20골 이상</span></p><div class="tblwrap"><table class="tbl"><thead><tr><th>선수</th><th class="num">골</th><th class="num">100경기당</th><th class="num">박스 안</th><th class="num">중거리</th><th class="num">헤더</th><th class="num">약발</th><th>주무기</th></tr></thead><tbody>${L.map(c => { const T = E.grTot(c.gt), f = E.grFin(c.gt), st = E.grSit(c.gt); return `<tr><td><button class="link" data-card="${c.id}">${esc(c.name)}</button> <span class="muted small">${esc(c.pos)}</span></td><td class="num">${nf(c.goals)}</td><td class="num">${c.apps ? (c.goals / c.apps * 100).toFixed(1) : '–'}</td><td class="num">${pc(st.box, T)}</td><td class="num">${pc(st.ls, T)}</td><td class="num">${pc(f.h, T)}</td><td class="num">${pc(offOf(c), f.l + f.r)}</td><td class="small">${esc(E.routeStyle(c.gt, c.foot) || '')}</td></tr>`; }).join('')}</tbody></table></div>` : '';
+    return `<h3 class="h3" style="margin-top:18px">득점 기록</h3><div class="recs">${rk('통산 최다 헤더', c => c.gt.h)}${rk('통산 최다 중거리', c => c.gt.ls)}${rk('통산 최다 프리킥', c => c.gt.fk)}${rk('통산 최다 약발 골', offOf)}${top('한 시즌 최다 헤더', 'h')}${top('한 시즌 최다 중거리', 'ls')}${top('한 시즌 최다 약발 골', 'wk')}</div>${tbl}`;
   }
   function seasonResult(r, p, compact) {
     const isGK = p.pos === 'GK';
     return `<section class="${compact ? '' : 'panel '}result"><div class="ptitle"><h2>${sl(r.year)} 시즌</h2><span class="muted small">${crest(r.club, 'xs')} ${esc(club(r.club).name)} · ${esc(E.ROLE[r.role]?.name || '')}${r.number ? ` · ${r.number}번` : ''}</span></div>
       <div class="sgrid"><div><b>${r.apps}${r.youthTeam ? `<small>+${r.youthApps}</small>` : ''}</b><span>출전</span></div>${isGK ? `<div><b>${r.cs}${r.youthTeam && r.youthCs != null ? `<small>+${r.youthCs}</small>` : ''}</b><span>클린시트</span></div>` : `<div><b>${r.goals}${r.youthTeam && r.youthGoals != null ? `<small>+${r.youthGoals}</small>` : ''}</b><span>골</span></div><div><b>${r.assists}${r.youthTeam && r.youthAssists != null ? `<small>+${r.youthAssists}</small>` : ''}</b><span>도움</span></div>`}<div><b>${r.rating.toFixed(2)}</b><span>평점</span></div><div><b>${r.ovrEnd}<small class="${r.growth >= 0 ? 'pos' : 'neg'}">${r.growth >= .5 ? '▲' : r.growth <= -.5 ? '▼' : ''}</small></b><span>OVR</span></div></div>
       ${!r.youthTeam ? `<p class="small muted">${shareWord(r.share ?? 0)}${r.assigned ? ` · ${esc(E.ROLE[r.role]?.name || '')} (${E.FAM_NAME[r.fam ?? 2]})` : ''}${r.injuryWeeks ? ` · 부상 ${r.injuryWeeks}주` : ''}</p>` : ''}
-      ${!isGK && r.goals ? routeBlock(E.routesOf(p, r), p.foot, { title: '득점 루트' }) : ''}
+      ${!isGK && r.goals ? routeBlock(E.routesOf(p, r), p.foot, { title: '득점 루트', cls: 'gr-season' }) : ''}
       ${pressBlock(r.press)}
       <ul class="lines">${seasonLines(r).map(([c, t]) => `<li class="${c}">${esc(t)}</li>`).join('')}</ul>${r.memo ? `<p class="memo">${esc(r.memo)}</p>` : ''}</section>`;
   }
@@ -6638,7 +6754,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function viewRecords(p, live, only) {
     const tabs = REC_TABS;
     const t = only || (S.rtab === 'life' ? 'story' : S.rtab); const isGK = p.pos === 'GK'; let inner = '';
-    if (t === 'season') inner = `<div class="tblwrap"><table class="tbl"><thead><tr><th>시즌</th><th>나이</th><th>구단</th><th>#</th><th>포지션</th><th>역할</th><th class="num">출전</th>${isGK ? '<th class="num">선방</th><th class="num">CS</th>' : '<th class="num">골</th><th class="num">도움</th>'}<th class="num">평점</th><th class="num">OVR</th><th class="num">연봉</th><th>성과</th></tr></thead><tbody>${p.seasons.map(r => `<tr><td class="num">${sl(r.year)}</td><td class="num">${r.age}</td><td>${crest(r.club, 'xs')} ${esc(club(r.club).name)}${r.youthTeam ? ' <span class="muted small">유스</span>' : r.loan ? ' <span class="muted small">임대</span>' : ''}</td><td class="num">${r.number || ''}</td><td>${r.pos || p.pos}</td><td class="rolecell">${roleCell(r)}</td><td class="num">${r.apps}${r.youthTeam ? `<span class="muted small">+${r.youthApps}</span>` : ''}</td>${isGK ? `<td class="num">${r.saves}${r.youthTeam && r.youthSaves != null ? `<span class="muted small">+${r.youthSaves}</span>` : ''}</td><td class="num">${r.cs}${r.youthTeam && r.youthCs != null ? `<span class="muted small">+${r.youthCs}</span>` : ''}</td>` : `<td class="num">${r.goals}${r.youthTeam && r.youthGoals != null ? `<span class="muted small">+${r.youthGoals}</span>` : ''}</td><td class="num">${r.assists}${r.youthTeam && r.youthAssists != null ? `<span class="muted small">+${r.youthAssists}</span>` : ''}</td>`}<td class="num">${r.rating.toFixed(2)}</td><td class="num">${r.ovrEnd} <span class="${r.growth >= 0 ? 'pos' : 'neg'} small">${r.growth >= 0 ? '+' : ''}${r.growth}</span></td><td class="num small">${r.wage ? E.fmtWon(r.wage) : ''}</td><td class="ach">${r.trophies.map(x => `<span class="achi tr">${esc(x.comp)}</span>`).join('')}${r.awards.map(x => `<span class="achi">${esc(x)}</span>`).join('')}${r.weakUp ? `<span class="achi up">약발 ★${r.weakUp}</span>` : ''}${r.move ? `<span class="achi ${r.move === 'up' ? 'up' : ''}">${r.move === 'up' ? '승격' : '강등'}</span>` : ''}</td></tr>`).join('')}</tbody></table></div>` + (!isGK ? routeBlock(E.routeSum(p), p.foot, { title: '커리어 득점 루트', pct: true, style: true, cls: 'gr-rec' }) : '');
+    if (t === 'season') inner = `<div class="tblwrap"><table class="tbl"><thead><tr><th>시즌</th><th>나이</th><th>구단</th><th>#</th><th>포지션</th><th>역할</th><th class="num">출전</th>${isGK ? '<th class="num">선방</th><th class="num">CS</th>' : '<th class="num">골</th><th class="num">도움</th>'}<th class="num">평점</th><th class="num">OVR</th><th class="num">연봉</th><th>성과</th></tr></thead><tbody>${p.seasons.map(r => `<tr><td class="num">${sl(r.year)}</td><td class="num">${r.age}</td><td>${crest(r.club, 'xs')} ${esc(club(r.club).name)}${r.youthTeam ? ' <span class="muted small">유스</span>' : r.loan ? ' <span class="muted small">임대</span>' : ''}</td><td class="num">${r.number || ''}</td><td>${r.pos || p.pos}</td><td class="rolecell">${roleCell(r)}</td><td class="num">${r.apps}${r.youthTeam ? `<span class="muted small">+${r.youthApps}</span>` : ''}</td>${isGK ? `<td class="num">${r.saves}${r.youthTeam && r.youthSaves != null ? `<span class="muted small">+${r.youthSaves}</span>` : ''}</td><td class="num">${r.cs}${r.youthTeam && r.youthCs != null ? `<span class="muted small">+${r.youthCs}</span>` : ''}</td>` : `<td class="num">${r.goals}${r.youthTeam && r.youthGoals != null ? `<span class="muted small">+${r.youthGoals}</span>` : ''}</td><td class="num">${r.assists}${r.youthTeam && r.youthAssists != null ? `<span class="muted small">+${r.youthAssists}</span>` : ''}</td>`}<td class="num">${r.rating.toFixed(2)}</td><td class="num">${r.ovrEnd} <span class="${r.growth >= 0 ? 'pos' : 'neg'} small">${r.growth >= 0 ? '+' : ''}${r.growth}</span></td><td class="num small">${r.wage ? E.fmtWon(r.wage) : ''}</td><td class="ach">${r.trophies.map(x => `<span class="achi tr">${esc(x.comp)}</span>`).join('')}${r.awards.map(x => `<span class="achi">${esc(x)}</span>`).join('')}${r.weakUp ? `<span class="achi up">약발 ★${r.weakUp}</span>` : ''}${r.move ? `<span class="achi ${r.move === 'up' ? 'up' : ''}">${r.move === 'up' ? '승격' : '강등'}</span>` : ''}</td></tr>`).join('')}</tbody></table></div>` + (!isGK ? routeAnalysis(p) : '');
     else if (t === 'finals') {
       const ucl = p.finals.filter(f => f.comp === 'UEFA 챔피언스리그');
       inner = (ucl.length ? `<p class="note">챔피언스리그 결승 ${ucl.length}회 · ${ucl.filter(f => f.won).length}승 ${ucl.filter(f => !f.won).length}패 · 결승 공격포인트 ${ucl.reduce((a, f) => a + f.g + f.as, 0)}</p>` : '') + (p.finals.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>연도</th><th>대회</th><th>소속</th><th>상대</th><th>스코어</th><th>결과</th><th>내 기록</th></tr></thead><tbody>${p.finals.map(f => `<tr><td class="num">${f.national ? f.year : sl(f.year)}</td><td>${esc(f.comp)}</td><td>${f.national ? natTag(f.nation || E.natT(p)) : crest(f.club, 'xs') + ' ' + esc(club(f.club).name)}</td><td>${f.oppNation ? natTag(f.opp) : crest(f.opp, 'xs') + ' ' + esc(club(f.opp).name)}</td><td class="num">${f.a}-${f.b}${f.pens ? `<span class="small muted"> PK ${f.pa}-${f.pb}</span>` : ''}</td><td><b class="${f.won ? 'pos' : 'neg'}">${f.won ? '우승' : '준우승'}</b></td><td class="small">${f.played ? `${finalMe(f, p.pos)}${f.rating ? ' · ' + f.rating : ''}${f.motm ? ' · MOTM' : ''}${f.pkMiss ? ' · PK 실축' : f.pk ? ' · PK 성공' : ''}` : '결장'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">아직 결승에 오른 적이 없어요.</p>');
@@ -6728,7 +6844,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       ${sum.ghost ? `<p class="cc-sub small">세계선이 기억하던 ${sum.ghost.Y} 발롱도르의 주인 · ${sum.ghost.kept ? '기억대로 들어 올렸다' : '이번에는 그에게 오지 않았다'}</p>` : ''}
       ${heirBlock}
       <div class="cc-stats"><div><b>${nf(sum.apps)}</b><span>출전</span></div>${isGK ? `<div><b>${nf(sum.saves)}</b><span>선방</span></div><div><b>${nf(sum.cs)}</b><span>클린시트</span></div>` : `<div><b>${nf(sum.goals)}</b><span>골</span></div><div><b>${nf(sum.assists)}</b><span>도움</span></div>`}<div><b>${sum.avgRating.toFixed(2)}</b><span>평균 평점</span></div><div><b>${sum.trophies}회</b><span>우승</span></div><div><b>${sum.awards}회</b><span>개인상</span></div></div>
-      ${!isGK && (sum.gt || p?.seasons) ? routeBlock(sum.gt || E.routeSum(p), sum.foot ?? p?.foot, { title: '득점 루트', pct: true, style: true, cls: 'gr-cc' }) : ''}
+      ${!isGK && (sum.gt || p?.seasons) ? routeBlock(p?.seasons ? E.routeSum(p) : sum.gt, sum.foot ?? p?.foot, { title: '득점 루트', pct: true, style: true, cls: 'gr-cc', line: p?.seasons ? E.routeShiftLine(p) : null }) : ''}
       </div><div class="cc-r">
       <div class="cc-badges">${badges.map(([k, v]) => `<span class="pill gold">${esc(k)}${v > 1 ? ' ' + v : ''}</span>`).join('')}${retN.map(x => `<span class="pill">${esc(x)} 영구결번</span>`).join('')}${hofN.map(x => `<span class="pill">${esc(x)} 명예의 전당</span>`).join('')}</div>
       ${(sum.legends || []).length || (sum.feats || []).length ? `<div class="cc-legend"><span>사람들이 기억하는 장면</span>${(sum.feats || []).map(e => `<p><b class="cc-feat">${esc(e.title)}</b> ${esc(e.line || E.featLine(e))}</p>`).join('')}${(sum.legends || []).map(e => `<p>${esc(e.line || E.legendLine(e))}</p>`).join('')}</div>` : ''}
@@ -6784,7 +6900,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function wiCompare(sum) {
     if (!sum.whatIf) return ''; const o = S.world.careers.find(c => c.id === sum.whatIf.of); if (!o) return '';
     const gk = sum.pos === 'GK' || o.pos === 'GK';
-    const rows = [['최고 OVR', o.peakOvr, sum.peakOvr], ['출전', o.apps, sum.apps], ...(gk ? [['클린시트', o.cs, sum.cs]] : [['골', o.goals, sum.goals], ['도움', o.assists, sum.assists]]), ['우승', o.trophies, sum.trophies], ['A매치', o.caps || 0, sum.caps || 0], ['발롱도르', o.bdo || 0, sum.bdo || 0], ['은퇴 나이', o.retireAge, sum.retireAge]];
+    const rows = [['최고 OVR', o.peakOvr, sum.peakOvr], ['출전', o.apps, sum.apps], ...(gk ? [['클린시트', o.cs, sum.cs]] : [['골', o.goals, sum.goals], ['도움', o.assists, sum.assists]]), ...(!gk && o.gt && sum.gt && E.grTot(o.gt) && E.grTot(sum.gt) ? [['100경기당 골', +(o.goals / Math.max(1, o.apps) * 100).toFixed(1), +(sum.goals / Math.max(1, sum.apps) * 100).toFixed(1)], ['중거리 비중 %', Math.round(o.gt.ls / E.grTot(o.gt) * 100), Math.round(sum.gt.ls / E.grTot(sum.gt) * 100)], ['헤더 비중 %', Math.round(o.gt.h / E.grTot(o.gt) * 100), Math.round(sum.gt.h / E.grTot(sum.gt) * 100)]] : []), ['우승', o.trophies, sum.trophies], ['A매치', o.caps || 0, sum.caps || 0], ['발롱도르', o.bdo || 0, sum.bdo || 0], ['은퇴 나이', o.retireAge, sum.retireAge]];
     const dp = sum.peakOvr - o.peakOvr, da = sum.retireAge - o.retireAge, dt = sum.trophies - o.trophies;
     const db = (sum.bdo || 0) - (o.bdo || 0);
     const a = dp >= 3 ? '더 높이 올랐' : dp <= -3 ? '원래만큼 오르지 못했' : db >= 1 ? '발롱도르를 더 들었' : db <= -1 ? '발롱도르는 더 적게 들었' : '비슷한 곳까지 올랐';
@@ -7011,6 +7127,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function bind() {
     $$('[data-go]').forEach(b => b.onclick = () => { S.view = b.dataset.go; render(); window.scrollTo(0, 0); });
     $$('[data-wtab]').forEach(b => b.onclick = () => { S.worldTab = b.dataset.wtab; render(); });
+    $$('[data-grsel]').forEach(b => b.onclick = () => { S.grSel = +b.dataset.grsel; const y = scrollY; render(); scrollTo(0, y); });
     $$('[data-vline]').forEach(b => b.onclick = () => { S.viewLine = b.dataset.vline; S.worldTab = 'legends'; render(); window.scrollTo(0, 0); });
     const vl = $('#viewline'); if (vl) vl.onchange = () => { S.viewLine = vl.value; render(); };
     const cc = $('#chronclub'); if (cc) cc.onchange = () => { S.chronClub = cc.value; render(); };
