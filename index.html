@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v83'</script>
+<script>window.SK_VER='v84'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6845,9 +6845,18 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       const w = Math.ceil(inner.getBoundingClientRect().width), h = Math.ceil(Math.max(inner.scrollHeight, inner.getBoundingClientRect().height)) + 4; const scale = Math.max(1, Math.min(2, Math.sqrt(15.5e6 / (w * h)))); // iOS 캔버스 크기 한도
       const bg = getComputedStyle(document.body).backgroundColor || '#f1f3f7';
-      const opt = { scale, backgroundColor: bg, timeout: 6000, width: w, height: h };
-      await MS.domToBlob(inner, opt).catch(() => null); // 사파리는 첫 렌더에서 이미지를 빠뜨리곤 해서 한 번 더 그린다
-      const blob = await MS.domToBlob(inner, opt); if (!blob) throw new Error('blob');
+      // 그림 안에서 글자 폭이 화면과 조금만 달라도(기기 글꼴·힌팅 차이) 고정된 칸 안에서 줄이 넘쳐 겹친다.
+      // 그래서 복제본에서는 글자가 든 칸의 높이를 풀어 주고, 짧은 꼬리표는 줄바꿈 없이 제 폭을 쓰게 한다. 늘어난 만큼 아래 여유를 둔다
+      const relax = (root) => { const all = [root, ...root.querySelectorAll('*')]; for (const n of all) { const t = n.tagName; if (!n.style || /^(IMG|CANVAS|SVG|svg|I|INPUT|BUTTON)$/.test(t)) continue; if (!(n.textContent || '').trim()) continue; n.style.height = 'auto'; n.style.maxHeight = 'none';
+        if (n.matches && n.matches('.tmp-n b, .pill, .sch, .gr-style, .cc-badges span, .gr-leg span, .famtag, .achi, .gr-t, .wi-eye, .cc-eye, .tmp-l, .tmp-d')) { n.style.width = 'auto'; n.style.maxWidth = 'none'; n.style.whiteSpace = 'nowrap'; } if (window.__shotStress) n.style.letterSpacing = '.06em'; } return root; };
+      const opt = { scale, backgroundColor: bg, timeout: 6000, width: w, height: h + 60, onCloneNode: relax };
+      await MS.domToCanvas(inner, opt).catch(() => null); // 사파리는 첫 렌더에서 이미지를 빠뜨리곤 해서 한 번 더 그린다
+      let cv = await MS.domToCanvas(inner, opt); if (!cv) throw new Error('canvas');
+      // 아래에 남겨 둔 여유 중 빈 부분은 잘라 낸다(배경색과 다른 마지막 줄 + 원래 아래 여백)
+      try { const cx = cv.getContext('2d'); const W = cv.width, H = cv.height; const d = cx.getImageData(0, 0, W, H).data; const b0 = [d[0], d[1], d[2]]; let last = H - 1;
+        outer: for (let y = H - 1; y >= 0; y--) { for (let x = 0; x < W; x += 3) { const i = (y * W + x) * 4; if (Math.abs(d[i] - b0[0]) + Math.abs(d[i + 1] - b0[1]) + Math.abs(d[i + 2] - b0[2]) > 24) { last = y; break outer; } } }
+        const keep = Math.min(H, last + 1 + Math.round(28 * scale)); if (keep < H - 4) { const c2 = document.createElement('canvas'); c2.width = W; c2.height = keep; c2.getContext('2d').drawImage(cv, 0, 0); cv = c2; } } catch { }
+      const blob = await new Promise(r => cv.toBlob(r, 'image/png')); if (!blob) throw new Error('blob');
       const file = new File([blob], name + '.png', { type: 'image/png' });
       const touch = matchMedia('(pointer: coarse)').matches;
       if (touch && navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); return true; } catch (e) { if (e.name === 'AbortError') return true; } }
