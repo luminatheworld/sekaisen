@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v91'</script>
+<script>window.SK_VER='v92'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -272,6 +272,7 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 /* results */
 .result .ptitle .muted { display: inline-flex; align-items: center; gap: 4px; }
 .sgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(56px, 1fr)); gap: 6px; }
+.sgrid:has(> div:nth-child(6)) { grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); }
 .sgrid > div { background: var(--panel-2); border-radius: var(--r-sm); padding: 9px 4px; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .sgrid b { font-size: 19px; font-weight: 900; font-variant-numeric: tabular-nums; } .sgrid b small { font-size: 12px; color: var(--muted); margin-left: 2px; }
 .sgrid span { font-size: 11.5px; color: var(--muted); font-weight: 700; }
@@ -983,12 +984,14 @@ const ENGINE = (() => {
     return wsum(p.attrs, w);
   }
   // 포지션·롤별 기준점: 그 포지션의 전형적인 24세(포지션 맞춤으로 자란 선수)에서 '행동 능력 − 포지션 OVR'의 평균 [득점, 찬스]. 이 기준에서 벗어난 만큼만 생산성이 달라진다
-    // 기준점 버전: v91 · 2026-10-18 · seed 20261018 (calib/calib-v91.json, tests/calib.js로 재생성)
+    // 기준점 버전: v91 · 행동 기준점·평균 적합도·생산성 보정은 v91 값 유지(v92는 롤 구성이 바뀌지 않아 재생성하지 않음). 대표 기록 능력 기준점(rsc)만 v92에서 추가 (calib/calib-v92.json)
   const CALIB = { act: {"CB":{"bpd":[-17.6,-1.7],"stopper":[-13.2,-24.9],"covercb":[-14.3,-24.3],"widecb":[-13.1,-16.6],"libero":[-10.1,-10],"aerialcb":[-9.4,-27.4],"leadercb":[-13.7,-10.5]},"LB":{"invfb":[-10.4,1.1],"overlapfb":[-8.4,-10.4],"holdfb":[-12.5,-17.7],"underlap":[-4.2,-3.2]},"RB":{"invfb":[-10.3,0],"overlapfb":[-7.9,-8.6],"holdfb":[-11.8,-21.9],"underlap":[-5.2,-6]},"LWB":{"attwb":[-8.1,-4.5],"compwb":[-7.2,-7.9],"invwb":[-7.5,0],"wbplay":[-22.7,4.7],"defwb":[-9.8,-17.7]},"RWB":{"attwb":[-7.7,-2.9],"compwb":[-6.9,-4.6],"invwb":[-4.7,3.5],"wbplay":[-21.8,6.9],"defwb":[-10.1,-18.2]},"DM":{"anchor":[-11.9,-5.1],"regista":[-18.7,2.3],"halfback":[-18.5,0.6],"destroyer":[-6.7,-17],"volante":[-12.6,-15.4],"segundo":[-3.2,2.1]},"CM":{"b2b":[0.8,-6],"mezzala":[-4,5.2],"dlp":[-18.3,9.1],"carrier":[-2.9,5.2],"carrilero":[-2.9,5.8],"ballwin":[-13.5,-5.6],"roam":[-3.1,4.9],"linebreaker":[-9.4,7.9],"boxcrash":[5,-6.5]},"AM":{"treq":[-4.2,2.8],"ap":[-6.7,4.2],"shadow":[1.8,-0.9],"raum":[1.6,-5.9],"enganche":[-7.2,6.8],"mediapunta":[-2.7,1.8]},"LW":{"insidef":[1.7,-5.5],"invwinger":[1,4.6],"winger":[-2.5,-7.5],"iso":[1.1,-4.3],"widetm":[-1.9,-13.6],"wide10":[2,-5.1],"farpost":[-2.2,-16.2],"trackback":[-2.7,-14.9]},"RW":{"insidef":[2,-5.4],"invwinger":[1.3,-2.9],"winger":[-1.9,-6.5],"iso":[0.4,-3.6],"widetm":[0.8,-12.5],"wide10":[-0.4,4.7],"farpost":[3.7,-16.5],"trackback":[-2.1,-14.1]},"ST":{"poacher":[6.8,-24.1],"target":[3.6,-24.9],"presser":[5,-21.6],"complete":[2.6,-10.2],"false9":[11.3,10.7],"channel":[6.9,-23.6],"secondst":[7.8,-2.4],"dlf":[3.9,-9.3]}},
     // 실현 배율의 그룹 평균을 롤 원래 배율 평균에 맞추는 계수 [골, 도움]. 능력과 실현이 같은 방향으로 움직여 생기는 평균 상승을 없앤다
     norm: {"CM":[0.943,0.99],"ST":[0.924,1.004],"W":[0.942,0.97],"FB":[0.96,0.914],"DM":[0.92,1],"AM":[0.977,0.965],"CB":[1,0.958],"WB":[0.982,1.034]},
     // (참고용) 롤별 평균 적합도 [포지션][롤]: 그 롤로 실제로 뛴 선수들의 (롤 점수 − 포지션 OVR) 평균. 엔진 계산에는 쓰지 않는다
-    mu: {"CM":{"roam":10.5,"b2b":11.3,"boxcrash":13.6,"carrier":13.1,"linebreaker":12,"dlp":13.4,"carrilero":9.6,"ballwin":9.1,"mezzala":10.3},"ST":{"false9":14.5,"presser":8.5,"poacher":11.8,"channel":12.2,"complete":7,"secondst":11,"target":11.1,"dlf":11.3},"LW":{"insidef":8.9,"iso":10.1,"trackback":11.5,"farpost":10.1,"widetm":11.6,"invwinger":11.6,"winger":10.5},"RB":{"underlap":7.8,"holdfb":8.6,"invfb":9.4,"overlapfb":10.7},"DM":{"anchor":5.6,"destroyer":10.9,"halfback":6.7,"volante":6.9,"regista":6,"segundo":10},"AM":{"enganche":11.5,"ap":8.7,"treq":7.6,"shadow":9.2,"mediapunta":7.3,"raum":8.3},"RW":{"farpost":10.4,"iso":8.5,"insidef":6.7,"winger":10,"widetm":10.3,"trackback":11,"invwinger":10,"wide10":11.7},"LB":{"overlapfb":8.6,"holdfb":8.4,"invfb":8.1,"underlap":8.9},"GK":{"shotstop":8.1,"buildgk":10,"sweeperk":7.7,"commandgk":8.3},"CB":{"covercb":6.2,"aerialcb":8.8,"widecb":6.8,"stopper":6.8,"bpd":9.3,"libero":6.8,"leadercb":8.3},"LWB":{"invwb":5.4,"defwb":7.8,"compwb":6.6,"wbplay":10.7,"attwb":7.4},"RWB":{"wbplay":9.7,"compwb":6.7,"attwb":7.8,"invwb":9.4,"defwb":8.7}} };
+    mu: {"CM":{"roam":10.5,"b2b":11.3,"boxcrash":13.6,"carrier":13.1,"linebreaker":12,"dlp":13.4,"carrilero":9.6,"ballwin":9.1,"mezzala":10.3},"ST":{"false9":14.5,"presser":8.5,"poacher":11.8,"channel":12.2,"complete":7,"secondst":11,"target":11.1,"dlf":11.3},"LW":{"insidef":8.9,"iso":10.1,"trackback":11.5,"farpost":10.1,"widetm":11.6,"invwinger":11.6,"winger":10.5},"RB":{"underlap":7.8,"holdfb":8.6,"invfb":9.4,"overlapfb":10.7},"DM":{"anchor":5.6,"destroyer":10.9,"halfback":6.7,"volante":6.9,"regista":6,"segundo":10},"AM":{"enganche":11.5,"ap":8.7,"treq":7.6,"shadow":9.2,"mediapunta":7.3,"raum":8.3},"RW":{"farpost":10.4,"iso":8.5,"insidef":6.7,"winger":10,"widetm":10.3,"trackback":11,"invwinger":10,"wide10":11.7},"LB":{"overlapfb":8.6,"holdfb":8.4,"invfb":8.1,"underlap":8.9},"GK":{"shotstop":8.1,"buildgk":10,"sweeperk":7.7,"commandgk":8.3},"CB":{"covercb":6.2,"aerialcb":8.8,"widecb":6.8,"stopper":6.8,"bpd":9.3,"libero":6.8,"leadercb":8.3},"LWB":{"invwb":5.4,"defwb":7.8,"compwb":6.6,"wbplay":10.7,"attwb":7.4},"RWB":{"wbplay":9.7,"compwb":6.7,"attwb":7.8,"invwb":9.4,"defwb":8.7}},
+    // 대표 기록의 능력 기준점[롤]: 그 롤로 실제로 뛴 선수들의 그 기록 핵심 능력 중앙값. 기준보다 잘하면 더, 못하면 덜 기록한다
+    rsc: {"overlapfb":86.6,"invwb":92.2,"buildgk":91,"compwb":80.9,"invfb":73,"holdfb":86.2,"ap":77.4,"destroyer":90.1,"winger":85.6,"iso":94.4,"defwb":83,"wide10":91.8,"b2b":60,"trackback":62.9,"widetm":76.7,"stopper":85.4,"aerialcb":92.5,"attwb":91.8,"false9":91.2,"carrier":91.7,"roam":79.8,"invwinger":70.5,"segundo":73.7,"underlap":66.1,"bpd":95,"wbplay":89.2,"enganche":94.3,"sweeperk":88.1,"presser":87.8,"libero":81.3,"covercb":84.9,"volante":61.1,"anchor":82.6,"halfback":80.6,"target":83.3,"widecb":68.2,"carrilero":92.6,"regista":93.3,"dlp":93.5,"commandgk":92.6,"linebreaker":92.9,"ballwin":95,"dlf":60,"leadercb":82.1} };
   const ACT_BIAS = CALIB.act;
   const PROD = { act: .022, actLo: .72, actHi: 1.25, real: 8, realHi: 1.25 };
   // 실현된 롤 배율. 1보다 큰 배율(그 행동을 더 하는 역할)은 그 행동 능력만큼만 실현되고, 1보다 작은 배율(그 행동을 줄이는 역할)은 그대로 적용된다.
@@ -2158,6 +2161,7 @@ const ENGINE = (() => {
       awardsFor(p, res, lg, rank, age, led, world);
     }
     const a0 = { ...p.attrs }; const fam0 = famLevel(famOf(p, role.id)); res.a0 = {}; for (const k of Object.keys(a0)) res.a0[k] = +(+a0[k]).toFixed(2); res.ceil0 = +(p.ceil || 0).toFixed(2);
+    if (!res.youthTeam) { try { const st = seasonStat(p, res, 'sim'); if (st) res.rstat = st; } catch (e) { } }
     if (!isGK && res.goals) { const gt = goalRoutes(p, res, mods.gk || {}); if (gt) res.gt = gt; }
     growth(p, res, share * (p.youth ? 1 : clamp(av + .15, 0, 1)), choice, mgr, mods);
     res.attrD = {}; for (const k of attrsFor(p.pos)) res.attrD[k] = +((p.attrs[k] || 0) - (a0[k] || 0)).toFixed(1);
@@ -3314,6 +3318,84 @@ const ENGINE = (() => {
     return { numbers, hof };
   }
   function retireNumbers(p, sum) { const L = clubLegacy(p, sum); p._hof = L.hof; return L.numbers; }
+  // ---------- 시즌 대표 기록 (v92) ----------
+  // 롤마다 정해진 대표 기록 하나를 시즌 단위로 추정한다. 경기 하나하나를 추적한 숫자가 아니라 모델링된 기록이다.
+  //   기대값 = 출전 시간(90분 단위) × 행동 기회(롤 기본값 × 감독 전술 × 팀 상황) × 행동 능력(그 기록의 핵심 능력치, 롤 숙련)
+  //   변동: 시즌 기복(±7% 정도)과 횟수의 우연(포아송). 난수는 선수·시즌·기록에서 파생한 고정 시드만 쓴다. 기존 시뮬레이션 난수를 소비하지 않으므로 출전·골·도움·평점·수상은 바뀌지 않는다.
+  //   입력은 그 시즌 시작 능력치(a0)·롤·출전·감독 전술·소속 구단. 지금 능력치로 옛 시즌을 계산하지 않는다
+  const RSTAT_VER = 1;
+  const RS_W = { ti: { TKL: .45, DEF: .35, PRS: .2 }, rec: { DEF: .5, PAC: .25, STR: .15, AIR: .1 }, air: { AIR: .6, STR: .4 }, prs: { PRS: .5, STR: .3, PAC: .2 }, prog: { PAS: .55, VIS: .45 }, kp: { VIS: .45, PAS: .4, CRO: .15 }, cross: { CRO: .8, PAC: .2 }, carry: { DRI: .55, PAC: .25, STR: .2 }, drb: { DRI: .7, PAC: .3 }, work: { STR: .7, PRS: .3 }, sweep: { SWP: .6, ONE: .4 }, dist: { KIC: 1 }, claim: { GPO: .6, HAN: .4 } };
+  // 롤 기본값: 그 롤의 평균적인 선수가 90분에 하는 횟수(활동량은 km). 성공률을 따로 두는 기록은 [시도, 기본 성공률]
+  const RS_BASE = { anchor: 3.4, stopper: 3.0, holdfb: 2.7, defwb: 2.6, trackback: 2.0, ballwin: 3.6,
+    covercb: 6.5, leadercb: 6.3, halfback: 6.8, volante: 7.5, b2b: 6.0,
+    aerialcb: 4.2, target: 4.8, widetm: 3.0, destroyer: 3.3, presser: 2.8,
+    bpd: 5.5, invfb: 4.6, regista: 8.6, dlp: 8.0, enganche: 6.0,
+    underlap: 1.4, wbplay: 1.8, linebreaker: 2.4, ap: 2.8, invwinger: 2.2, wide10: 2.5, false9: 2.0, dlf: 1.6,
+    libero: 3.0, invwb: 4.2, carrier: 6.0,
+    compwb: 11.6, segundo: 11.2, carrilero: 11.8, roam: 11.9,
+    sweeperk: 1.4, commandgk: 1.4,
+    widecb: [2.4, .25], overlapfb: [4.6, .26], attwb: [5.6, .26], winger: [7.0, .27], iso: [5.2, .5], buildgk: [13, .55] };
+  const RS_RATE = { cross: [.26, .006, .14, .42], drb: [.5, .01, .3, .72], dist: [.55, .009, .32, .8] }; // [기준 성공률, 기준점보다 능력 1당, 하한, 상한]
+  const RS_TAC = { ti: { pos: .9, gegen: 1.15, block: 1.12 }, rec: { pos: .95, gegen: 1.05, block: 1.12 }, air: { direct: 1.25, wide: 1.12, pos: .85 }, prs: { gegen: 1.3, pos: 1.05, block: .85 },
+    prog: { pos: 1.2, direct: .85, counter: .9 }, kp: { pos: 1.05, wide: 1.05 }, cross: { wide: 1.3, pos: .9, direct: 1.05 }, carry: { counter: 1.2, pos: 1.05, block: .9 }, drb: { wide: 1.1, counter: 1.1 },
+    sweep: { pos: 1.2, gegen: 1.25, block: .75 }, dist: { pos: 1.15, direct: 1.1, counter: 1.05 }, claim: { wide: 1.15, direct: 1.2, pos: .85 } };
+  const RS_WORK_TAC = { gegen: .5, block: .1, pos: -.1, counter: .2 };
+  const RS_DEF = new Set(['ti', 'rec', 'air', 'prs', 'claim']), RS_POSS = new Set(['prog', 'kp', 'carry', 'drb', 'cross', 'dist', 'sweep']);
+  const lgMeanStr = (lg, year) => { const cs = clubsIn(lg, year).filter(c => !c.mil); return cs.length ? cs.reduce((a, c) => a + clubStr(c.id, year), 0) / cs.length : 76; };
+  // 시즌 대표 기록 계산. inp: { pos, role, attrs, apps, share, style, club, lg, year, age, fam, h, id, key }
+  function statModel(inp) {
+    const fam = ROLE_STAT[inp.role]; if (!fam || fam === 'ga' || fam === 'sv' || !inp.apps) return null;
+    const rng = seeded('rstat|' + RSTAT_VER + '|' + inp.key + '|' + fam);
+    const mpa = clamp(55 + 35 * (inp.share ?? .6), 45, 88); const min = inp.apps * mpa; const n90 = min / 90;
+    const ab = wsum(inp.attrs, RS_W[fam]); const c0 = CALIB.rsc?.[inp.role] ?? 75; const d = ab - c0; const fAb = clamp(1 + d * .02, .6, 1.45);
+    const fFam = [.88, .95, 1][inp.fam ?? 2] ?? 1; const form = Math.exp(gauss(rng) * .07);
+    const rel = inp.club && inp.lg ? clubStr(inp.club, inp.year) - lgMeanStr(inp.lg, inp.year) : 0;
+    const ctx = RS_DEF.has(fam) ? clamp(1 - rel * .018, .75, 1.3) : RS_POSS.has(fam) ? clamp(1 + rel * .015, .8, 1.25) : 1;
+    const tac = RS_TAC[fam]?.[inp.style] ?? 1;
+    const out = { f: fam, ver: RSTAT_VER, min: Math.round(min) };
+    if (fam === 'work') {
+      const km = RS_BASE[inp.role] + d * .03 + (RS_WORK_TAC[inp.style] || 0) - Math.max(0, (inp.age || 25) - 30) * .07 + gauss(rng) * .2;
+      out.v = +(clamp(km, 8.5, 13.8) * mpa / 90).toFixed(1); out.p90 = +clamp(km, 8.5, 13.8).toFixed(1); return out;
+    }
+    let hf = 1; if (fam === 'air' || fam === 'claim') hf = inp.h ? clamp(1 + (inp.h - 183) * .015, .8, 1.25) : 1;
+    const b = RS_BASE[inp.role];
+    if (Array.isArray(b)) {
+      const [r0, k, lo, hi] = RS_RATE[fam]; const rate = clamp(b[1] + d * k, lo, hi);
+      const att = poisson(n90 * b[0] * tac * ctx * clamp(1 + d * .008, .8, 1.2) * form, rng); let suc = 0; for (let i = 0; i < att; i++) if (rng() < rate * fFam) suc++;
+      out.v = suc; out.att = att; out.pct = att ? Math.round(suc / att * 100) : 0; out.p90 = n90 ? +(suc / n90).toFixed(2) : 0; return out;
+    }
+    const lam = n90 * b * tac * ctx * fAb * fFam * hf * form; out.v = poisson(lam, rng); out.p90 = n90 ? +(out.v / n90).toFixed(2) : 0; return out;
+  }
+  // 주인공 시즌: 시즌 시작 능력치(a0)가 남아 있을 때만. src: 'sim'(그 시즌에 계산) / 'calc'(저장된 그 시즌 입력으로 나중에 계산)
+  function seasonStat(p, r, src = 'sim') {
+    if (!r || r.youthTeam || !r.a0 || !r.role || !ROLE[r.role]) return null;
+    const role = ROLE[r.role].retired ? null : r.role; const fam = role ? ROLE_STAT[role] : null; if (!fam) return null;
+    const o = statModel({ pos: r.pos || p.pos, role, attrs: r.a0, apps: r.apps || 0, share: r.share, style: r.mgr?.style, club: r.club, lg: r.lg, year: r.year, age: r.age, fam: r.fam, h: heightAt(p, r.age), key: p.id + '|' + r.year + '|' + r.club });
+    if (o) o.src = src; return o;
+  }
+  const rsAbility = (attrs, fam) => wsum(attrs, RS_W[fam]);
+  const rstatLabel = (o) => !o ? '' : STAT_FAM[o.f] || '';
+  const rstatText = (o) => !o ? '' : o.f === 'work' ? `${o.v}km` : o.pct != null && o.att != null ? `${o.v} (${o.pct}%)` : `${o.v}`;
+  // ---------- 기록 속 선수의 프로필 (v92) ----------
+  // 이미 확정된 역사(이름·국적·생년·구단·골·도움·수상)는 그대로 두고, 그에 맞는 롤·능력치를 새로 모델링한다(복원이 아니다).
+  // 시드는 기록 속 선수 식별자·세계선·연도·생성 규칙 버전에서 따로 파생한다. 같은 기록은 언제 열어도 같은 프로필이다
+  const GPROF_VER = 1;
+  function ghostProfile(g) {
+    if (!g || !g.pos || !POS[g.pos]) return null;
+    const rng = seeded('gprof|' + GPROF_VER + '|' + g.id + '|' + (g.line || 'L0') + '|' + g.Y);
+    const sy = g.Y - 1; const lgK = g.club ? lgAt(g.club, sy) : null; const games = LEAGUES[lgK]?.games || 34; const apps = Math.round(games * (.86 + rng() * .1));
+    const roles = rolesFor(g.pos); const q = 1.3;
+    const lpois = (k, lam) => { lam = Math.max(lam, .05); let l = -lam + k * Math.log(lam); for (let i = 2; i <= k; i++) l -= Math.log(i); return l; };
+    const ws = roles.map(r => { if (g.pos === 'GK') return 1; const rp = { g: r.g, a: r.a }; const eg = apps * POS[g.pos].g * rp.g * q, ea = apps * POS[g.pos].a * rp.a * q; return Math.exp(lpois(g.g || 0, eg) + lpois(g.a || 0, ea)); });
+    const tot = ws.reduce((a, b) => a + b, 0); let u = rng() * tot, role = roles[0]; for (let i = 0; i < roles.length; i++) { u -= ws[i]; if (u <= 0) { role = roles[i]; break; } }
+    const top = new Set(Object.entries(role.w).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0])); const pw = POS[g.pos].w; const attrs = {};
+    for (const k of attrsFor(g.pos)) attrs[k] = Math.round(top.has(k) ? 86 + rng() * 9 : role.w[k] ? 81 + rng() * 8 : pw[k] ? 79 + rng() * 9 : 52 + rng() * 18);
+    const styles = Object.keys(STYLES); const sw = styles.map(st => Math.max(.2, 1.2 + roleFit(role.id, st))); let v = rng() * sw.reduce((a, b) => a + b, 0), style = styles[0]; for (let i = 0; i < styles.length; i++) { v -= sw[i]; if (v <= 0) { style = styles[i]; break; } }
+    const age = sy - (g.birthYear ?? (sy - 27)); const h = Math.round(({ GK: 191, CB: 188, ST: 184, DM: 182 })[g.pos] ?? 179) + Math.round(gauss(rng) * 4);
+    const st = statModel({ pos: g.pos, role: role.id, attrs, apps, share: .95, style, club: g.club, lg: lgK, year: sy, age, fam: 2, h, key: 'ghost|' + g.id + '|' + (g.line || 'L0') });
+    if (st) { st.src = 'model'; st.lg = true; }
+    return { ver: GPROF_VER, src: 'model', role: role.id, style, apps, attrs, ovr: Math.round(ovrOf(attrs, g.pos)), rstat: st };
+  }
   // ---------- 커리어 갈림길 ----------
   // 이적 제안 카드: 그 구단 감독이 맡길 역할, 예상 출전, 리그 판도, 그리고 세계선이 기억하는 그 해의 우승팀
   function offerOutlook(p, clubId, world, opt = {}) {
@@ -3433,7 +3515,7 @@ const ENGINE = (() => {
     coachStints, parentsAlive, coachNow, recordDeath, farewellAsk, farewellAgree, farewellRefused, homecomingOffer, farewellOf, fwPact, fwClubLine, fanCer, fwSeasons, FW_CLUB,
     LG_SCHOOL, SCHOOLS, CLUB_SCHOOL, schoolOf, wiEcho, wiRewrite, goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    roleProd, actAbility, normalizeRole, MERGED, STAT_FAM, ROLE_STAT, growMul, GCFG, CALIB, ASG, MCFG, effOvr, muOf, isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    roleProd, actAbility, normalizeRole, MERGED, STAT_FAM, ROLE_STAT, statModel, seasonStat, rsAbility, rstatLabel, rstatText, ghostProfile, RSTAT_VER, GPROF_VER, growMul, GCFG, CALIB, ASG, MCFG, effOvr, muOf, isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, hasJong, sharedPast, splitSummer, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -6532,10 +6614,13 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return out;
   }
   // 기록 속 선수: 주인공이 아깝게 놓친 발롱도르를 가져간 사람. 그 사람으로 살아볼 수 있다
+  // 기록 속 선수의 추정 롤·대표 기록(v92). 이미 확정된 골·도움은 그대로 두고, 모델로 새로 만든 정보라는 표시를 남긴다
+  function ghostProf(g) { if (!g) return null; if (g.prof && g.prof.ver === E.GPROF_VER) return g.prof; try { return E.ghostProfile(g); } catch { return null; } }
+  function ghostRoleLine(g) { const pr = ghostProf(g); if (!pr) return ''; const st = pr.rstat; return `<p class="small">${esc(E.ROLE[pr.role]?.name || '')}${st ? ` · 리그 ${esc(E.rstatLabel(st))} <b>${esc(E.rstatText(st))}</b>` : ''} <span class="muted">· 기록 바탕 추정</span></p>`; }
   function ghostTaken(g) { if (S.p && S.p.ghost?.id === g.id) return S.p; return S.world.careers.find(c => c.ghost?.id === g.id) || (S.world.paused || []).find(x => x.ghost === g.id) || null; }
   function ghostBlock(g) {
     (S.ghosts = S.ghosts || {})[g.id] = g; const by = ghostTaken(g); const can = g.birthYear + 16 >= 2026;
-    return `<div class="ghostp">${ava(g.look, g.club, { gk: g.pos === 'GK', age: g.Y - 1 - g.birthYear, cls: 'sm' })}<div class="grow"><p><b>발롱도르 ${g.Y} · ${esc(g.name)}</b></p><p class="small">${flag(g.nation)} ${esc(g.nation)} · ${esc(g.pos)} · ${g.Y - 1 - g.birthYear}세 · ${g.club ? `${crest(g.club, 'xs')} ${esc(club(g.club).name)} · ` : ''}${esc(E.ghostStat(g))}</p><p class="small muted">${g.birthYear}년생 · 이 세계선에 이름만 남은 사람이에요.</p>${by ? `<p class="small">${by === S.p && S.p.status !== 'retired' ? '지금 이 사람으로 살고 있어요.' : S.world.careers.includes(by) ? `이 사람의 커리어가 있어요. <button class="link" data-card="${by.id}">기록 보기</button>` : `이 사람으로 살던 커리어가 ${by.year}년에 멈춰 있어요. <button class="link" data-act="resume" data-id="${by.id}">이어하기</button>`}</p>` : can ? `<button class="btn sm" data-act="ghoststart" data-g="${g.id}">이 선수로 살아보기</button>` : `<p class="small muted">${g.birthYear}년생이라 2026년에 이미 ${2026 - g.birthYear}세예요. 커리어는 2026년 이후 16세 시즌부터만 시작할 수 있어서, 이 사람은 직접 살아볼 수 없어요.</p>`}</div></div>`;
+    return `<div class="ghostp">${ava(g.look, g.club, { gk: g.pos === 'GK', age: g.Y - 1 - g.birthYear, cls: 'sm' })}<div class="grow"><p><b>발롱도르 ${g.Y} · ${esc(g.name)}</b></p><p class="small">${flag(g.nation)} ${esc(g.nation)} · ${esc(g.pos)} · ${g.Y - 1 - g.birthYear}세 · ${g.club ? `${crest(g.club, 'xs')} ${esc(club(g.club).name)} · ` : ''}${esc(E.ghostStat(g))}</p>${by ? '' : ghostRoleLine(g)}<p class="small muted">${g.birthYear}년생 · 이 세계선에 이름만 남은 사람이에요.</p>${by ? `<p class="small">${by === S.p && S.p.status !== 'retired' ? '지금 이 사람으로 살고 있어요.' : S.world.careers.includes(by) ? `이 사람의 커리어가 있어요. <button class="link" data-card="${by.id}">기록 보기</button>` : `이 사람으로 살던 커리어가 ${by.year}년에 멈춰 있어요. <button class="link" data-act="resume" data-id="${by.id}">이어하기</button>`}</p>` : can ? `<button class="btn sm" data-act="ghoststart" data-g="${g.id}">이 선수로 살아보기</button>` : `<p class="small muted">${g.birthYear}년생이라 2026년에 이미 ${2026 - g.birthYear}세예요. 커리어는 2026년 이후 16세 시즌부터만 시작할 수 있어서, 이 사람은 직접 살아볼 수 없어요.</p>`}</div></div>`;
   }
   function viewAlmanac(w, VL, led) {
     const P = almPeople(VL, led); if (!P.length) return '<p class="muted">커리어가 하나라도 쌓이면, 해마다 이 세계선의 주인공들이 어디서 무엇을 했는지 여기에 쌓여요.</p>';
@@ -6715,7 +6800,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const lineFld = retired.length ? `<div class="fld"><span>세계선</span>${lineIds.length > 1 ? `<select id="f-line" class="inp">${allowed.map(id => `<option value="${id}" ${id === f.line ? 'selected' : ''}>${esc(lineLabel(id))}</option>`).join('')}</select>` : ''}<p class="muted small">${span ? `이 세계선엔 ${span[0]}–${span[1]}년의 기록이 있어요. 기록이 있는 해에 뛰면 역사가 버티고, 기록된 우승·발롱도르를 뒤집으면 세계선이 갈라져요. 그때 뛰던 선배들도 동료나 상대로 나와요.` : '아직 기록이 없는 세계선이에요.'}</p></div>` : '';
     const yearFld = `<label class="fld"><span>시작 연도 · 16세 시즌</span><div class="row wrapgap"><input id="f-year" class="inp grow" type="number" min="${f.mode === 'heir' && parent && f.kid < 0 ? heirYearRange(parent)[0] : 2026}" max="${f.mode === 'heir' && parent && f.kid < 0 ? heirYearRange(parent)[1] : 2400}" value="${f.startYear}" ${(f.mode === 'heir' && f.kid >= 0) || f.mode === 'ghost' ? 'readonly' : ''}>${span && f.mode === 'new' ? `<button class="btn sm" data-yr="${Math.max(2026, span[0] - 2)}">선배들과 같은 시대</button><button class="btn sm" data-yr="${Math.max(2026, span[1] - 8)}">기록 끝 무렵</button><button class="btn sm" data-yr="${span[1] + 1}">기록 이후</button>` : ''}</div>${f.mode === 'heir' && parent && f.kid < 0 ? `<p class="muted small">${f.startYear - 16}년생 · ${esc(parent.name)} ${f.startYear - 16 - parent.birthYear}세 때${parent.spouse?.married ? ` · ${parent.spouse.married}년 결혼` : ''}. 태어난 해는 연도를 바꿔 고를 수 있어요.</p>` : ''}</label>`;
     return `<section class="panel"><h1 class="h1">새 커리어</h1>
-      ${f.mode === 'ghost' ? (() => { const g = f.ghost; return `<div class="note ghostnote"><p><b>세계선의 기록 · ${g.Y} 발롱도르 ${esc(g.name)}</b></p><p class="small">기록 속 그는 ${sl(g.Y - 1)} 시즌 ${g.club ? esc(club(g.club).name) + '에서 ' : ''}${esc(E.ghostStat(g))}${E.hasJong(E.ghostStat(g)) ? '을' : '를'} 남기고 발롱도르를 받았어요. 이름도 얼굴도 국적도 태어난 해도 정해져 있어요. 나머지는 이제부터예요.</p><p class="small muted">그 해 발롱도르를 받으면 세계선이 기억하는 대로 흘러가요. 놓치면 세계선이 갈라져요.</p></div>`; })() : ''}
+      ${f.mode === 'ghost' ? (() => { const g = f.ghost; return `<div class="note ghostnote"><p><b>세계선의 기록 · ${g.Y} 발롱도르 ${esc(g.name)}</b></p><p class="small">기록 속 그는 ${sl(g.Y - 1)} 시즌 ${g.club ? esc(club(g.club).name) + '에서 ' : ''}${esc(E.ghostStat(g))}${E.hasJong(E.ghostStat(g)) ? '을' : '를'} 남기고 발롱도르를 받았어요. 이름도 얼굴도 국적도 태어난 해도 정해져 있어요. 나머지는 이제부터예요.</p>${(() => { const pr = ghostProf(g); return pr ? `<p class="small muted">기록으로 미루어 보면 그는 ${esc(E.ROLE[pr.role]?.name || '')}${E.hasJong(E.ROLE[pr.role]?.name || '') ? '이었' : '였'}던 것 같아요${pr.rstat ? ` (리그 ${esc(E.rstatLabel(pr.rstat))} ${esc(E.rstatText(pr.rstat))})` : ''}. 어떤 선수가 될지는 정해져 있지 않아요.</p>` : ''; })()}<p class="small muted">그 해 발롱도르를 받으면 세계선이 기억하는 대로 흘러가요. 놓치면 세계선이 갈라져요.</p></div>`; })() : ''}
       ${retired.length && f.mode !== 'ghost' ? `<div class="seg"><button data-mode="new" class="${f.mode === 'new' ? 'on' : ''}">새 선수</button><button data-mode="heir" class="${f.mode === 'heir' ? 'on' : ''}">가문 후손으로 시작</button></div>` : ''}
       ${f.mode === 'heir' ? `<label class="fld"><span>누구의 후손인가요</span><select id="f-parent" class="inp">${retired.map(c => `<option value="${c.id}" ${c.id === f.parentId ? 'selected' : ''}>${esc(c.name)} · ${c.pos} · ${c.startYear}–${c.endYear} · 피크 ${c.peakOvr}${(c.kids || []).length ? ` · 자녀 ${c.kids.length}` : ''}</option>`).join('')}</select></label>
         ${kids.length ? `<div class="fld"><span>어느 아이로 시작할까요</span><div class="seg">${kids.map((k, i) => `<button data-kid="${i}" class="${f.kid === i ? 'on' : ''}" ${k.used ? 'disabled title="이미 커리어가 있어요"' : ''}>${esc(k.name)} (${k.born}년생)${k.used ? ' · 뛰었음' : ''}</button>`).join('')}<button data-kid="-1" class="${f.kid === -1 ? 'on' : ''}">기록에 없는 아이</button></div><p class="muted small">${f.kid >= 0 ? '커리어 중에 태어난 아이예요. 이름과 태어난 해는 기록 그대로예요.' : '부모의 커리어 기록에 없는 아이로 시작해요. 시작하면 부모의 자녀 목록에 올라가요.'}</p></div>` : ''}
@@ -7197,10 +7282,14 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const tbl = L.length >= 2 ? `<p class="gr-t" style="margin-top:14px">득점 스타일 비교 <span class="muted">통산 20골 이상</span></p><div class="tblwrap"><table class="tbl"><thead><tr><th>선수</th><th class="num">골</th><th class="num">100경기당</th><th class="num">박스 안</th><th class="num">중거리</th><th class="num">헤더</th><th class="num">약발</th><th>주무기</th></tr></thead><tbody>${L.map(c => { const T = E.grTot(c.gt), f = E.grFin(c.gt), st = E.grSit(c.gt); return `<tr><td><button class="link" data-card="${c.id}">${esc(c.name)}</button> <span class="muted small">${esc(c.pos)}</span></td><td class="num">${nf(c.goals)}</td><td class="num">${c.apps ? (c.goals / c.apps * 100).toFixed(1) : '–'}</td><td class="num">${pc(st.box, T)}</td><td class="num">${pc(st.ls, T)}</td><td class="num">${pc(f.h, T)}</td><td class="num">${pc(offOf(c), f.l + f.r)}</td><td class="small">${esc(E.routeStyle(c.gt, c.foot) || '')}</td></tr>`; }).join('')}</tbody></table></div>` : '';
     return `<h3 class="h3" style="margin-top:18px">득점 기록</h3><div class="recs">${rk('통산 최다 헤더', c => c.gt.h)}${rk('통산 최다 중거리', c => c.gt.ls)}${rk('통산 최다 프리킥', c => c.gt.fk)}${rk('통산 최다 약발 골', offOf)}${top('한 시즌 최다 헤더', 'h')}${top('한 시즌 최다 중거리', 'ls')}${top('한 시즌 최다 약발 골', 'wk')}</div>${tbl}`;
   }
+  // 시즌 대표 기록(v92): 롤마다 하나. 골·도움이 정체성인 롤은 따로 없다. 슛스토퍼는 기존 선방
+  function rstatOf(r) { return r && !r.youthTeam ? r.rstat || null : null; }
+  function rstatTile(r, p) { const o = rstatOf(r); if (o) return `<div><b>${esc(E.rstatText(o))}</b><span>${o.f === 'work' ? '경기당 활동량' : esc(E.rstatLabel(o))}</span></div>`; if (!r.youthTeam && E.ROLE_STAT[r.role] === 'sv' && r.saves != null) return `<div><b>${r.saves}</b><span>선방</span></div>`; return ''; }
+  function rstatCell(r) { const o = rstatOf(r); return o ? `${esc(E.rstatText(o))} <span class="muted small">${o.f === 'work' ? '경기당 활동량' : esc(E.rstatLabel(o))}</span>` : ''; }
   function seasonResult(r, p, compact) {
     const isGK = p.pos === 'GK';
     return `<section class="${compact ? '' : 'panel '}result"><div class="ptitle"><h2>${sl(r.year)} 시즌</h2><span class="muted small">${crest(r.club, 'xs')} ${esc(club(r.club).name)} · ${esc(E.ROLE[r.role]?.name || '')}${r.number ? ` · ${r.number}번` : ''}</span></div>
-      <div class="sgrid"><div><b>${r.apps}${r.youthTeam ? `<small>+${r.youthApps}</small>` : ''}</b><span>출전</span></div>${isGK ? `<div><b>${r.cs}${r.youthTeam && r.youthCs != null ? `<small>+${r.youthCs}</small>` : ''}</b><span>클린시트</span></div>` : `<div><b>${r.goals}${r.youthTeam && r.youthGoals != null ? `<small>+${r.youthGoals}</small>` : ''}</b><span>골</span></div><div><b>${r.assists}${r.youthTeam && r.youthAssists != null ? `<small>+${r.youthAssists}</small>` : ''}</b><span>도움</span></div>`}<div><b>${r.rating.toFixed(2)}</b><span>평점</span></div><div><b>${r.ovrEnd}<small class="${r.growth >= 0 ? 'pos' : 'neg'}">${r.growth >= .5 ? '▲' : r.growth <= -.5 ? '▼' : ''}</small></b><span>OVR</span></div></div>
+      <div class="sgrid"><div><b>${r.apps}${r.youthTeam ? `<small>+${r.youthApps}</small>` : ''}</b><span>출전</span></div>${isGK ? `<div><b>${r.cs}${r.youthTeam && r.youthCs != null ? `<small>+${r.youthCs}</small>` : ''}</b><span>클린시트</span></div>` : `<div><b>${r.goals}${r.youthTeam && r.youthGoals != null ? `<small>+${r.youthGoals}</small>` : ''}</b><span>골</span></div><div><b>${r.assists}${r.youthTeam && r.youthAssists != null ? `<small>+${r.youthAssists}</small>` : ''}</b><span>도움</span></div>`}${rstatTile(r, p)}<div><b>${r.rating.toFixed(2)}</b><span>평점</span></div><div><b>${r.ovrEnd}<small class="${r.growth >= 0 ? 'pos' : 'neg'}">${r.growth >= .5 ? '▲' : r.growth <= -.5 ? '▼' : ''}</small></b><span>OVR</span></div></div>
       ${!r.youthTeam ? `<p class="small muted">${shareWord(r.share ?? 0)}${r.assigned ? ` · ${esc(E.ROLE[r.role]?.name || '')} (${E.FAM_NAME[r.fam ?? 2]})` : ''}${r.injuryWeeks ? ` · 부상 ${r.injuryWeeks}주` : ''}</p>` : ''}
       ${!isGK && r.goals ? routeBlock(E.routesOf(p, r), p.foot, { title: '득점 루트', cls: 'gr-season' }) : ''}
       ${pressBlock(r.press)}
@@ -7214,7 +7303,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function viewRecords(p, live, only) {
     const tabs = REC_TABS;
     const t = only || (S.rtab === 'life' ? 'story' : S.rtab); const isGK = p.pos === 'GK'; let inner = '';
-    if (t === 'season') inner = `<div class="tblwrap"><table class="tbl"><thead><tr><th>시즌</th><th>나이</th><th>구단</th><th>#</th><th>포지션</th><th>역할</th><th class="num">출전</th>${isGK ? '<th class="num">선방</th><th class="num">CS</th>' : '<th class="num">골</th><th class="num">도움</th>'}<th class="num">평점</th><th class="num">OVR</th><th class="num">연봉</th><th>성과</th></tr></thead><tbody>${p.seasons.map(r => `<tr><td class="num">${sl(r.year)}</td><td class="num">${r.age}</td><td>${crest(r.club, 'xs')} ${esc(club(r.club).name)}${r.youthTeam ? ' <span class="muted small">유스</span>' : r.loan ? ' <span class="muted small">임대</span>' : ''}</td><td class="num">${r.number || ''}</td><td>${r.pos || p.pos}</td><td class="rolecell">${roleCell(r)}</td><td class="num">${r.apps}${r.youthTeam ? `<span class="muted small">+${r.youthApps}</span>` : ''}</td>${isGK ? `<td class="num">${r.saves}${r.youthTeam && r.youthSaves != null ? `<span class="muted small">+${r.youthSaves}</span>` : ''}</td><td class="num">${r.cs}${r.youthTeam && r.youthCs != null ? `<span class="muted small">+${r.youthCs}</span>` : ''}</td>` : `<td class="num">${r.goals}${r.youthTeam && r.youthGoals != null ? `<span class="muted small">+${r.youthGoals}</span>` : ''}</td><td class="num">${r.assists}${r.youthTeam && r.youthAssists != null ? `<span class="muted small">+${r.youthAssists}</span>` : ''}</td>`}<td class="num">${r.rating.toFixed(2)}</td><td class="num">${r.ovrEnd} <span class="${r.growth >= 0 ? 'pos' : 'neg'} small">${r.growth >= 0 ? '+' : ''}${r.growth}</span></td><td class="num small">${r.wage ? E.fmtWon(r.wage) : ''}</td><td class="ach">${r.trophies.map(x => `<span class="achi tr">${esc(x.comp)}</span>`).join('')}${r.awards.map(x => `<span class="achi">${esc(x)}</span>`).join('')}${r.weakUp ? `<span class="achi up">약발 ★${r.weakUp}</span>` : ''}${r.move ? `<span class="achi ${r.move === 'up' ? 'up' : ''}">${r.move === 'up' ? '승격' : '강등'}</span>` : ''}</td></tr>`).join('')}</tbody></table></div>` + (!isGK ? routeAnalysis(p) : '');
+    if (t === 'season') inner = `<div class="tblwrap"><table class="tbl"><thead><tr><th>시즌</th><th>나이</th><th>구단</th><th>#</th><th>포지션</th><th>역할</th><th class="num">출전</th>${isGK ? '<th class="num">선방</th><th class="num">CS</th>' : '<th class="num">골</th><th class="num">도움</th>'}<th>대표 기록</th><th class="num">평점</th><th class="num">OVR</th><th class="num">연봉</th><th>성과</th></tr></thead><tbody>${p.seasons.map(r => `<tr><td class="num">${sl(r.year)}</td><td class="num">${r.age}</td><td>${crest(r.club, 'xs')} ${esc(club(r.club).name)}${r.youthTeam ? ' <span class="muted small">유스</span>' : r.loan ? ' <span class="muted small">임대</span>' : ''}</td><td class="num">${r.number || ''}</td><td>${r.pos || p.pos}</td><td class="rolecell">${roleCell(r)}</td><td class="num">${r.apps}${r.youthTeam ? `<span class="muted small">+${r.youthApps}</span>` : ''}</td>${isGK ? `<td class="num">${r.saves}${r.youthTeam && r.youthSaves != null ? `<span class="muted small">+${r.youthSaves}</span>` : ''}</td><td class="num">${r.cs}${r.youthTeam && r.youthCs != null ? `<span class="muted small">+${r.youthCs}</span>` : ''}</td>` : `<td class="num">${r.goals}${r.youthTeam && r.youthGoals != null ? `<span class="muted small">+${r.youthGoals}</span>` : ''}</td><td class="num">${r.assists}${r.youthTeam && r.youthAssists != null ? `<span class="muted small">+${r.youthAssists}</span>` : ''}</td>`}<td class="small" style="white-space:nowrap">${rstatCell(r)}</td><td class="num">${r.rating.toFixed(2)}</td><td class="num">${r.ovrEnd} <span class="${r.growth >= 0 ? 'pos' : 'neg'} small">${r.growth >= 0 ? '+' : ''}${r.growth}</span></td><td class="num small">${r.wage ? E.fmtWon(r.wage) : ''}</td><td class="ach">${r.trophies.map(x => `<span class="achi tr">${esc(x.comp)}</span>`).join('')}${r.awards.map(x => `<span class="achi">${esc(x)}</span>`).join('')}${r.weakUp ? `<span class="achi up">약발 ★${r.weakUp}</span>` : ''}${r.move ? `<span class="achi ${r.move === 'up' ? 'up' : ''}">${r.move === 'up' ? '승격' : '강등'}</span>` : ''}</td></tr>`).join('')}</tbody></table></div>` + (!isGK ? routeAnalysis(p) : '');
     else if (t === 'finals') {
       const ucl = p.finals.filter(f => f.comp === 'UEFA 챔피언스리그');
       inner = (ucl.length ? `<p class="note">챔피언스리그 결승 ${ucl.length}회 · ${ucl.filter(f => f.won).length}승 ${ucl.filter(f => !f.won).length}패 · 결승 공격포인트 ${ucl.reduce((a, f) => a + f.g + f.as, 0)}</p>` : '') + (p.finals.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>연도</th><th>대회</th><th>소속</th><th>상대</th><th>스코어</th><th>결과</th><th>내 기록</th></tr></thead><tbody>${p.finals.map(f => `<tr><td class="num">${f.national ? f.year : sl(f.year)}</td><td>${esc(f.comp)}</td><td>${f.national ? natTag(f.nation || E.natT(p)) : crest(f.club, 'xs') + ' ' + esc(club(f.club).name)}</td><td>${f.oppNation ? natTag(f.opp) : crest(f.opp, 'xs') + ' ' + esc(club(f.opp).name)}</td><td class="num">${f.a}-${f.b}${f.pens ? `<span class="small muted"> PK ${f.pa}-${f.pb}</span>` : ''}</td><td><b class="${f.won ? 'pos' : 'neg'}">${f.won ? '우승' : '준우승'}</b></td><td class="small">${f.played ? `${finalMe(f, p.pos)}${f.rating ? ' · ' + f.rating : ''}${f.motm ? ' · MOTM' : ''}${f.pkMiss ? ' · PK 실축' : f.pk ? ' · PK 성공' : ''}` : '결장'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">아직 결승에 오른 적이 없어요.</p>');
@@ -7476,6 +7565,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
         <li><b>기대 이상이면 잠재력이 움직인다.</b> 19~29세에 15경기 이상 뛴 시즌, 평점이 기대 평점보다 뚜렷하게 높으면 천장이 최대 +0.8(대기만성형은 22세부터 1.4배, 조숙형은 24세부터 0.6배), 뚜렷하게 낮으면 최대 −0.5. 원래 잘하는 선수가 잘하는 건 잠재력의 증거로 치지 않아요. 기대 이상인 시즌엔 천장 근처에서도 조금 더 크고, 천장 위로 3까지 갈 수 있어요.</li>
         <li><b>18~25세 출전 보너스.</b> 출전 비율 65% 이상인 시즌마다 천장 +0.75(최대 +5), 30% 미만이면 −0.9.</li>
         <li><b>훈련 초점.</b> 고른 능력치는 1.7배, 나머지는 0.78배로 자라요. 포지션 맞춤·역할 맞춤·능력치 그룹은 고른 능력치가 몇 개든 한 시즌 성장 총량이 같아요. 능력치 창에서 막대 하나를 누르면 그 능력치만 2배로 집중해요(다시 누르면 포지션 맞춤으로). 그 대신 성장 총량은 조금 줄어요.</li>
+        <li><b>기록 속 선수의 역할.</b> 이름만 남은 기록 속 선수는 남은 골·도움에 맞게 역할과 능력치를 새로 추정해서, 그해 리그 대표 기록을 함께 보여줘요. 이미 기록된 골·도움·수상은 바뀌지 않고, 같은 기록은 언제 열어도 같아요. 그 사람으로 직접 살면 실제 기록이 우선해요.</li>
+        <li><b>시즌 대표 기록.</b> 역할마다 그 역할다운 기록이 하나씩 남아요. 앵커는 태클+가로채기, 레지스타는 전진 패스, 아이솔레이션 윙어는 1대1 돌파, 카릴레로는 경기당 활동량 같은 식이에요. 골·도움이 정체성인 역할(포처, 섀도 스트라이커 등)은 따로 없어요. 경기 하나하나를 센 숫자가 아니라, 그 시즌의 출전 시간, 감독 전술, 팀 수준(약한 팀일수록 수비할 일이 많아요), 그 기록에 필요한 능력치와 역할 숙련도로 추정한 기록이에요. 시즌 결과(출전·골·도움·평점·수상)에는 영향을 주지 않아요. 예전 시즌은 그 시즌 시작 능력치가 저장돼 있을 때만 채워요.</li>
         <li><b>출전 판단.</b> 감독은 포지션 OVR만 보지 않고, 자기가 맡길 역할을 그 선수가 얼마나 잘 해낼지도 봐요. 그 역할을 같은 포지션의 다른 선수들보다 잘 소화하면 OVR이 조금 낮아도 더 기용되고, 맞지 않는 역할이면 덜 기용돼요. 이적·대표팀 선발은 그대로 포지션 OVR을 봐요.</li>
         <li><b>실전 경험.</b> 한 시즌 성장분의 일부는 훈련 초점이 아니라 그 시즌 실제로 뛴 역할을 따라 자라요. 꾸준히 뛰면 최대 25%, 덜 뛰면 그만큼 적게요. 성장 총량은 그대로예요. 감독이 레지스타로 쓰면 포지션 맞춤으로 훈련해도 패스와 시야가 조금씩 자라고, 감독이 바뀌어 다른 역할을 맡으면 선수도 조금 다르게 자라요.</li>
         <li><b>주발과 약발.</b> 주발은 만들 때 고르고(랜덤이면 왼발 24%), 약발 등급 ★1~5는 운으로 정해져요(★2·★3이 대부분, ★5는 3%). 측면 포지션에서 역할이 원하는 발(정통 윙어·오버래핑 계열은 같은 쪽 발, 인버티드·인사이드 계열은 반대 발)이면 역할 적성 +1.2, 아니면 약발이 낮을수록 최대 −2.4. ★5는 어느 쪽이든 +1.2. 약발 등급 자체도 역할 적성에 (등급 − 3) × 0.2~0.6을 더해요. 왼발 센터백·풀백은 이적 제안이 1.25배.</li>
@@ -8221,7 +8312,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     }
     if (a === 'ghoststart') {
       const g = S.ghosts?.[el.dataset.g]; if (!g) return; const nat = g.nation;
-      S.newForm = { mode: 'ghost', ghost: g, name: g.name, nation: nat, pos: g.pos, role: E.rolesFor(g.pos)[0].id, talent: '', club: randomClub(nat), startYear: g.birthYear + 16, parentId: null, kid: -1, trait: 'pro', severity: 'real', number: g.pos === 'GK' ? 1 : g.pos === 'ST' ? 9 : 10, look: g.look || AVATAR.randomLook(Math.random, nat), line: g.line };
+      S.newForm = { mode: 'ghost', ghost: g, name: g.name, nation: nat, pos: g.pos, role: (ghostProf(g)?.role && E.rolesFor(g.pos).some(r => r.id === ghostProf(g).role)) ? ghostProf(g).role : E.rolesFor(g.pos)[0].id, talent: '', club: randomClub(nat), startYear: g.birthYear + 16, parentId: null, kid: -1, trait: 'pro', severity: 'real', number: g.pos === 'GK' ? 1 : g.pos === 'ST' ? 9 : 10, look: g.look || AVATAR.randomLook(Math.random, nat), line: g.line };
       S.view = 'new'; render(); window.scrollTo(0, 0); return;
     }
     // 한 시즌도 뛰지 않은 커리어만 지울 수 있다. 기록이 생긴 커리어는 숨기기만 한다
@@ -8363,7 +8454,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (q.lastFocus && !['pos', 'role', 'bal', 'weak', ...Object.keys(E.groupsFor(q.pos))].includes(q.lastFocus) && !E.attrsFor(q.pos).includes(q.lastFocus)) q.lastFocus = 'pos';
     q.v4 = true; return q;
   }
-  function migrateCareer(p) { const q = migrateV4(migrateCareer0(p)); try { if (q && q.status !== 'retired') E.normalizeRole(q); } catch { } if (q && !q.body) q.body = E.inferBody(q); if (q && !q.roleXp) { q.roleXp = {}; (q.seasons || []).forEach(x => { if (x.role) q.roleXp[x.role] = Math.min(100, (q.roleXp[x.role] || 0) + 22); }); if (q.role && q.roleXp[q.role] == null) q.roleXp[q.role] = 30; } return q; }
+  function migrateCareer(p) { const q = migrateV4(migrateCareer0(p)); try { if (q && q.status !== 'retired') E.normalizeRole(q); } catch { } try { if (q && q.seasons) for (const r of q.seasons) if (!r.rstat && !r.youthTeam && r.a0 && (r.apps || 0) > 0) { const st = E.seasonStat(q, r, 'calc'); if (st) r.rstat = st; } } catch { } if (q && !q.body) q.body = E.inferBody(q); if (q && !q.roleXp) { q.roleXp = {}; (q.seasons || []).forEach(x => { if (x.role) q.roleXp[x.role] = Math.min(100, (q.roleXp[x.role] || 0) + 22); }); if (q.role && q.roleXp[q.role] == null) q.roleXp[q.role] = 30; } return q; }
   function migrateCareer0(p) {
     if (!p) return p;
     if (p.v === 2) { (p.seasons || []).forEach(x => x.bdoDone = true); p.v = 3; return p; }
@@ -8439,7 +8530,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const lineAt = (d, y) => { const B = d.branches || []; let ln = B.length ? B[0].from : (d.line || 'L0'); for (const b of B) if (b.year <= y) ln = b.line; return ln; };
     // 예전엔 OVR 84 미만이면 후보에도 못 올랐다: 남은 시즌 기록으로 그해 순위를 다시 매긴다
     const bdoRe = (d) => { let n = 0; for (const r of d.seasons || []) { if (r.youthTeam || r.bdoRank || r.bdo || (r.awards || []).includes('발롱도르') || (r.apps || 0) < 25 || (r.ovrEnd || 0) < 80 || (r.ovrEnd || 0) >= 85) continue; const Y = r.year + 1; let sc = null; try { sc = E.bdoScore(r, r.ovrEnd, r.meters?.rep ?? 50, (d.bdoYears || []).filter(y => y < Y).length); } catch { continue; } const rv = E.bdoRivalOf(Y); const rk = sc > rv ? 2 : E.clamp(2 + Math.floor((rv - sc) / 2.2), 2, 40); if (rk <= 30) { r.bdoRank = rk; n++; } } return n; };
-    const ghostFill = (d, selfId) => { let n = bdoRe(d); for (const r of d.seasons || []) { if (!r.bdoRank || r.bdoRank > 3 || r.bdoGhost || r.bdoRival || (r.awards || []).includes('발롱도르')) continue; const Y = r.year + 1; const ln = lineAt(d, r.year); let rec = null; try { rec = E.lineView(w, ln)?.bdo[Y]; } catch { } if (rec && rec.by !== selfId) { r.bdoRival = rec.name; n++; continue; } const g = E.ghostOf(Y, ln, r.club); r.bdoGhost = g; r.bdoRival = g.name; n++; } return n; };
+    const ghostFill = (d, selfId) => { let n = bdoRe(d); for (const r of d.seasons || []) { if (!r.bdoRank || r.bdoRank > 3 || r.bdoGhost || r.bdoRival || (r.awards || []).includes('발롱도르')) continue; const Y = r.year + 1; const ln = lineAt(d, r.year); let rec = null; try { rec = E.lineView(w, ln)?.bdo[Y]; } catch { } if (rec && rec.by !== selfId) { r.bdoRival = rec.name; n++; continue; } const g = E.ghostOf(Y, ln, r.club); r.bdoGhost = g; r.bdoRival = g.name; n++; } for (const r of d.seasons || []) { const g = r.bdoGhost; if (g && (!g.prof || g.prof.ver !== E.GPROF_VER)) { try { g.prof = E.ghostProfile(g); n++; } catch { } } } return n; };
     for (const c of w.careers) {
       if ((c.gv || 0) >= 2) continue; let doc = null; try { doc = await Store.loadCareer(c.id); } catch { doc = null; }
       if (doc) { try { if (ghostFill(doc, c.id)) Store.save('career', doc); c.ghosts = (doc.seasons || []).filter(r => r.bdoGhost).map(r => r.bdoGhost); } catch (e) { console.warn('ghost', e); } }
