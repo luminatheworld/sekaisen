@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v80'</script>
+<script>window.SK_VER='v81'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -398,6 +398,10 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .reel-ft { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; font-size: 11.5px; color: rgba(233, 236, 245, .38); }
 .reel-off { background: none; border: 0; padding: 6px 0; color: rgba(233, 236, 245, .5); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .reel, .reel *, .reel-line { animation: none !important; transition: none !important; } }
+.reel-year { margin: 6px 0 2px; font-family: var(--f-serif); font-size: 64px; line-height: 1; font-weight: 700; letter-spacing: .02em; color: #d6c9ff; font-variant-numeric: tabular-nums; opacity: .9; }
+.reel-year.land { color: #fff; text-shadow: 0 0 24px rgba(184, 169, 255, .6); }
+.reel.rewind .reel-bar i { transition: width .12s linear; margin-left: auto; background: linear-gradient(270deg, #8f84e8, #d6c9ff); }
+.reel.rewind .reel-bar { display: flex; }
 .btn.reel-tg { margin-left: auto; color: var(--muted); }
 .cut { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: hidden; cursor: pointer; color: #fff; background: radial-gradient(ellipse at 50% 42%, #2a3566 0%, #121833 45%, #05070f 100%); animation: cutbg .35s ease-out; }
 .cut.ball { background: radial-gradient(ellipse at 50% 42%, #5a4416 0%, #24190a 50%, #070502 100%); }
@@ -7249,6 +7253,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     S.p = np; S.world.activeId = np.id; S.choice = defaultChoice(np); S.offerPick = -1; S.lastRes = null; S.phase = 'prep'; S.windowQ = []; S.pendingNumber = null; S.wi = null;
     Store.save('career', np); Store.save('world', S.world);
     S.view = 'career'; render(); window.scrollTo(0, 0);
+    try { warpReel(np, W.doc, pt); } catch (e) { console.warn('warp', e); }
   }
   async function resumeCareer(id) {
     let doc = null; try { doc = await Store.loadCareer(id); } catch { doc = null; } if (!doc) { toast('기록을 불러오지 못했어요.'); return; }
@@ -7875,6 +7880,29 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return { fr, end, stages, warp };
   }
   let REEL = null;
+  // '만약에'를 고른 순간: 시간이 거꾸로 감긴다. 갈림길 화면이 뜨기 전에 한 번
+  function warpReel(p, doc, pt) {
+    if (!reelOn() || document.hidden || REEL) return;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const y1 = (doc.seasons[doc.seasons.length - 1]?.year ?? pt.y) + 1, y0 = pt.y; const age0 = p.age;
+    const rng = E.seeded('warp|' + p.id); const pk = (a) => a[Math.floor(rng() * a.length)];
+    const lines = [pk(['시곗바늘이 거꾸로 돌기 시작했다.', '달력이 한 장씩 거꾸로 넘어간다.', '들리던 응원가가 뒤에서부터 감긴다.']), pk(['트로피들이 하나씩 진열장에서 사라진다.', '유니폼의 이름이 한 벌씩 지워진다.', '잊은 줄 알았던 냄새가 먼저 돌아왔다.']), `${age0}세의 어느 아침으로.`, pt.label ? `${pt.label}.` : '세계선이 갈라진다.'];
+    const el = document.createElement('div'); el.className = 'reel warp rewind' + (reduce ? ' still' : ''); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '세계선이 갈라진다');
+    el.innerHTML = `<div class="reel-in"><p class="reel-eye">만약에 · 세계선이 갈라진다</p><p class="reel-who"><b>${esc(p.name)}</b><span>${y1 - 1} → ${y0}</span></p><p class="reel-year" aria-hidden="true">${y1}</p>
+      <div class="reel-bar" aria-hidden="true"><i style="width:100%"></i></div><p class="reel-line"></p><div class="reel-ft"><button class="reel-off" type="button">다음부터 끄기</button><span>누르면 건너뛰어요</span></div></div>`;
+    document.body.appendChild(el);
+    const yr = el.querySelector('.reel-year'), bar = el.querySelector('.reel-bar i'), ln = el.querySelector('.reel-line');
+    const T = reduce ? 2800 : 4800; const step = T / lines.length; let i = 0, done = false, timer = null, ytimer = null;
+    const finish = () => { if (done) return; done = true; clearTimeout(timer); clearInterval(ytimer); document.removeEventListener('visibilitychange', vis); el.classList.add('out'); setTimeout(() => el.remove(), reduce ? 0 : 260); REEL = null; };
+    const span = Math.max(1, y1 - y0); let y = y1; const yStep = Math.max(60, Math.floor((T * .8) / span));
+    ytimer = setInterval(() => { if (y > y0) { y--; yr.textContent = y; bar.style.width = ((y - y0) / span * 100).toFixed(0) + '%'; } else { clearInterval(ytimer); yr.classList.add('land'); } }, yStep);
+    const tick = () => { if (i >= lines.length) { timer = setTimeout(finish, 900); return; } ln.classList.remove('on'); void ln.offsetWidth; ln.textContent = lines[i]; ln.classList.add('on'); i++; timer = setTimeout(tick, step); };
+    const vis = () => { if (document.hidden) finish(); };
+    el.addEventListener('click', (e) => { if (e.target.closest('.reel-off')) { reelSet(false); toast('연출을 껐어요. 세계선 탭 아래 세이브 칸에서 다시 켤 수 있어요.'); } finish(); });
+    document.addEventListener('keydown', function k(e) { if (done) { document.removeEventListener('keydown', k); return; } if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); finish(); document.removeEventListener('keydown', k); } });
+    document.addEventListener('visibilitychange', vis);
+    REEL = el; tick();
+  }
   function seasonReel(p, res) {
     if (!reelOn() || document.hidden || REEL) return;
     const sc = reelScript(p, res); const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
