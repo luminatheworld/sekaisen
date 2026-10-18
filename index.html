@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v89'</script>
+<script>window.SK_VER='v90'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -967,10 +967,12 @@ const ENGINE = (() => {
     return wsum(p.attrs, w);
   }
   // 포지션·롤별 기준점: 그 포지션의 전형적인 24세(포지션 맞춤으로 자란 선수)에서 '행동 능력 − 포지션 OVR'의 평균 [득점, 찬스]. 이 기준에서 벗어난 만큼만 생산성이 달라진다
-    // 기준점 버전: v89 · 2026-10-18 · seed 20261018 (calib/calib-v89.json, tests/calib.js로 재생성)
-  const CALIB = { act: {"CB":{"bpd":[-16.6,-3.9],"stopper":[-10.2,-25.7],"covercb":[-14.8,-23.2],"widecb":[-13.3,-17.9],"libero":[-13.8,-4.5],"aerialcb":[-8.6,-27.3],"leadercb":[-13.4,-18.9]},"LB":{"invfb":[-14.8,-5.9],"overlapfb":[-5.8,-6.2],"holdfb":[-12.7,-19.3],"hybridfb":[-11.5,-7.5],"underlap":[-4.6,-3.5]},"RB":{"invfb":[-11.1,-1.4],"overlapfb":[-7.3,-9.3],"holdfb":[-11.3,-20.1],"hybridfb":[-11,-5.7],"underlap":[-4.7,-1.5]},"LWB":{"attwb":[-7.7,-5.1],"compwb":[-6.8,-7.6],"invwb":[-6.5,-5.3],"wbplay":[-22.2,2.5],"defwb":[-10.1,-18.2]},"RWB":{"attwb":[-6.9,-3.9],"compwb":[-6.2,-7],"invwb":[-2.1,-0.7],"wbplay":[-23.8,-2.4],"defwb":[-8.6,-19.9]},"DM":{"anchor":[-11.1,-3.6],"regista":[-17.4,2.7],"halfback":[-17.4,0],"destroyer":[-7.3,-18.4],"volante":[-14.6,-8.6],"segundo":[-5.1,2]},"CM":{"b2b":[-1.9,-4.5],"mezzala":[-2.7,5.7],"dlp":[-3.5,8],"carrier":[-1.7,7.3],"carrilero":[-1.4,6.5],"roam":[-3,4.4],"linebreaker":[-7.2,8.4],"boxcrash":[2.7,-6]},"AM":{"treq":[-2.7,2.2],"ap":[-5.5,5.4],"shadow":[4.9,-1.5],"free10":[-5.5,5.3],"raum":[-0.6,-6.7],"enganche":[-4.8,4.8],"mediapunta":[-1.1,0.8]},"LW":{"insidef":[0.7,-5.1],"invwinger":[0.5,0.6],"winger":[-3.2,-5.5],"iso":[-0.2,-2.6],"widetm":[-3.6,-13.3],"wide10":[0.1,-1.3],"farpost":[6.4,-17.5],"trackback":[-3.3,-14.3]},"RW":{"insidef":[2.7,-6.6],"invwinger":[1,-2],"winger":[-2.8,-6.7],"iso":[1.2,-4.7],"widetm":[-4.2,-12.6],"wide10":[0.1,0.4],"farpost":[4.3,-19.2],"trackback":[-1.7,-15.6]},"ST":{"poacher":[8.5,-28.1],"target":[3.4,-25.7],"presser":[3.6,-25.3],"complete":[4.9,-6.2],"false9":[8.4,5],"channel":[5.5,-24.3],"secondst":[8.3,-5.4],"dlf":[4.3,-8]}},
+    // 기준점 버전: v90 · 2026-10-18 · seed 20261018 (calib/calib-v90.json, tests/calib.js로 재생성)
+  const CALIB = { act: {"CB":{"bpd":[-15.4,-1.5],"stopper":[-10.5,-25.5],"covercb":[-15.4,-24.5],"widecb":[-13.3,-16.7],"libero":[-15.5,-7],"aerialcb":[-8.9,-27.7],"leadercb":[-13.1,-17.7]},"LB":{"invfb":[-11.9,-5.1],"overlapfb":[-7.5,-7.2],"holdfb":[-13.1,-22],"hybridfb":[-12.9,-11.5],"underlap":[-5,-4.7]},"RB":{"invfb":[-11.6,-1.8],"overlapfb":[-6,-6.2],"holdfb":[-13.5,-18],"hybridfb":[-11.8,-7.2],"underlap":[-5.9,-7.7]},"LWB":{"attwb":[-8.5,-5.9],"compwb":[-6.7,-8.3],"invwb":[-4.8,-3.2],"wbplay":[-21.5,-0.5],"defwb":[-10.4,-21.1]},"RWB":{"attwb":[-8,-3.6],"compwb":[-6.1,-8.7],"invwb":[-4.9,-2],"wbplay":[-23.1,5.3],"defwb":[-10.3,-18.3]},"DM":{"anchor":[-11.2,-5],"regista":[-13.8,5],"halfback":[-18.7,-1.1],"destroyer":[-9.4,-18.2],"volante":[-16.2,-8.4],"segundo":[-6.8,1.7]},"CM":{"b2b":[-1.5,-4.1],"mezzala":[-2.7,6.2],"dlp":[-3.1,8.3],"carrier":[-0.6,6.5],"carrilero":[-1.9,8.2],"roam":[-4.3,4.9],"linebreaker":[-7.5,8.5],"boxcrash":[6.7,-6.5]},"AM":{"treq":[-3.4,2.3],"ap":[-5.6,5.1],"shadow":[-5.2,2],"free10":[-5.7,4.2],"raum":[0.1,-4.8],"enganche":[-4.9,4.8],"mediapunta":[-1,1]},"LW":{"insidef":[2.3,-5],"invwinger":[2,-3],"winger":[-2.4,-7.2],"iso":[0.7,-3.3],"widetm":[2.1,-12.9],"wide10":[0.1,0.6],"farpost":[5.5,-17.2],"trackback":[-1.6,-15.3]},"RW":{"insidef":[2.8,-6.1],"invwinger":[2.2,0.6],"winger":[-1.6,-7],"iso":[1,-4.4],"widetm":[6.9,-11.8],"wide10":[-0.3,3.2],"farpost":[3.8,-17.9],"trackback":[-1,-14.1]},"ST":{"poacher":[8.8,-27.2],"target":[4.6,-26.4],"presser":[3,-21.7],"complete":[4.6,-6.3],"false9":[8.9,9.1],"channel":[7.2,-26.1],"secondst":[8.5,-3],"dlf":[4.1,-4.8]}},
     // 실현 배율의 그룹 평균을 롤 원래 배율 평균에 맞추는 계수 [골, 도움]. 능력과 실현이 같은 방향으로 움직여 생기는 평균 상승을 없앤다
-    norm: {"WB":[0.934,0.965],"FB":[1.005,1.025],"CM":[0.912,0.953],"DM":[0.942,0.944],"W":[0.937,0.994],"CB":[1.038,0.9],"ST":[0.922,1.033],"AM":[0.958,0.989]} };
+    norm: {"ST":[0.949,1.036],"W":[0.96,0.985],"AM":[0.928,0.989],"WB":[0.986,0.961],"FB":[0.97,0.952],"CM":[0.996,0.96],"CB":[0.963,0.946],"DM":[0.936,0.94]},
+    // (참고용) 롤별 평균 적합도 [포지션][롤]: 그 롤로 실제로 뛴 선수들의 (롤 점수 − 포지션 OVR) 평균. 엔진 계산에는 쓰지 않는다
+    mu: {"ST":{"presser":10.4,"poacher":11.7,"target":9.8,"complete":9.2,"secondst":8.5,"false9":14.9,"channel":12.1},"GK":{"commandgk":9.5,"sweeperk":8.6,"shotstop":8.5,"buildgk":10.4},"LW":{"farpost":11.7,"insidef":9,"widetm":12.7,"wide10":12.5,"invwinger":11,"iso":10.7,"winger":10.7},"AM":{"free10":8.1,"ap":9.4,"mediapunta":7,"treq":7,"raum":10.3,"enganche":9.4,"shadow":10},"RWB":{"compwb":6.3,"wbplay":9.1,"defwb":8.5,"invwb":5.2,"attwb":7.6},"RB":{"holdfb":7.3,"underlap":7.8,"hybridfb":4.7,"overlapfb":10.2,"invfb":8.7},"RW":{"insidef":6,"iso":6.5,"widetm":9.1,"trackback":10,"invwinger":6.3,"winger":7.5,"farpost":5.8,"wide10":10.3},"LB":{"underlap":7.4,"holdfb":9.2,"invfb":8.4,"overlapfb":10.5,"hybridfb":5.1},"LWB":{"compwb":6.1,"attwb":6.5,"invwb":8.1,"defwb":6.5,"wbplay":8.1},"CM":{"roam":9.6,"linebreaker":10.7,"dlp":12.4,"carrier":16.2,"boxcrash":12.9,"mezzala":9.7,"b2b":9.2,"carrilero":10.8},"CB":{"leadercb":6.4,"stopper":5.9,"aerialcb":6.8,"covercb":6,"libero":8.1,"bpd":5.7,"widecb":6.2},"DM":{"volante":9.6,"destroyer":14.3,"regista":12.4,"segundo":10.6,"anchor":7.4,"halfback":10}} };
   const ACT_BIAS = CALIB.act;
   const PROD = { act: .022, actLo: .72, actHi: 1.25, real: 8, realHi: 1.25 };
   // 실현된 롤 배율. 1보다 큰 배율(그 행동을 더 하는 역할)은 그 행동 능력만큼만 실현되고, 1보다 작은 배율(그 행동을 줄이는 역할)은 그대로 적용된다.
@@ -1639,8 +1641,10 @@ const ENGINE = (() => {
   // 롤 적합도의 평점 몫 (v87: .006 → .02). 롤 점수가 포지션 OVR보다 10 낮으면 시즌 평점 −0.2
   const RATE_FIT = .02;
   // 포지션별로 감독이 배정한 롤의 평균 적합도(롤 점수 − OVR). 이 평균을 기준으로 위아래만 크게 본다. 평균 선수의 평점은 예전(.006)과 같다
-  const FIT0 = { GK: 8.3, CB: 7.7, LB: 5.6, RB: 7.1, LWB: 7.8, RWB: 7.4, DM: 7.5, CM: 10.7, AM: 9.2, LW: 9.1, RW: 9.5, ST: 11.7 }; CALIB.fit0 = FIT0;
-  function rateBase(p, o, rs, teamStr) { const g = POS[p.pos].grp; return 6.5 + (o - 75) * .036 + ((rs - o - (FIT0[p.pos] ?? 4)) * RATE_FIT + (FIT0[p.pos] ?? 4) * .006) + (teamStr - 76) * .006 + (g === 'DF' || p.pos === 'DM' ? .16 : 0); }
+  // 기준 적합도: 포지션 평균(FIT0)을 쓴다. 롤별 평균(CALIB.mu)은 그 롤에 이미 특화된 선수들의 값이라, 기준으로 쓰면 포지션 맞춤으로 자란 선수가 불리해진다(v89-B 실험). 참고용으로만 남긴다
+  const muOf = (pos) => FIT0[pos] ?? 4;
+  const FIT0 = { GK: 9.2, CB: 6.4, LB: 8, RB: 7.6, LWB: 6.8, RWB: 7.4, DM: 10.5, CM: 11.4, AM: 8.6, LW: 10.9, RW: 7.4, ST: 10.7 }; CALIB.fit0 = FIT0;
+  function rateBase(p, o, rs, teamStr, roleId) { const mu = muOf(p.pos, roleId); const g = POS[p.pos].grp; return 6.5 + (o - 75) * .036 + ((rs - o - mu) * RATE_FIT + (FIT0[p.pos] ?? 4) * .006) + (teamStr - 76) * .006 + (g === 'DF' || p.pos === 'DM' ? .16 : 0); }
   // 큰 경기 한 판의 의미: 결정적 장면(이긴 경기의 결승골·최우수 선수·승부차기 마무리)과 무너진 경기
   function bigOutcome(f) {
     const marginGoal = f.g >= 1 && (f.pens || (f.a - f.b) <= f.g);
@@ -1993,8 +1997,12 @@ const ENGINE = (() => {
   }
 
   // ---------- SEASON SIMULATION ----------
+  // 출전 판단의 실효 OVR (v89-B): 포지션 OVR + λ × (맡길 롤 점수 − 포지션 OVR − 그 포지션에서 감독이 배정한 롤의 평균 적합도 FIT0).
+  // 평균적인 선수는 포지션 OVR 그대로, 맡은 롤을 남들보다 잘 해낼수록 더 기용된다. 보정 폭은 ±MCFG.cap. 감독 궁합 항은 따로 그대로 둔다
+  const MCFG = { lam: .15, neg: .15, cap: 5 }; // v89-B 실험: λ .5는 벤치 10%→16%, 역할 맞춤 경로가 포지션 맞춤을 크게 앞섬. .15에서 평균·벤치 비율 유지, 출전 회복은 오히려 늘었다
+  function effOvr(p, roleId) { const o = ovr(p); if (!roleId || !ROLE[roleId]) return o; const d = roleScore(p, roleId) - o - muOf(p.pos, roleId); return o + clamp((d >= 0 ? MCFG.lam : MCFG.neg ?? MCFG.lam) * d, -MCFG.cap, MCFG.cap); }
   function minutesShare(p, clubId, year, mgr, choice, mods) {
-    const rel = ovr(p) - clubStr(clubId, year);
+    const rel = effOvr(p, choice.role) - clubStr(clubId, year);
     let x = (rel + 3) / 2.6;
     x += roleFit(choice.role, mgr.style) * .35;
     x += (p.trust - 50) / 45;
@@ -2064,7 +2072,7 @@ const ENGINE = (() => {
       const boost = { id: p.club, v: impact, big: bigE(p) * clamp(share * av * 1.3, 0, 1) };
       const fit = roleFit(role.id, mgr.style); const mor = (p.morale - 55) / 100;
       // 이 시즌 평점의 기준선(무작위·공격 포인트 제외). 결승 평점도 여기서 출발한다
-      const rbase = rateBase(p, o0, rs, cs0) + fit * .06 - (1 - fam) * .3 + mor * .35 + (mods.rating || 0); res.rbase = +rbase.toFixed(3);
+      const rbase = rateBase(p, o0, rs, cs0, role.id) + fit * .06 - (1 - fam) * .3 + mor * .35 + (mods.rating || 0); res.rbase = +rbase.toFixed(3);
       const myPow = seasonPower(p.club, year) + impact; const pwOf = (opp, sc) => logistic((myPow - seasonPower(opp, year)) / sc);
       const tf = 1 + (cs0 - 78) * .018; const qS = clamp(1 + (0.55 * o0 + 0.45 * rs - 80) * .027, .25, 1.75) * tf * (.82 + .18 * fam);
       const table = tableFor(lgK, year, boost);
@@ -2183,7 +2191,7 @@ const ENGINE = (() => {
       if (isGK) sv = poisson(2.4 + sc.b * .7 + (won ? 0 : .6));
     }
     // 평점: 이 선수의 시즌 기준선에서 출발해, 기대보다 잘하거나 못한 만큼 오르내린다. 팀이 이긴 것도 '이길 확률보다' 잘 됐을 때만 더한다
-    const base = rbase ?? rateBase(p, o0, roleScore(p, role.id), 76); const dfm = grp === 'DF' ? 2 : 1;
+    const base = rbase ?? rateBase(p, o0, roleScore(p, role.id), 76, role.id); const dfm = grp === 'DF' ? 2 : 1;
     const exp = +(base + (isGK ? (gkT ?? .1) : ((eg + ea) - .3) * .35 * dfm)).toFixed(2);
     let rating = null;
     if (playing) {
@@ -2484,10 +2492,10 @@ const ENGINE = (() => {
     const nat = NATION[natT(p)]; const T = TOUR[plan.kind];
     const last = p.seasons[p.seasons.length - 1];
     const t = { ...plan, nation: natT(p), ko: T.ko.slice(), bronze: !!T.bronze, pow: natPower(p, plan.kind, plan.year) + (plan.host ? 2.5 : 0) + gauss() * 1.6, used: [], group: [], mode: 'group', ri: 0, cur: null, games: 0, g: 0, as: 0, rsum: 0, rn: 0, cs: 0, xg: 0, log: [], pk: null, finish: null, done: false,
-      rbase: +(rateBase(p, ovr(p), roleScore(p, p.role), nat.str - (T.u23 ? 6 : 0)) + (p.morale - 55) / 100 * .35).toFixed(3), sr: last && !last.youthTeam ? last.rating : null };
+      rbase: +(rateBase(p, ovr(p), roleScore(p, p.role), nat.str - (T.u23 ? 6 : 0), p.role) + (p.morale - 55) / 100 * .35).toFixed(3), sr: last && !last.youthTeam ? last.rating : null };
     Object.defineProperty(t, 'world', { value: world || CUR?.world || null, enumerable: false, writable: true });
     // 그 시즌 클럽에서의 폼(평점 − 기준선)이 대표팀 기준선에 실린다. 그래서 '대표팀에서 더 잘했나'는 같은 선수끼리 비교된다
-    if (t.sr != null) { const lb = last.rbase ?? rateBase(p, last.ovrStart ?? ovr(p), roleScore(p, p.role), clubStr(last.club, last.year)); t.anchor = +(t.sr - lb).toFixed(3); }
+    if (t.sr != null) { const lb = last.rbase ?? rateBase(p, last.ovrStart ?? ovr(p), roleScore(p, p.role), clubStr(last.club, last.year), p.role); t.anchor = +(t.sr - lb).toFixed(3); }
     const led = last?.branch ? null : ledOf(world, p); const nr = led?.nat[plan.kind + '|' + plan.year];
     if (nr) { if (nr.nation === natT(p)) t.fateMine = true; else t.fate = nr.nation; t.fateBy = nr.name; }
     else if (led) { const mt = led.people.find(c => (c.natTeam || c.nation) === natT(p) && (c.hist?.nt || []).some(x => x[0] === plan.year && x[1] === plan.kind && !x[2]) && plan.year - 1 < (led.cut[c.id] ?? Infinity)); if (mt) { t.fateNot = true; t.fateBy = mt.name; t.pow -= 1.2; } }
@@ -2547,7 +2555,7 @@ const ENGINE = (() => {
     // 평점: 선수 실력 기준선 + 기대보다 잘한 만큼. 팀이 강해서 크게 이기는 것만으로는 평점이 오르지 않는다
     let rating = null, exp = null, xg = 0;
     if (played) {
-      const base = t.rbase ?? rateBase(p, ovr(p), roleScore(p, p.role), baseStr);
+      const base = t.rbase ?? rateBase(p, ovr(p), roleScore(p, p.role), baseStr, p.role);
       if (p.pos === 'GK') { exp = base + (t.anchor ?? .1); rating = exp + (b === 0 ? .45 : -(b - 1) * .22 - .1) + (sv - (2.2 + EB * .7 + (cx.side === 'under' ? 1 : 0))) * .08 + ((a - b) - (EA - EB)) * .1 + gauss() * .35; }
       else {
         const eg = EA * gs, eas = EA * ash; xg = EA * gs0;
@@ -3408,7 +3416,7 @@ const ENGINE = (() => {
     coachStints, parentsAlive, coachNow, recordDeath, farewellAsk, farewellAgree, farewellRefused, homecomingOffer, farewellOf, fwPact, fwClubLine, fanCer, fwSeasons, FW_CLUB,
     LG_SCHOOL, SCHOOLS, CLUB_SCHOOL, schoolOf, wiEcho, wiRewrite, goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    roleProd, actAbility, growMul, GCFG, CALIB, ASG, isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    roleProd, actAbility, growMul, GCFG, CALIB, ASG, MCFG, effOvr, muOf, isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, hasJong, sharedPast, splitSummer, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -7450,6 +7458,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
         <li><b>기대 이상이면 잠재력이 움직인다.</b> 19~29세에 15경기 이상 뛴 시즌, 평점이 기대 평점보다 뚜렷하게 높으면 천장이 최대 +0.8(대기만성형은 22세부터 1.4배, 조숙형은 24세부터 0.6배), 뚜렷하게 낮으면 최대 −0.5. 원래 잘하는 선수가 잘하는 건 잠재력의 증거로 치지 않아요. 기대 이상인 시즌엔 천장 근처에서도 조금 더 크고, 천장 위로 3까지 갈 수 있어요.</li>
         <li><b>18~25세 출전 보너스.</b> 출전 비율 65% 이상인 시즌마다 천장 +0.75(최대 +5), 30% 미만이면 −0.9.</li>
         <li><b>훈련 초점.</b> 고른 능력치는 1.7배, 나머지는 0.78배로 자라요. 포지션 맞춤·역할 맞춤·능력치 그룹은 고른 능력치가 몇 개든 한 시즌 성장 총량이 같아요. 능력치 창에서 막대 하나를 누르면 그 능력치만 2배로 집중해요(다시 누르면 포지션 맞춤으로). 그 대신 성장 총량은 조금 줄어요.</li>
+        <li><b>출전 판단.</b> 감독은 포지션 OVR만 보지 않고, 자기가 맡길 역할을 그 선수가 얼마나 잘 해낼지도 봐요. 그 역할을 같은 포지션의 다른 선수들보다 잘 소화하면 OVR이 조금 낮아도 더 기용되고, 맞지 않는 역할이면 덜 기용돼요. 이적·대표팀 선발은 그대로 포지션 OVR을 봐요.</li>
         <li><b>실전 경험.</b> 한 시즌 성장분의 일부는 훈련 초점이 아니라 그 시즌 실제로 뛴 역할을 따라 자라요. 꾸준히 뛰면 최대 25%, 덜 뛰면 그만큼 적게요. 성장 총량은 그대로예요. 감독이 레지스타로 쓰면 포지션 맞춤으로 훈련해도 패스와 시야가 조금씩 자라고, 감독이 바뀌어 다른 역할을 맡으면 선수도 조금 다르게 자라요.</li>
         <li><b>주발과 약발.</b> 주발은 만들 때 고르고(랜덤이면 왼발 24%), 약발 등급 ★1~5는 운으로 정해져요(★2·★3이 대부분, ★5는 3%). 측면 포지션에서 역할이 원하는 발(정통 윙어·오버래핑 계열은 같은 쪽 발, 인버티드·인사이드 계열은 반대 발)이면 역할 적성 +1.2, 아니면 약발이 낮을수록 최대 −2.4. ★5는 어느 쪽이든 +1.2. 약발 등급 자체도 역할 적성에 (등급 − 3) × 0.2~0.6을 더해요. 왼발 센터백·풀백은 이적 제안이 1.25배.</li>
         <li><b>타고난 양발잡이.</b> 새로 만든 선수의 약 1%(부모가 양발잡이면 15%)는 주발이 따로 없는 양발잡이로 태어나요. 고를 수 없고, 약발 등급을 직접 정해 만든 선수에게는 나오지 않아요. 처음엔 주발 ★5로 보이다가, 15~17세에 코치가 주발을 묻는 이벤트로 드러나요(17세가 넘어서 시작하면 첫 시즌에). 약발 ★5와 같고, 역할 적성에 포지션별 약발 계수 × 0.4가 더해져요(AM +0.24 · 윙어·ST +0.2). 이적 관심은 ★5의 ×1.1 대신 ×1.15, 프리킥 키커 자리를 놓고 경쟁할 때 성공률은 60% 대신 75%예요.</li><li><b>약발 훈련.</b> 훈련 초점에서 고르면 다른 능력치는 모두 0.8배로 자라고, 시즌 끝에 약발이 한 등급 오를 확률이 생겨요. 17세 이하 60% · 19세 이하 50% · 21세 이하 40% · 23세 이하 26% · 25세 이하 15% · 28세 이하 7% · 그 위 2%에, 다음 등급이 ★3 이하면 ×1.05~1.15, ★4면 ×0.85, ★5면 ×0.5. 감독 능력에 따라 조금 달라져요. 훈련하지 않으면 약발은 오르지 않아요.</li>
