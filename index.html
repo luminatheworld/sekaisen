@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v78'</script>
+<script>window.SK_VER='v79'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -381,6 +381,24 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .crow:last-child { border-bottom: 0; }
 .lgchips { display: flex; flex-wrap: wrap; gap: 6px; }
 
+.reel { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 24px 20px; cursor: pointer; color: #e9ecf5; background: radial-gradient(ellipse at 50% 38%, #1d2440 0%, #0d111f 70%); animation: reelIn .3s ease both; -webkit-tap-highlight-color: transparent; }
+.reel.warp { background: radial-gradient(ellipse at 50% 38%, #2c2152 0%, #0f0b1f 72%); }
+.reel.out { animation: reelOut .25s ease both; } .reel.still, .reel.still * { animation: none !important; transition: none !important; }
+@keyframes reelIn { from { opacity: 0; } to { opacity: 1; } } @keyframes reelOut { to { opacity: 0; } }
+.reel-in { width: min(520px, 100%); display: flex; flex-direction: column; gap: 10px; }
+.reel-eye { margin: 0; font-size: 12px; letter-spacing: .14em; color: rgba(233, 236, 245, .55); }
+.reel.warp .reel-eye { color: #b8a9ff; }
+.reel-who { margin: 0 0 6px; display: flex; flex-direction: column; gap: 2px; } .reel-who b { font-size: 22px; font-weight: 800; } .reel-who span { font-size: 13px; color: rgba(233, 236, 245, .6); }
+.reel-bar { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .1); overflow: hidden; } .reel-bar i { display: block; height: 100%; width: 0; background: #d9a441; border-radius: 2px; transition: width .9s ease; }
+.reel.warp .reel-bar i { background: linear-gradient(90deg, #8f84e8, #d6c9ff); }
+.reel-ticks { display: flex; justify-content: space-between; font-size: 10.5px; color: rgba(233, 236, 245, .38); } @media (max-width: 559px) { .reel-ticks span:nth-child(2), .reel-ticks span:nth-child(3), .reel-ticks span:nth-child(5) { visibility: hidden; } }
+.reel-stage { margin: 18px 0 0; font-size: 12.5px; color: rgba(233, 236, 245, .55); min-height: 1.4em; }
+.reel-line { margin: 0; font-family: var(--f-serif); font-size: 21px; line-height: 1.55; min-height: 4.7em; opacity: 0; transform: translateY(4px); transition: opacity .45s ease, transform .45s ease; word-break: keep-all; }
+.reel-line.on { opacity: 1; transform: none; }
+.reel-ft { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; font-size: 11.5px; color: rgba(233, 236, 245, .38); }
+.reel-off { background: none; border: 0; padding: 6px 0; color: rgba(233, 236, 245, .5); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .reel, .reel *, .reel-line { animation: none !important; transition: none !important; } }
+.btn.reel-tg { margin-left: auto; color: var(--muted); }
 .cut { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: hidden; cursor: pointer; color: #fff; background: radial-gradient(ellipse at 50% 42%, #2a3566 0%, #121833 45%, #05070f 100%); animation: cutbg .35s ease-out; }
 .cut.ball { background: radial-gradient(ellipse at 50% 42%, #5a4416 0%, #24190a 50%, #070502 100%); }
 .cut-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -6488,6 +6506,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function dataPanel() {
     return `<section class="panel quiet"><h2>세이브</h2><p class="muted small">${Store.cloud ? '세이브는 Claude 계정에 저장돼요. 다른 기기에서 열어도 이어서 할 수 있어요.' : '세이브는 이 브라우저에만 저장돼요. 가끔 파일로 내보내 두세요.'}</p>
       <div class="row wrapgap"><button class="btn" data-go="crests">구단 엠블럼 넣기</button><button class="btn" data-act="export">세이브 파일 내보내기</button><label class="btn">세이브 파일 불러오기<input type="file" id="importfile" accept="application/json,.json" hidden></label><input id="worldname" class="inp grow" value="${esc(S.world.name)}" aria-label="세계선 이름"><button class="btn" data-act="rename">이름 바꾸기</button></div>
+      <div class="row wrapgap" style="margin-top:10px"><button class="btn" data-act="reeltoggle">시즌 진행 연출 · ${reelOn() ? '켜짐' : '꺼짐'}</button><span class="muted small">시즌을 시작하면 5초쯤 한 해가 흘러가는 장면을 보여 줘요. 결과는 똑같고, 누르면 바로 넘어가요.</span></div>
       <div id="importconfirm" hidden class="confirm"></div><p class="muted small" style="margin-top:10px">버전 ${esc(window.SK_VER || '')}</p></section>`;
   }
 
@@ -6745,7 +6764,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const mustPick = p.released && offers.length && S.offerPick < 0;
     const blockers = [mustPick ? '방출됐어요. 제안 하나를 골라 주세요.' : '', needsNum ? '등번호를 골라 주세요.' : '', pickedOffer?.blocked ? '구단이 거절한 제안이에요.' : '', pickedOffer?.withdrawn ? '철회된 제안이에요.' : ''].filter(Boolean);
     const disabled = blockers.length > 0;
-    const actions = `<section class="panel go ${!canRetire && !p.forcedRetire && !blockers.length && p.seasons.length ? 'only-start' : ''}"><div class="row wrapgap">${p.forcedRetire ? '<p class="note">이제 은퇴할 때예요.</p>' : `<button class="btn primary big" data-act="start" ${disabled ? 'disabled' : ''}>${sl(p.year)} 시즌 시작</button>`}${canRetire ? `<button class="btn" data-act="retire">은퇴 선언</button>` : ''}${!p.seasons.length ? `<button class="btn" data-act="discard">이 커리어 취소</button>` : ''}</div>
+    const actions = `<section class="panel go ${!canRetire && !p.forcedRetire && !blockers.length && p.seasons.length ? 'only-start' : ''}"><div class="row wrapgap">${p.forcedRetire ? '<p class="note">이제 은퇴할 때예요.</p>' : `<button class="btn primary big" data-act="start" ${disabled ? 'disabled' : ''}>${sl(p.year)} 시즌 시작</button>`}${canRetire ? `<button class="btn" data-act="retire">은퇴 선언</button>` : ''}${!p.seasons.length ? `<button class="btn" data-act="discard">이 커리어 취소</button>` : ''}<button class="btn ghost sm reel-tg" data-act="reeltoggle" title="시즌 진행 연출">연출 ${reelOn() ? '켜짐' : '꺼짐'}</button></div>
       ${blockers.length ? `<p class="muted small">${blockers.join(' ')}</p>` : ''}</section>`;
     const simbar = !p.forcedRetire ? `<div class="simbar"><button class="btn primary big" data-act="start" ${disabled ? 'disabled' : ''}>${disabled ? esc(blockers[0]) : sl(p.year) + ' 시즌 시작'}</button></div>` : '';
     return header(p) + wiBanner(p) + omenLine(p) + chgPanel(p) + lastFold + market + terms + numberPicker + plan + attrs + decide + actions + simbar;
@@ -7256,6 +7275,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
         <li>확률 표현: <b>거의 확실히</b> 80% 이상 · <b>높은 확률로</b> 60~79% · <b>반반으로</b> 45~59% · <b>낮은 확률로</b> 25~44% · <b>드물게</b> 25% 미만. 위험도는 높음 60%+ · 꽤 있음 40%+ · 있음 25%+ · 낮음.</li>
         <li><b>역할 적성 글자</b>는 (역할 적성 − 오버롤) 기준이에요. S +4 이상 · A +1.5 · B ±1.5 · C −4 · D 그 아래.</li>
         <li><b>여기서 은퇴하고 싶다</b>: 30세가 넘고 한 구단에서 3시즌 이상 뛰었으면 커리어 결정에서 의사를 전할 수 있어요. 구단은 그 팀에서 뛴 시간, 팬심, 감독 신뢰, 주장 여부, 그 팀에서 든 트로피, 지금 실력이 팀 수준에 맞는지를 보고 답해요. 구단 규모와 문화도 들어가요. 레알 마드리드·PSG·첼시처럼 전설에게도 쉽게 은퇴식을 열어 주지 않는 팀이 있고, 아틀레틱·로마처럼 자기 사람을 품는 팀도 있어요. 답은 약속·조건부(연봉 삭감이나 벤치)·거절 셋 중 하나예요. 약속이 생기면 다른 구단 제안이 줄고, 마지막 시즌은 원할 때 선언해요. 그 팀에서 은퇴하면 고별전과 함께 카드에 '명예로운 작별'로 남아요. 약속을 깨고 떠나면 그 팀 팬심이 크게 깎여요. 거절당한 뒤 다른 팀으로 가거나 은퇴하면, 인터뷰에서 그 팀을 직격할 수도, 품위 있게 넘길 수도 있어요. 처음 공을 찬 구단으로 돌아가 끝내고 싶다는 연락(귀향)도 같은 방식이에요. 선언·고별전으로 오른 팬심은 결번 판정에 들어가지 않아서, 결번 문턱은 그대로예요.</li>
+        <li><b>시즌 진행 연출</b>: 시즌을 시작하면 5초쯤 한 해가 흘러가는 장면이 지나가요. 이미 계산이 끝난 시즌을 보여 주기만 해서 결과는 켜든 끄든 똑같아요. 시즌의 파편 같은 문장들은 대부분 그냥 풍경이고, 부상·주장·벤치·임대처럼 그 시즌 기록이 뒷받침할 때만 그 사람의 일을 말해요(언제였는지는 말하지 않아요). 누르면 바로 넘어가고, 세계선 탭 아래 세이브 칸에서 끌 수 있어요. '만약에' 세계선이 갈라진 첫 시즌은 다른 빛깔로 흘러가요.</li>
         <li><b>리그·구단의 색깔</b>: 리그마다, 몇몇 구단마다 사람들이 떠올리는 이미지가 있어요(라리가의 기술, 세리에 A의 수비, 발렌시아의 윙어, 아약스의 유스…). 정확한 통계가 아니라 평판이고, 그 팀에서 뛰는 동안 해당 능력치 성장에 3~6% 정도가 더 얹혀요(20대 초반까지 한 팀에 있으면 OVR 1 안팎). 유스 화수분·빅리그행 환승역은 21세까지 성장이 조금 빨라지고, 꿈의 무대·지옥의 홈구장에서 주전으로 뛰면 큰 경기 체질이 조금씩 단단해져요. 구단의 전력과 돈은 시대마다 바뀌지만 이 색깔은 문화라서 그대로 남아요. 제안 목록에서 구단 꼬리표의 ↑ 표시는 내 자리에 효과가 닿는다는 뜻이에요.</li>
         <li><b>출전 표현</b>: 붙박이 주전 80%+ · 주전 60%+ · 로테이션 40%+ · 교체 자원 20%+ · 벤치.</li>
         <li><b>이번 오프시즌 변화</b>: 지난 시즌 동안 0.6 이상 오른 능력치 셋, 내린 능력치 둘. ▲▲ / ▼▼는 2 이상. 능력치 창의 화살표도 같은 기준이에요.</li>
@@ -7811,15 +7831,82 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (!S.evQ.length) { runSim(); return; }
     S.phase = 'events'; render(); window.scrollTo(0, 0);
   }
+  // ---------- 시즌 진행 연출 ----------
+  // 이미 계산이 끝난 한 시즌을 시간의 흐름으로 보여 주기만 한다. 결과에는 손대지 않는다.
+  // 문구는 시즌마다 고정 시드로 고른다(게임 난수를 쓰지 않는다). 누르면 바로 건너뛴다.
+  const REEL_KEY = 'sk_reel';
+  const reelOn = () => { try { return localStorage.getItem(REEL_KEY) !== '0'; } catch { return true; } };
+  const reelSet = (v) => { try { localStorage.setItem(REEL_KEY, v ? '1' : '0'); } catch { } };
+  // 장소: 경기장 · 라커룸 · 원정길 · 일상. c = 추운 계절 문장(남반구·사막 리그에선 빼고), g = 키퍼 전용, f = 필드 전용
+  const REEL_LINES = [
+    ['골대에 맞은 공의 울림이 옆 동네까지 퍼졌다.', 'f'], ['라커룸에는 승리의 냄새보다 파스 냄새가 짙다.'], ['원정 버스 와이파이는 이번 시즌에도 고쳐지지 않았다.'], ['훈련장 고양이가 새끼를 낳았다. 이름 투표에서 주장의 이름이 졌다.'],
+    ['킥오프 전 잔디 냄새는 해마다 조금씩 다르다.'], ['전광판 시계가 3분 늦게 간다는 걸 아무도 고치지 않았다.'], ['원정 호텔 엘리베이터 거울에 비친 얼굴이 낯설었다.'], ['장비 담당이 축구화 끈을 또 거꾸로 꿰어 놓았다.'],
+    ['관중석 맨 윗줄, 늘 같은 자리에 같은 노인이 앉아 있다.'], ['비 오는 수요일 밤 경기. 공이 무거웠다.'], ['물리치료사의 라디오에서 같은 노래가 석 달째 나온다.'], ['어느 토요일 오후, 공이 크로스바 위로 한참 날아갔다. 관중석에서 누군가 박수를 쳤다.', 'f'],
+    ['새벽 비행기. 창밖으로 다른 나라의 불빛이 지나갔다.'], ['코치가 화이트보드에 그린 화살표가 점점 많아진다.'], ['원정 팬 열두 명이 끝까지 노래를 불렀다.'], ['구단 식당 금요일 메뉴는 언제나 생선이다.'],
+    ['라커룸 스피커 선곡권을 두고 막내들이 가위바위보를 했다.'], ['하프타임, 아무도 말하지 않았다. 그래서 다 알았다.'], ['경기장 밖 핫도그 가게 아저씨가 이름을 외웠다.'], ['교체 사인이 올라가기 직전, 이상하게 다리가 가벼웠다.'],
+    ['훈련장 그물에 구멍이 났다. 공은 늘 그쪽으로 빠져나갔다.'], ['아침 훈련 전, 잔디 위에 서리가 내려 있었다.', 'c'], ['입김이 하얗게 나오는 밤 경기. 장갑을 낀 손이 둔했다.', 'c'], ['크리스마스 연휴에도 공은 굴렀다.', 'c'],
+    ['눈 때문에 경기가 미뤄졌다. 라커룸에서 카드 게임만 세 판.', 'c'], ['해가 길어졌다. 훈련이 끝나도 아직 밝았다.'], ['봄비가 그치자 잔디가 갑자기 짙어졌다.'], ['순위표를 보지 않겠다고 했다. 매일 봤다.'],
+    ['원정 휴게소 자판기가 동전을 삼켰다. 주장이 발로 찼다. 콜라가 두 개 나왔다.'], ['팬이 보낸 손편지 맞춤법이 틀렸다. 그래서 더 좋았다.'], ['경기 전날 밤, 천장의 얼룩이 축구공처럼 보였다.'], ['감독의 커피는 하루에 다섯 잔에서 여섯 잔이 됐다.'],
+    ['볼보이가 공을 너무 빨리 건네서 상대 감독이 항의했다.'], ['라커룸 체중계가 고장 나서 모두가 2kg 가벼워졌다.'], ['동료의 아이가 처음으로 아빠 이름을 응원가로 불렀다.'], ['원정길 차창에 기대 잠들었다가 목에 담이 왔다.'],
+    ['구단 SNS 담당자가 경기보다 먼저 울었다.'], ['훈련 끝나고 혼자 남아 프리킥 스무 개. 열아홉 개가 벽에 맞았다.', 'f'], ['골킥 연습만 백 번. 하프라인을 넘을 때마다 코치가 휘파람을 불었다.', 'g'], ['장갑 끈을 세 번 고쳐 맸다. 습관이 됐다.', 'g'],
+    ['크로스가 올라올 때마다 시간이 아주 조금 느려졌다.', 'g'], ['공이 발등에 정확히 맞는 날은 소리부터 다르다.', 'f'], ['상대 수비수가 경기 내내 사과했다. 반칙은 계속했다.', 'f'], ['비디오 분석 시간에 감독이 같은 장면을 일곱 번 돌렸다.'],
+    ['아무도 없는 경기장에서 스프링클러가 돌았다.'], ['동네 아이들이 담벼락에 등번호를 그려 놓았다.'], ['여름 이적설이 벌써 돌기 시작했다. 아직 겨울인데.'], ['홈 경기 날마다 비가 왔다. 사람들은 이제 우산을 접지 않는다.'],
+    ['잔디 관리인은 시즌 내내 그 페널티 스폿만 다시 깔았다.'], ['원정 경기장 샤워실 온수가 3분이면 끝났다.'], ['경기가 끝나면 늘 같은 편의점에서 같은 우유를 산다.'], ['어느 날 갑자기 몸이 가볍다. 이유는 모른다.'],
+    ['스탠드의 북소리가 심장 박동보다 반 박자 빨랐다.'], ['구단 버스 기사가 은퇴했다. 새 기사는 길을 두 번 잃었다.'], ['선발 명단이 붙는 금요일 오후, 복도가 유난히 조용하다.'], ['응원 걸개 하나가 바람에 날아가 옆 동네 빨랫줄에 걸렸다.'],
+  ];
+  const REEL_WARM = new Set(['BRA', 'ARG', 'KSA']);
+  const REEL_WARP = ['시곗바늘이 반 바퀴 거꾸로 돌았다.', '익숙한 거리인데, 간판 하나가 다르다.', '어딘가에서 다른 그가 같은 날 아침을 맞는다.', '처음 보는 시즌인데, 이상하게 낯익다.', '갈라진 길 위에도 똑같이 해가 뜬다.'];
+  function reelScript(p, res) {
+    const rng = E.seeded('reel|' + p.id + '|' + res.year); const pickN = (arr, n) => { const a = arr.slice(), o = []; while (a.length && o.length < n) o.push(a.splice(Math.floor(rng() * a.length), 1)[0]); return o; };
+    const gk = res.pos === 'GK' || p.pos === 'GK'; const warm = REEL_WARM.has(res.lg);
+    const pool = REEL_LINES.filter(([, t]) => !(t === 'c' && warm) && !(t === 'g' && !gk) && !(t === 'f' && gk)).map(x => x[0]);
+    const warp = p.whatIf && res.year === p.whatIf.y;
+    // 기록이 뒷받침하는 문장만 '그 시즌의 일'로 끼운다 (언제 일어났는지는 말하지 않는다)
+    const real = [];
+    if (res.youthTeam) real.push('유스팀 버스는 1군 버스보다 시끄럽다. 1군 훈련장 쪽을 자꾸 쳐다봤다.');
+    else if ((res.share ?? 1) < .3) real.push('벤치에서 보는 경기는 생각보다 길다.');
+    if (res.loan) real.push('임대 선수에게는 라커룸 구석 자리가 배정됐다.');
+    if ((res.injuryWeeks || 0) >= 4) real.push(`재활실 창문 너머로 동료들의 훈련이 보였다. ${res.injuryWeeks}주.`);
+    if (res.captain) real.push('주장 완장은 생각보다 자주 흘러내렸다.');
+    if (!gk && (res.goals || 0) >= 20) real.push('득점 순위표 맨 윗줄 근처에 이름이 보이기 시작했다.');
+    const fr = [...(warp ? pickN(REEL_WARP, 2) : []), ...pickN(real, 1), ...pickN(pool, warp ? 2 : 3)].slice(0, 4);
+    const t = (res.trophies || []).map(x => x.type);
+    const end = res.pendingFinal ? '그리고 아직, 결승이 남아 있다.' : t.includes('league') ? '우승 트로피는 생각보다 무거웠다.' : res.move === 'down' ? '마지막 휘슬이 울린 경기장은 이상하게 조용했다.' : res.move === 'up' ? '마지막 휘슬. 누군가 잔디 위에 드러누웠다.' : warp ? '그렇게, 아무도 몰랐던 한 해가 지났다.' : pickN(['그렇게, 또 한 해가 지났다.', '그렇게 또 한 시즌이 흘러갔다.', '마지막 휘슬이 울렸다.'], 1)[0];
+    const stages = warm || ['KOR', 'JPN', 'USA'].includes(res.lg) ? ['프리시즌', '개막', '시즌 초반', '반환점', '막바지', '시즌 종료'] : ['프리시즌', '개막', '가을', '겨울', '봄', '시즌 종료'];
+    return { fr, end, stages, warp };
+  }
+  let REEL = null;
+  function seasonReel(p, res) {
+    if (!reelOn() || document.hidden || REEL) return;
+    const sc = reelScript(p, res); const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const el = document.createElement('div'); el.className = 'reel' + (sc.warp ? ' warp' : '') + (reduce ? ' still' : ''); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', `${sl(res.year)} 시즌 진행`);
+    el.innerHTML = `<div class="reel-in"><p class="reel-eye">${sc.warp ? '세계선이 갈라진다 · ' : ''}${sl(res.year)}</p><p class="reel-who"><b>${esc(p.name)}</b><span>${esc(club(res.club).name)} · ${esc(res.pos || p.pos)} · ${res.age}세</span></p>
+      <div class="reel-bar" aria-hidden="true"><i></i></div><div class="reel-ticks" aria-hidden="true">${sc.stages.map(s => `<span>${esc(s)}</span>`).join('')}</div>
+      <p class="reel-stage" aria-live="polite"></p><p class="reel-line"></p>
+      <div class="reel-ft"><button class="reel-off" type="button">다음부터 끄기</button><span>누르면 건너뛰어요</span></div></div>`;
+    document.body.appendChild(el);
+    const bar = el.querySelector('.reel-bar i'), st = el.querySelector('.reel-stage'), ln = el.querySelector('.reel-line');
+    const seq = [...sc.fr, sc.end]; const T = reduce ? 3200 : 5200; const step = T / seq.length; let i = 0, timer = null, done = false;
+    const stageAt = (f) => sc.stages[Math.min(sc.stages.length - 1, Math.floor(f * (sc.stages.length - .001)))];
+    const show = () => { const f = (i + 1) / seq.length; bar.style.width = (f * 100).toFixed(0) + '%'; st.textContent = i === seq.length - 1 ? sc.stages[sc.stages.length - 1] : stageAt(i / (seq.length - 1)); ln.classList.remove('on'); void ln.offsetWidth; ln.textContent = seq[i]; ln.classList.add('on'); };
+    const finish = () => { if (done) return; done = true; clearTimeout(timer); document.removeEventListener('visibilitychange', vis); el.classList.add('out'); setTimeout(() => el.remove(), reduce ? 0 : 260); REEL = null; };
+    const tick = () => { if (i >= seq.length) { timer = setTimeout(finish, 700); return; } show(); i++; timer = setTimeout(tick, step); };
+    const vis = () => { if (document.hidden) finish(); };
+    el.addEventListener('click', (e) => { if (e.target.closest('.reel-off')) { reelSet(false); toast('시즌 연출을 껐어요. 세계선 탭 아래 세이브 칸에서 다시 켤 수 있어요.'); } finish(); });
+    document.addEventListener('keydown', function k(e) { if (done) { document.removeEventListener('keydown', k); return; } if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); finish(); document.removeEventListener('keydown', k); } });
+    document.addEventListener('visibilitychange', vis);
+    REEL = el; tick();
+  }
   function runSim() {
     const p = S.p;
     const res = E.simulateSeason(p, { ...S.choice, role: p.role, liveFinal: true }, S.world, S.mods || {});
     S.lastRes = res; S.choice.memo = ''; p.stage = 'post'; S.mods = {};
     S.postQ = []; S.evIdx = 0; S.evOut = null; S.summerDone = false;
     if (res.branch) branchCut(res.branch, res.year);
-    if (res.pendingFinal) { S.cfinal = E.clubFinalStart(p, res, S.world); S.postQ.push(cfCard(S.cfinal)); Store.save('career', p); S.phase = 'post'; render(); window.scrollTo(0, 0); return; }
+    if (res.pendingFinal) { S.cfinal = E.clubFinalStart(p, res, S.world); S.postQ.push(cfCard(S.cfinal)); Store.save('career', p); S.phase = 'post'; render(); window.scrollTo(0, 0); try { seasonReel(p, res); } catch (e) { console.warn('reel', e); } return; }
     afterSeason(res, true);
     S.phase = 'post'; render(); window.scrollTo(0, 0);
+    try { seasonReel(p, res); } catch (e) { console.warn('reel', e); }
   }
   // 시즌 결과 확정 뒤: 언론·연출·시즌 후 사건. 결승을 직접 치렀으면 그 뒤에 붙는다
   function afterSeason(res, fresh) {
@@ -7971,6 +8058,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       Store.save('career', p); render(); return;
     }
     if (a === 'fwlast') { keepMemo(); if (p.flags.lastSeason === p.year) return; p.flags.lastSeason = p.year; E.fanCer(p, p.club, 10); p.morale = Math.min(100, (p.morale ?? 60) + 8); try { PRESS.queue(p, PRESS.both('fw_last', p, {})); } catch { } S.fwMsg = '이번 시즌이 마지막이라고 발표했다. 남은 경기마다 박수가 따라올 것이다.'; Store.save('career', p); render(); return; }
+    if (a === 'reeltoggle') { reelSet(!reelOn()); toast(reelOn() ? '시즌 진행 연출을 켰어요.' : '시즌 진행 연출을 껐어요.'); render(); return; }
     if (a === 'intlback') {
       keepMemo(); if (p.flags.retAsk === p.year) return; p.flags.retAsk = p.year;
       if (Math.random() < E.natReturnChance(p)) { p.intlRetired = false; p.flags.intlReturned = p.year; E.nudge(p, 'nat', .06, 'return'); try { PRESS.queue(p, PRESS.natHead('intlreturn', p, {})); } catch { } p.pendingEvents = (p.pendingEvents || []).concat('대표팀 복귀'); S.intlMsg = '대표팀 감독이 반겼다. 다시 국기를 단다.'; }
