@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v85'</script>
+<script>window.SK_VER='v86'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -393,7 +393,8 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .reel-who { margin: 0 0 6px; display: flex; flex-direction: column; gap: 2px; } .reel-who b { font-size: 22px; font-weight: 800; } .reel-who span { font-size: 13px; color: rgba(233, 236, 245, .6); }
 .reel-bar { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .1); overflow: hidden; } .reel-bar i { display: block; height: 100%; width: 0; background: #d9a441; border-radius: 2px; transition: width .9s ease; }
 .reel.warp .reel-bar i { background: linear-gradient(90deg, #8f84e8, #d6c9ff); }
-.reel-ticks { display: flex; justify-content: space-between; font-size: 10.5px; color: rgba(233, 236, 245, .38); } @media (max-width: 559px) { .reel-ticks span:nth-child(2), .reel-ticks span:nth-child(3), .reel-ticks span:nth-child(5) { visibility: hidden; } }
+.reel-ticks { position: relative; height: 1.4em; font-size: 10.5px; color: rgba(233, 236, 245, .38); } .reel-ticks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; } .reel-ticks span:first-child { transform: none; } .reel-ticks span:last-child { transform: translateX(-100%); }
+@media (max-width: 559px) { .reel-ticks span:nth-child(2), .reel-ticks span:nth-child(5) { display: none; } }
 .reel-stage { margin: 18px 0 0; font-size: 12.5px; color: rgba(233, 236, 245, .55); min-height: 1.4em; }
 .reel-line { margin: 0; font-family: var(--f-serif); font-size: 21px; line-height: 1.55; min-height: 4.7em; opacity: 0; transform: translateY(4px); transition: opacity .45s ease, transform .45s ease; word-break: keep-all; }
 .reel-line.on { opacity: 1; transform: none; }
@@ -6445,10 +6446,10 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return out;
   }
   // 기록 속 선수: 주인공이 아깝게 놓친 발롱도르를 가져간 사람. 그 사람으로 살아볼 수 있다
-  function ghostTaken(g) { return S.world.careers.some(c => c.ghost?.id === g.id) || (S.p && S.p.ghost?.id === g.id) ? (S.world.careers.find(c => c.ghost?.id === g.id) || S.p) : null; }
+  function ghostTaken(g) { if (S.p && S.p.ghost?.id === g.id) return S.p; return S.world.careers.find(c => c.ghost?.id === g.id) || (S.world.paused || []).find(x => x.ghost === g.id) || null; }
   function ghostBlock(g) {
     (S.ghosts = S.ghosts || {})[g.id] = g; const by = ghostTaken(g); const can = g.birthYear + 16 >= 2026;
-    return `<div class="ghostp">${ava(g.look, g.club, { gk: g.pos === 'GK', age: g.Y - 1 - g.birthYear, cls: 'sm' })}<div class="grow"><p><b>발롱도르 ${g.Y} · ${esc(g.name)}</b></p><p class="small">${flag(g.nation)} ${esc(g.nation)} · ${esc(g.pos)} · ${g.Y - 1 - g.birthYear}세 · ${g.club ? `${crest(g.club, 'xs')} ${esc(club(g.club).name)} · ` : ''}${esc(E.ghostStat(g))}</p><p class="small muted">${g.birthYear}년생 · 이 세계선에 이름만 남은 사람이에요.</p>${by ? `<p class="small">${by === S.p && S.p.status !== 'retired' ? '지금 이 사람으로 살고 있어요.' : `이 사람의 커리어가 있어요. <button class="link" data-card="${by.id}">기록 보기</button>`}</p>` : can ? `<button class="btn sm" data-act="ghoststart" data-g="${g.id}">이 선수로 살아보기</button>` : `<p class="small muted">${g.birthYear}년생이라 2026년에 이미 ${2026 - g.birthYear}세예요. 커리어는 2026년 이후 16세 시즌부터만 시작할 수 있어서, 이 사람은 직접 살아볼 수 없어요.</p>`}</div></div>`;
+    return `<div class="ghostp">${ava(g.look, g.club, { gk: g.pos === 'GK', age: g.Y - 1 - g.birthYear, cls: 'sm' })}<div class="grow"><p><b>발롱도르 ${g.Y} · ${esc(g.name)}</b></p><p class="small">${flag(g.nation)} ${esc(g.nation)} · ${esc(g.pos)} · ${g.Y - 1 - g.birthYear}세 · ${g.club ? `${crest(g.club, 'xs')} ${esc(club(g.club).name)} · ` : ''}${esc(E.ghostStat(g))}</p><p class="small muted">${g.birthYear}년생 · 이 세계선에 이름만 남은 사람이에요.</p>${by ? `<p class="small">${by === S.p && S.p.status !== 'retired' ? '지금 이 사람으로 살고 있어요.' : S.world.careers.includes(by) ? `이 사람의 커리어가 있어요. <button class="link" data-card="${by.id}">기록 보기</button>` : `이 사람으로 살던 커리어가 ${by.year}년에 멈춰 있어요. <button class="link" data-act="resume" data-id="${by.id}">이어하기</button>`}</p>` : can ? `<button class="btn sm" data-act="ghoststart" data-g="${g.id}">이 선수로 살아보기</button>` : `<p class="small muted">${g.birthYear}년생이라 2026년에 이미 ${2026 - g.birthYear}세예요. 커리어는 2026년 이후 16세 시즌부터만 시작할 수 있어서, 이 사람은 직접 살아볼 수 없어요.</p>`}</div></div>`;
   }
   function viewAlmanac(w, VL, led) {
     const P = almPeople(VL, led); if (!P.length) return '<p class="muted">커리어가 하나라도 쌓이면, 해마다 이 세계선의 주인공들이 어디서 무엇을 했는지 여기에 쌓여요.</p>';
@@ -6628,7 +6629,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const lineFld = retired.length ? `<div class="fld"><span>세계선</span>${lineIds.length > 1 ? `<select id="f-line" class="inp">${allowed.map(id => `<option value="${id}" ${id === f.line ? 'selected' : ''}>${esc(lineLabel(id))}</option>`).join('')}</select>` : ''}<p class="muted small">${span ? `이 세계선엔 ${span[0]}–${span[1]}년의 기록이 있어요. 기록이 있는 해에 뛰면 역사가 버티고, 기록된 우승·발롱도르를 뒤집으면 세계선이 갈라져요. 그때 뛰던 선배들도 동료나 상대로 나와요.` : '아직 기록이 없는 세계선이에요.'}</p></div>` : '';
     const yearFld = `<label class="fld"><span>시작 연도 · 16세 시즌</span><div class="row wrapgap"><input id="f-year" class="inp grow" type="number" min="${f.mode === 'heir' && parent && f.kid < 0 ? heirYearRange(parent)[0] : 2026}" max="${f.mode === 'heir' && parent && f.kid < 0 ? heirYearRange(parent)[1] : 2400}" value="${f.startYear}" ${(f.mode === 'heir' && f.kid >= 0) || f.mode === 'ghost' ? 'readonly' : ''}>${span && f.mode === 'new' ? `<button class="btn sm" data-yr="${Math.max(2026, span[0] - 2)}">선배들과 같은 시대</button><button class="btn sm" data-yr="${Math.max(2026, span[1] - 8)}">기록 끝 무렵</button><button class="btn sm" data-yr="${span[1] + 1}">기록 이후</button>` : ''}</div>${f.mode === 'heir' && parent && f.kid < 0 ? `<p class="muted small">${f.startYear - 16}년생 · ${esc(parent.name)} ${f.startYear - 16 - parent.birthYear}세 때${parent.spouse?.married ? ` · ${parent.spouse.married}년 결혼` : ''}. 태어난 해는 연도를 바꿔 고를 수 있어요.</p>` : ''}</label>`;
     return `<section class="panel"><h1 class="h1">새 커리어</h1>
-      ${f.mode === 'ghost' ? (() => { const g = f.ghost; return `<div class="note ghostnote"><p><b>세계선의 기록 · ${g.Y} 발롱도르 ${esc(g.name)}</b></p><p class="small">기록 속 그는 ${sl(g.Y - 1)} 시즌 ${g.club ? esc(club(g.club).name) + '에서 ' : ''}${esc(E.ghostStat(g))}${E.hasJong(E.ghostStat(g)) ? '을' : '를'} 남기고 발롱도르를 받았어요. 이름도 국적도 태어난 해도 정해져 있어요. 나머지는 이제부터예요.</p><p class="small muted">그 해 발롱도르를 받으면 세계선이 기억하는 대로 흘러가요. 놓치면 세계선이 갈라져요.</p><button class="btn sm" data-mode="new">기록 속 선수 그만두고 새 선수로</button></div>`; })() : ''}
+      ${f.mode === 'ghost' ? (() => { const g = f.ghost; return `<div class="note ghostnote"><p><b>세계선의 기록 · ${g.Y} 발롱도르 ${esc(g.name)}</b></p><p class="small">기록 속 그는 ${sl(g.Y - 1)} 시즌 ${g.club ? esc(club(g.club).name) + '에서 ' : ''}${esc(E.ghostStat(g))}${E.hasJong(E.ghostStat(g)) ? '을' : '를'} 남기고 발롱도르를 받았어요. 이름도 얼굴도 국적도 태어난 해도 정해져 있어요. 나머지는 이제부터예요.</p><p class="small muted">그 해 발롱도르를 받으면 세계선이 기억하는 대로 흘러가요. 놓치면 세계선이 갈라져요.</p></div>`; })() : ''}
       ${retired.length && f.mode !== 'ghost' ? `<div class="seg"><button data-mode="new" class="${f.mode === 'new' ? 'on' : ''}">새 선수</button><button data-mode="heir" class="${f.mode === 'heir' ? 'on' : ''}">가문 후손으로 시작</button></div>` : ''}
       ${f.mode === 'heir' ? `<label class="fld"><span>누구의 후손인가요</span><select id="f-parent" class="inp">${retired.map(c => `<option value="${c.id}" ${c.id === f.parentId ? 'selected' : ''}>${esc(c.name)} · ${c.pos} · ${c.startYear}–${c.endYear} · 피크 ${c.peakOvr}${(c.kids || []).length ? ` · 자녀 ${c.kids.length}` : ''}</option>`).join('')}</select></label>
         ${kids.length ? `<div class="fld"><span>어느 아이로 시작할까요</span><div class="seg">${kids.map((k, i) => `<button data-kid="${i}" class="${f.kid === i ? 'on' : ''}" ${k.used ? 'disabled title="이미 커리어가 있어요"' : ''}>${esc(k.name)} (${k.born}년생)${k.used ? ' · 뛰었음' : ''}</button>`).join('')}<button data-kid="-1" class="${f.kid === -1 ? 'on' : ''}">기록에 없는 아이</button></div><p class="muted small">${f.kid >= 0 ? '커리어 중에 태어난 아이예요. 이름과 태어난 해는 기록 그대로예요.' : '부모의 커리어 기록에 없는 아이로 시작해요. 시작하면 부모의 자녀 목록에 올라가요.'}</p></div>` : ''}
@@ -6651,7 +6652,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <div class="fld"><span>운명의 가혹함</span><div class="seg">${Object.entries(E.SEVERITY).map(([k, v]) => `<button data-sev="${k}" class="${(f.severity || 'real') === k ? 'on' : ''}">${v.name}</button>`).join('')}</div><p class="muted small">${esc(E.SEVERITY[f.severity || 'real'].desc)}${f.severity === 'harsh' ? ' 장면 묘사 없이, 담담하게 다뤄져요.' : ''} 커리어를 시작하면 바꿀 수 없어요.</p></div>
       ${lineFld}${yearFld}
       ${E.clubStr(f.club, f.startYear) >= 76 ? '<p class="note">빅클럽 유스예요. 18세에 1군 승격 심사가 까다로워서 기대에 못 미치면 방출될 수 있어요.</p>' : ''}
-      ${det('newlook', '외모 꾸미기', look)}
+      ${f.mode === 'ghost' ? '' : det('newlook', '외모 꾸미기', look)}
       ${det('newfree', '자유 설정', `<div class="fld"><span>재능</span><div class="seg"><button data-talent="" class="${!f.talent ? 'on' : ''}">운에 맡기기</button>${Object.entries(E.TALENT).map(([k, t]) => `<button data-talent="${k}" class="${f.talent === k ? 'on' : ''}">${t.label}</button>`).join('')}</div><p class="muted small">기본은 운에 맡기기예요. 재능과 성장 곡선이 숨겨지고, 스카우트 평가와 사건으로 조금씩 드러나요.</p></div>`)}
       <div class="row wrapgap"><button class="btn" data-go="world">취소</button><button class="btn" data-act="rall">전부 무작위</button><button class="btn primary grow" data-act="create">${sl(f.startYear)} 시즌, 16세로 시작</button></div>
     </section>`;
@@ -7338,7 +7339,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   }
   function pauseActive() {
     const p = S.p; if (!p) return; Store.save('career', p);
-    S.world.paused = (S.world.paused || []).filter(x => x.id !== p.id).concat({ id: p.id, name: p.name, year: p.year, wi: p.whatIf ? p.whatIf.label : null });
+    S.world.paused = (S.world.paused || []).filter(x => x.id !== p.id).concat({ id: p.id, name: p.name, year: p.year, wi: p.whatIf ? p.whatIf.label : null, ghost: p.ghost?.id || null });
   }
   function startWhatIf() {
     const W = S.wi; if (!W || W.sel == null) return; const pt = W.pts[W.sel];
@@ -8007,7 +8008,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const sc = reelScript(p, res); const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const el = document.createElement('div'); el.className = 'reel' + (sc.warp ? ' warp' : '') + (reduce ? ' still' : ''); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', `${sl(res.year)} 시즌 진행`);
     el.innerHTML = `<div class="reel-in"><p class="reel-eye">${sc.warp ? '세계선이 갈라진다 · ' : ''}${sl(res.year)}</p><p class="reel-who"><b>${esc(p.name)}</b><span>${esc(club(res.club).name)} · ${esc(res.pos || p.pos)} · ${res.age}세</span></p>
-      <div class="reel-bar" aria-hidden="true"><i></i></div><div class="reel-ticks" aria-hidden="true">${sc.stages.map(s => `<span>${esc(s)}</span>`).join('')}</div>
+      <div class="reel-bar" aria-hidden="true"><i></i></div><div class="reel-ticks" aria-hidden="true">${sc.stages.map((s, i, a) => `<span style="left:${(i / (a.length - 1) * 100).toFixed(2)}%">${esc(s)}</span>`).join('')}</div>
       <p class="reel-stage" aria-live="polite"></p><p class="reel-line"></p>
       <div class="reel-ft"><button class="reel-off" type="button">다음부터 끄기</button><span>누르면 건너뛰어요</span></div></div>`;
     document.body.appendChild(el);
@@ -8075,7 +8076,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const p = S.p;
     if (S.mods && Object.keys(S.mods).length) { p.nextMods = p.nextMods || {}; for (const k of ['form', 'share', 'rating']) if (S.mods[k]) p.nextMods[k] = (p.nextMods[k] || 0) + S.mods[k]; if (S.mods.ceil) p.ceil += S.mods.ceil; }
     S.mods = {}; S.tour = null;
-    try { const b = E.ballonLate(p, S.world); ballonCut(p, b); if (b?.branch) branchCut(b.branch, b.year - 1); } catch (e) { console.warn('cut', e); }
+    try { const b = E.ballonLate(p, S.world); ballonCut(p, b); if (b?.branch) branchCut(b.branch, b.branch.year ?? (b.year - 1)); } catch (e) { console.warn('cut', e); }
     E.endOfSeason(p, S.world); p.stage = 'prep'; S.open.clear(); S.numAsk = null; S.qn = null; S.confirmIntl = false; S.intlMsg = ''; S.fwMsg = '';
     S.choice = defaultChoice(p); S.offerPick = -1; S.pendingNumber = null;
     S.windowQ = p.forcedRetire ? [] : EVENTS.draw('window', ctxFor(p), Math.random() < .45 ? 1 : 0);
@@ -8108,11 +8109,11 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     }
     if (S.view === 'new' && ['rname', 'rnation', 'rclub', 'rlook', 'rall'].includes(a)) {
       const f = S.newForm; f.name = $('#f-name').value;
-      if (f.mode === 'ghost' && ['rname', 'rnation'].includes(a)) return;
+      if (f.mode === 'ghost' && ['rname', 'rnation', 'rlook'].includes(a)) return;
       if ((a === 'rnation' || a === 'rall') && f.mode !== 'ghost') { f.nation = E.pick(E.NATIONS).name; }
       if (a === 'rname' || a === 'rnation' || a === 'rall') f.name = f.mode === 'heir' || f.mode === 'ghost' ? f.name : NAMES.gen(f.nation);
       if (a === 'rclub' || a === 'rall' || a === 'rnation') f.club = randomClub(f.nation);
-      if (a === 'rlook' || a === 'rall' || a === 'rnation') f.look = AVATAR.randomLook(Math.random, f.nation);
+      if ((a === 'rlook' || a === 'rall' || a === 'rnation') && f.mode !== 'ghost') f.look = AVATAR.randomLook(Math.random, f.nation);
       if (a === 'rall' && f.mode !== 'ghost') { f.pos = E.pick(Object.keys(E.POS)); f.role = E.pick(E.rolesFor(f.pos)).id; f.trait = E.pick(Object.keys(E.TRAITS)); f.number = E.pick([7, 8, 9, 10, 11, 14, 17, 19, 21, 22, 23, 77, 99, 4, 5, 6, 1, 3]); }
       render(); return;
     }
@@ -8357,6 +8358,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       c.gv = 2; changed = true;
     }
     if (S.p && (S.p.gv || 0) < 2) { try { ghostFill(S.p, S.p.id); } catch { } S.p.gv = 2; changed = true; }
+    for (const x of w.paused || []) if (!('ghost' in x)) { let d = null; try { d = await Store.loadCareer(x.id); } catch { } x.ghost = d?.ghost?.id || null; changed = true; }
     for (const l of Object.values(w.lines || {})) if (/^만약 · /.test(l.name || '')) { l.name = l.name.replace(/^만약 · /, '만약에 · '); changed = true; }
     const needs = w.careers.some(c => !c.line || !w.lines[c.line]) || (S.p && !(S.p.line && w.lines[S.p.line]));
     if (needs) { let out = []; try { out = E.migrateLines(w, S.p); } catch (e) { console.warn('lines', e); } changed = true; if (out.length) S.migMsg = `겹쳐 있던 커리어를 세계선 ${out.length}갈래로 정리했어요. 세계선 → 세계선 계보에서 볼 수 있어요.`; }
