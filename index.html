@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v75'</script>
+<script>window.SK_VER='v76'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2788,6 +2788,8 @@ const ENGINE = (() => {
     }
     out.sort((a, b) => clubStr(b.club, year) - clubStr(a.club, year));
     let res = out.slice(0, (p.wantOut || free) ? 6 : 4);
+    // 여기서 끝내기로 약속한 선수에게는 다른 구단이 덜 묻는다
+    if (fwPact(p, cur)) res = res.filter(() => R() < .35);
     if ((p.age <= 22 && last && (last.share ?? 1) < .4 && !last.youthTeam) || (p.age <= 25 && benched) || extra.loan) {
       const cands = CLUBS.filter(c => c.id !== cur && !c.mil && Math.abs(clubStr(c.id, year) - (o + 1)) <= 4 && policyMul(p, c, o) >= .3);
       for (let i = 0; i < (extra.loan ? 3 : 2) && cands.length; i++) { const c = cands.splice(Math.floor(R() * cands.length), 1)[0]; res.push(offerTerms(p, { club: c.id, type: 'loan', expect: expectRole(o, clubStr(c.id, year)), years: 1 })); }
@@ -2832,7 +2834,7 @@ const ENGINE = (() => {
       if (R() < pr) p.pendingEvents.push('1군 승격');
       else p.academyCut = { near: o >= center - 5, club: p.club };
     }
-    p.released = !p.youth && p.age >= 30 && (last.share ?? 1) < .18;
+    p.released = !p.youth && p.age >= 30 && (last.share ?? 1) < .18 && !fwPact(p);
     p.wantOut = !!p.wantOutNext || (p.flags.superAgent && R() < .5); p.wantOutNext = false;
     if (!p.youth) ensureWage(p);
     p.renewOffer = !p.youth && p.contract <= 0 && !p.loanFrom ? renewWage(p) : null;
@@ -2851,6 +2853,10 @@ const ENGINE = (() => {
       p.pendingEvents.push((offer.type === 'free' ? '자유 이적: ' : '이적: ') + CLUB[offer.club].name);
       // 방출당했거나 구단이 무너져 떠난 선수는 배신자가 아니다
       const pushed = p.released || p.flags?.forcedOut === p.year; p.flags.leftPushed = pushed ? p.year : p.flags.leftPushed;
+      const pact = fwPact(p, from); if (pact && !pushed) { pact.broken = p.year; p.fans[from] = clamp((p.fans[from] ?? 30) - 30, 0, 100); p.tags.push('fwbreak'); p.pendingEvents.push(`${CLUB[from].name}에서 끝내겠다던 약속을 깼다`); }
+      const rf = p.flags?.retireHere; if (rf && rf.state === 'refused' && rf.club === from && p.year - rf.year <= 3) p.flags.dissPending = { club: from, to: offer.club, year: p.year };
+      if (offer.benchStart) { p.nextMods = p.nextMods || {}; p.nextMods.share = (p.nextMods.share || 0) - .1; }
+      if (offer.homecoming) { p.flags.retireHere = { club: offer.club, year: p.year, state: 'agreed', home: true }; fanCer(p, offer.club, 8); p.pendingEvents.push(`귀향 · ${CLUB[offer.club].name}`); }
       if (isRival(from, offer.club) && !pushed) { p.fans[from] = clamp((p.fans[from] ?? 30) - 45, 0, 100); p.pendingEvents.push(CLUB[from].name + ' 팬들이 라이벌 이적에 분노했다'); p.tags.push('rivalmove'); }
       else if (!pushed) p.fans[from] = clamp((p.fans[from] ?? 30) - 8, 0, 100);
       // 같은 여름에 맺은 재계약을 깨고 떠났다: 이례적인 사건으로 남는다
@@ -2876,7 +2882,7 @@ const ENGINE = (() => {
     return {
       id: p.id, name: p.name, nation: p.nation, pos: p.pos, origPos: p.origPos, role: p.role, trait: p.trait, look: p.look, nickname: p.nickname, nickLocal: p.nickLocal || null, roles: mainRoles(p), body: p.body ? { h: p.body.h, b: p.body.b } : null, legends: (p.legends || []).map(e => ({ ...e, line: legendLine(e) })), feats: (p.feats || []).map(e => ({ ...e, line: featLine(e) })), birthYear: p.birthYear, startYear: p.startYear, endYear: p.year - 1,
       retireAge: p.age - 1, seasons: s.length, clubs: topClubs.length, peakOvr: p.peakOvr,
-      apps: sum('apps'), goals: sum('goals'), gt: p.pos === 'GK' ? null : routeSum(p, s), gtTop: p.pos === 'GK' ? null : routeTop(p), assists: sum('assists'), saves: sum('saves'), cs: sum('cs'), avgRating: +avg.toFixed(2),
+      apps: sum('apps'), goals: sum('goals'), farewell: farewellOf(p), lastWords: p.flags.lastWords || null, gt: p.pos === 'GK' ? null : routeSum(p, s), gtTop: p.pos === 'GK' ? null : routeTop(p), assists: sum('assists'), saves: sum('saves'), cs: sum('cs'), avgRating: +avg.toFixed(2),
       trophies: p.trophies.filter(t => t.type !== 'youth').length, youthTrophies: p.trophies.filter(t => t.type === 'youth').length, awards: p.awards.length, awardCount, bdo: p.bdoYears.length, bdoYears: p.bdoYears.slice(),
       topClubs, stints, familyId: p.familyId || p.id, parentId: p.parentId, generation: p.generation, caps: p.caps, intlGoals: p.intlGoals,
       uclFinals: p.finals.filter(f => f.comp === 'UEFA 챔피언스리그').length, uclWins: p.finals.filter(f => f.comp === 'UEFA 챔피언스리그' && f.won).length,
@@ -2929,42 +2935,42 @@ const ENGINE = (() => {
   // 구단 색깔 유형: a = 성장이 조금 더 붙는 능력치, pos = 그 효과를 받는 자리(역할 그룹), young = 21세 이하 성장 배수, big = 큰 경기 체질
   const SCHOOLS = {
     wing: { tag: '윙어 사관학교', desc: '측면 공격수와 포워드를 잘 키워 낸다는 평판', pos: ['W', 'ST', 'AM', 'WB'], a: { DRI: .12, PAC: .1, SHO: .08, CRO: .05 } },
-    academy: { tag: '유스 명가', desc: '어린 선수에게 기회를 주고 잘 키운다', young: 1.06 },
-    tiki: { tag: '점유 철학', desc: '짧은 패스와 위치 선정이 몸에 밴다', a: { PAS: .1, VIS: .1, DRI: .05 } },
-    def: { tag: '수비 명가', desc: '수비 조직과 대인 방어를 철저히 가르친다', pos: ['CB', 'FB', 'WB', 'DM'], a: { DEF: .12, TKL: .1, AIR: .06 } },
-    press: { tag: '압박의 팀', desc: '전방 압박과 빠른 전환을 몸으로 배운다', a: { PRS: .12, MOV: .06, PAC: .05 } },
-    grit: { tag: '투지의 팀', desc: '거칠고 끈질긴 축구. 몸싸움이 늘고 정신력이 단단해진다', a: { STR: .1, TKL: .06 } },
-    gk: { tag: '골키퍼 명가', desc: '좋은 골키퍼를 꾸준히 배출해 왔다', pos: ['GK'], a: { REF: .1, ONE: .1, GPO: .08, HAN: .06 } },
-    fullback: { tag: '풀백 명가', desc: '공격적인 풀백을 잘 키운다', pos: ['FB', 'WB'], a: { CRO: .1, PAC: .08, TKL: .05 } },
-    stepping: { tag: '빅리그행 정거장', desc: '젊은 재능을 키워 비싸게 판다. 빅클럽 스카우트가 늘 지켜본다', young: 1.04 },
-    flair: { tag: '드리블러의 산실', desc: '공을 오래 갖고 노는 선수를 사랑한다', a: { DRI: .12, VIS: .04 } },
-    striker: { tag: '골잡이 계보', desc: '이름난 9번들이 거쳐 간 팀', pos: ['ST'], a: { SHO: .1, MOV: .08 } },
-    playmaker: { tag: '10번의 전통', desc: '경기를 읽고 마지막 패스를 넣는 선수를 키운다', pos: ['AM', 'CM', 'DM'], a: { VIS: .1, PAS: .08 } },
+    academy: { tag: '유스 화수분', desc: '퍼내도 퍼내도 유망주가 나온다. 어린 선수에게 기회를 주고 잘 키운다', young: 1.06 },
+    tiki: { tag: '티키타카 학당', desc: '짧은 패스와 위치 선정을 몸에 새긴다', a: { PAS: .1, VIS: .1, DRI: .05 } },
+    def: { tag: '빗장수비 학교', desc: '간격과 대인 방어를 집요하게 가르친다. 수비수는 여기서 어른이 된다', pos: ['CB', 'FB', 'WB', 'DM'], a: { DEF: .12, TKL: .1, AIR: .06 } },
+    press: { tag: '사냥개 훈련소', desc: '공을 잃으면 3초 안에 다시 문다. 압박과 전환이 몸에 밴다', a: { PRS: .12, MOV: .06, PAC: .05 } },
+    grit: { tag: '근성 도장', desc: '거칠고 끈질긴 축구. 몸싸움이 늘고 정신력이 단단해진다', a: { STR: .1, TKL: .06 } },
+    gk: { tag: '수문장 가문', desc: '대를 이어 좋은 골키퍼를 배출해 왔다', pos: ['GK'], a: { REF: .1, ONE: .1, GPO: .08, HAN: .06 } },
+    fullback: { tag: '풀백 공장', desc: '측면을 끝까지 오르내리는 공격적인 풀백을 찍어 낸다', pos: ['FB', 'WB'], a: { CRO: .1, PAC: .08, TKL: .05 } },
+    stepping: { tag: '빅리그행 환승역', desc: '젊은 재능을 키워 비싸게 판다. 빅클럽 스카우트가 늘 지켜본다', young: 1.04 },
+    flair: { tag: '드리블 놀이터', desc: '공을 오래 갖고 노는 선수를 사랑한다. 발재간이 는다', a: { DRI: .12, VIS: .04 } },
+    striker: { tag: '9번의 혈통', desc: '이름난 골잡이들이 대를 이어 거쳐 간 팀', pos: ['ST'], a: { SHO: .1, MOV: .08 } },
+    playmaker: { tag: '10번의 성지', desc: '경기를 읽고 마지막 패스를 넣는 선수를 키운다', pos: ['AM', 'CM', 'DM'], a: { VIS: .1, PAS: .08 } },
     big: { tag: '별들의 무대', desc: '압박감이 다르다. 여기서 뛰면 큰 경기에 익숙해진다', big: 1 },
     cauldron: { tag: '지옥의 홈구장', desc: '관중이 경기를 바꾼다. 웬만한 큰 경기에는 떨지 않게 된다', big: 1 },
     star: { tag: '오일 머니', desc: '세계적인 스타가 모여든다. 배울 사람도 많고 경쟁도 치열하다' },
     dakgong: { tag: '닥공', desc: '닥치고 공격. 공격수가 숫자를 쌓기 좋은 팀', pos: ['ST', 'W', 'AM'], a: { SHO: .08, MOV: .06 } },
   };
   const CLUB_SCHOOL = {
-    mci: ['tiki'], ars: ['academy', 'tiki'], liv: ['press', 'fullback'], che: ['academy'], mun: ['academy', 'wing'], tot: ['wing'], new: ['grit'], bha: ['stepping'], whu: ['academy'], cry: ['wing'], eve: ['grit'], bre: ['stepping'],
-    sou: ['academy', 'wing'], lee: ['grit'], sto: ['grit'],
-    rma: ['big'], bar: ['tiki', 'academy'], atm: ['def', 'grit'], ath: ['academy', 'grit'], vil: ['stepping'], rso: ['academy'], bet: ['flair'], sev: ['fullback', 'stepping'], val: ['wing', 'academy'], gir: ['stepping'], cel: ['academy'], osa: ['grit'], spg: ['academy'],
-    int: ['def'], nap: ['flair', 'cauldron'], mil: ['def', 'big'], juv: ['def', 'big'], ata: ['academy', 'press'], rom: ['academy'], fio: ['playmaker'], tor: ['grit'], par: ['gk'],
-    bay: ['big'], lev2: ['stepping'], bvb: ['stepping', 'wing'], rbl: ['press', 'stepping'], vfb: ['academy'], scf: ['academy'], tsg: ['academy'], bmg: ['stepping'], m05: ['press'], fcu: ['grit'], s04: ['academy', 'gk'], fck: ['grit'],
-    psg: ['big'], om: ['cauldron'], asm: ['academy', 'stepping'], ol: ['academy'], losc: ['stepping'], rcl: ['grit'], srfc: ['academy'], fcn2: ['academy'], asse: ['academy'],
-    slb: ['academy', 'stepping'], scp: ['academy', 'wing'], fcp: ['stepping', 'grit'], scb: ['stepping'],
-    psv: ['stepping', 'wing'], aja: ['academy', 'tiki'], fey: ['academy'], az: ['stepping'], hee: ['striker'],
-    gal: ['cauldron'], fen: ['cauldron'], bjk: ['cauldron'],
-    bru: ['stepping'], and: ['academy'], gnk: ['academy', 'gk'], stl: ['academy'], usg: ['stepping'],
-    cel2: ['cauldron'], ran: ['cauldron'], oly: ['cauldron'], paok: ['cauldron'],
-    fla: ['flair', 'big'], pal2: ['academy'], spfc: ['academy'], cor: ['grit'], gre: ['academy'], san: ['wing', 'academy'],
-    riv: ['academy', 'playmaker'], boc: ['grit', 'cauldron'], est: ['grit'], arj: ['academy', 'playmaker'], vel: ['academy'],
-    hil: ['star'], nas: ['star'], itt: ['star'], ahl: ['star'], mia: ['star'],
-    uls: ['grit'], jbh: ['dakgong'], poh: ['academy'], fcs: ['academy'], gwj: ['tiki'],
-    kaw: ['tiki'], yok: ['press'], kas2: ['grit'], hir: ['academy'], gam: ['academy'],
-    din: ['academy', 'playmaker'], haj: ['cauldron'], crv: ['academy', 'cauldron'], prt: ['academy'], shk: ['flair'], dyn: ['academy'],
-    sla: ['press'], spa: ['academy'], lech: ['academy'], pus: ['academy'], far: ['academy'], lud: ['stepping'],
-    sal: ['press', 'stepping'], bas: ['stepping'], mjy: ['stepping'], nsj: ['academy'], bod: ['press'], mff: ['academy'],
+ mci: ['tiki'], ars: ['tiki'], liv: ['press', 'fullback'], mun: ['academy', 'wing'], tot: ['wing'], new: ['grit'], bha: ['stepping'], cry: ['wing'], eve: ['grit'], bre: ['stepping'],
+ sou: ['academy', 'wing'], lee: ['grit'], sto: ['grit'],
+ rma: ['big'], bar: ['tiki', 'academy'], atm: ['def', 'grit'], ath: ['academy', 'grit'], vil: ['stepping'], rso: ['academy'], bet: ['flair'], sev: ['fullback', 'stepping'], val: ['wing'], gir: ['stepping'], osa: ['grit'], 
+ int: ['def'], nap: ['flair', 'cauldron'], mil: ['def', 'big'], juv: ['def', 'big'], ata: ['academy', 'press'], fio: ['playmaker'], tor: ['grit'], par: ['gk'],
+ bay: ['big'], lev2: ['stepping'], bvb: ['stepping', 'wing'], rbl: ['press', 'stepping'], bmg: ['stepping'], m05: ['press'], fcu: ['grit'], s04: ['academy', 'gk'], fck: ['grit'],
+ psg: ['big'], om: ['cauldron'], asm: ['stepping'], ol: ['academy'], losc: ['stepping'], rcl: ['grit'], srfc: ['academy'], fcn2: ['academy'], 
+ slb: ['academy', 'stepping'], scp: ['academy', 'wing'], fcp: ['stepping', 'grit'], scb: ['stepping'],
+ psv: ['stepping', 'wing'], aja: ['academy', 'tiki'], az: ['stepping'], hee: ['striker'],
+ gal: ['cauldron'], fen: ['cauldron'], bjk: ['cauldron'],
+ bru: ['stepping'], and: ['academy'], gnk: ['academy', 'gk'], usg: ['stepping'],
+ cel2: ['cauldron'], ran: ['cauldron'], oly: ['cauldron'], paok: ['cauldron'],
+ fla: ['flair', 'big'], cor: ['grit'], san: ['wing', 'academy'],
+ riv: ['academy', 'playmaker'], boc: ['grit', 'cauldron'], est: ['grit'], arj: ['academy', 'playmaker'], 
+ hil: ['star'], nas: ['star'], itt: ['star'], ahl: ['star'], mia: ['star'],
+ uls: ['grit'], jbh: ['dakgong'], poh: ['academy'], gwj: ['tiki'],
+ kaw: ['tiki'], yok: ['press'], kas2: ['grit'], 
+ din: ['academy', 'playmaker'], haj: ['cauldron'], crv: ['cauldron'], shk: ['flair'], 
+ sla: ['press'], spa: ['academy'], pus: ['academy'], lud: ['stepping'],
+ sal: ['press', 'stepping'], bas: ['stepping'], mjy: ['stepping'], bod: ['press'], 
   };
   // 이 구단에서 이 선수가 받는 색깔: 효과가 닿는 능력치(hit)와 함께
   function schoolOf(clubId, year, p) {
@@ -3104,6 +3110,50 @@ const ENGINE = (() => {
     return t;
   }
 
+  // ---------- 명예로운 은퇴: '여기서 끝내고 싶다' ----------
+  // 구단이 받아 주면 그 팀에서 축구화를 벗는 약속이 생긴다. 결번 판정에는 의식(선언·고별전)으로 오른 팬심을 넣지 않는다
+  // 구단의 문화: 어떤 팀은 전설에게도 나가는 문만 열어 준다
+  const FW_CLUB = {
+    rma: [-.42, '레알 마드리드는 전설에게도 문을 열어 준다. 대개는 나가는 문을.'], psg: [-.38, '파리는 지난 이름을 오래 붙잡지 않는다.'], che: [-.3, '첼시는 늘 내일의 선수를 산다.'],
+    mci: [-.2, '맨체스터 시티의 계획표에는 은퇴식 날짜가 잘 적히지 않는다.'], juv: [-.18, '유벤투스는 이기는 것만 기억한다. 작별도 계산한다.'], bar: [-.15, '바르셀로나도 레전드를 끝까지 지켜 주지는 못했다.'],
+    bay: [-.1, '바이에른은 이별에 능숙하다. 정중하고, 단호하게.'], hil: [-.2, '오일 머니의 시계는 다음 스타에 맞춰져 있다.'], nas: [-.2, '오일 머니의 시계는 다음 스타에 맞춰져 있다.'], itt: [-.2, '오일 머니의 시계는 다음 스타에 맞춰져 있다.'], ahl: [-.2, '오일 머니의 시계는 다음 스타에 맞춰져 있다.'],
+    ath: [.22, '아틀레틱은 자기 사람을 끝까지 품는다.'], rso: [.1, '레알 소시에다드는 제 아이들을 기억한다.'], rom: [.12, '로마는 제 아들에게 약하다.'], mil: [.05, '밀란은 깃발을 아낀다.'], mun: [.03, ''], liv: [.05, '리버풀은 혼자 걷게 두지 않는다.'],
+  };
+  const fwSize = (id) => { const s = CLUB[id]?.str || 60; return s >= 84 ? -.1 : s >= 77 ? .03 : .1; };
+  const fwClubLine = (id) => FW_CLUB[id]?.[1] || '';
+  // 지금 이 구단과 맺은 약속 (깨지지 않았을 때만)
+  const fwPact = (p, id = p.club) => { const f = p.flags?.retireHere; return f && f.state === 'agreed' && !f.broken && f.club === id ? f : null; };
+  // 결번용 팬심에서 빼는 '의식' 몫: 선언·고별전으로 오른 만큼
+  function fanCer(p, id, d) { E_bumpFans(p, id, d); p.flags.fanCer = p.flags.fanCer || {}; p.flags.fanCer[id] = (p.flags.fanCer[id] || 0) + d; }
+  function E_bumpFans(p, id, d) { p.fans = p.fans || {}; p.fans[id] = clamp((p.fans[id] ?? 30) + d, 0, 100); }
+  const fwSeasons = (p, id) => p.seasons.filter(s => s.club === id && !s.youthTeam && !s.loan).length;
+  // 구단의 대답: yes(약속) · cond(조건부) · no(거절)
+  function farewellAsk(p, kind = 'here') {
+    const home = kind === 'home'; const id = home ? p.homeClub : p.club; if (!CLUB[id]) return null;
+    const o = ovr(p), cs = clubStr(id, p.year), d = o - cs; const n = fwSeasons(p, id); const fan = p.fans[id] ?? 30;
+    const major = p.trophies.filter(t => t.club === id && MAJOR_T.has(t.type)).length;
+    let sc = home ? .25 + (fan - 50) / 100 + (p.rep || 0) / 220 + (d >= -3 ? .15 : d >= -8 ? 0 : -.25) + (p.flags['snub_' + id] ? -.3 : 0) + Math.min(.15, n * .03)
+      : .15 + Math.min(.35, (n - 3) * .05) + (fan - 60) / 120 + ((p.trust ?? 50) - 50) / 160 + (p.captain ? .12 : 0) + Math.min(.16, major * .04) + (d >= 0 ? .1 : d >= -4 ? 0 : d >= -8 ? -.15 : -.3);
+    sc += (p.age >= 36 ? -.08 : 0) + fwSize(id) + (FW_CLUB[id]?.[0] || 0) + (p.trait === 'loyal' ? .05 : 0);
+    const pr = clamp(sc, .02, .85); const r = R();
+    const out = r < pr ? 'yes' : r < pr + (home ? .15 : .3) * clamp(pr * 2.5, .15, 1) ? 'cond' : 'no';
+    const ask = { kind, club: id, year: p.year, out, pr: +pr.toFixed(2) };
+    if (out === 'cond') ask.terms = d < -4 ? 'bench' : 'wage';
+    p.flags.fwAsk = p.flags.fwAsk || {}; p.flags.fwAsk[kind] = ask;
+    return ask;
+  }
+  // 약속 성사: 마지막 계약 (연봉은 조금 줄고, 계약은 최소 2년)
+  function farewellAgree(p, ask, terms) {
+    const id = ask.club; p.flags.retireHere = { club: id, year: p.year, state: 'agreed', home: ask.kind === 'home', terms: terms || null };
+    if (ask.kind !== 'home') { const cut = terms === 'wage' ? .7 : .9; p.wage = +((p.wage || 0) * cut).toFixed(2); p.contract = Math.max(p.contract || 0, 2); p.wageHist = (p.wageHist || []).concat({ year: p.year, club: id, wage: p.wage, years: p.contract, farewell: true }); p.renewOffer = null; if (terms === 'bench') { p.nextMods = p.nextMods || {}; p.nextMods.share = (p.nextMods.share || 0) - .12; } }
+    fanCer(p, id, 6); p.morale = clamp((p.morale ?? 60) + 6, 0, 100);
+  }
+  function farewellRefused(p, ask) { p.flags.retireHere = { club: ask.club, year: p.year, state: 'refused', home: ask.kind === 'home' }; p.morale = clamp((p.morale ?? 60) - 6, 0, 100); }
+  // 친정의 마지막 제안
+  function homecomingOffer(p) { const id = p.homeClub; return offerTerms(p, { club: id, type: p.contract <= 0 ? 'free' : 'transfer', expect: expectRole(ovr(p), clubStr(id, p.year)), years: 2, fee: 0, homecoming: true }); }
+  // 은퇴할 때 약속이 지켜졌는지
+  function farewellOf(p) { const f = fwPact(p); if (!f) return null; return { club: f.club, home: !!f.home, seasons: fwSeasons(p, f.club), since: f.year, rare: (FW_CLUB[f.club]?.[0] || 0) <= -.25 }; }
+
   // ---------- 영구결번 · 구단 명예의 전당 ----------
   // 구단 규모가 클수록 문턱이 높다. 결번까지는 못 가도 오래 사랑받았으면 구단 명예의 전당에 오른다.
   // 빅클럽: 12시즌·주요 트로피 2개·주장이나 세계적 스타여야 후보. 중견: 9시즌, 작은 구단: 7시즌.
@@ -3112,7 +3162,7 @@ const ENGINE = (() => {
   const MAJOR_T = new Set(['league', 'ucl', 'cont', 'euro2']);
   function legacyAt(p, sum, clubId) {
     const ss = p.seasons.filter(s => s.club === clubId && !s.youthTeam && !s.loan); const n = ss.length;
-    const fan = p.fans[clubId] || 0; const size = clubSize(clubId); const bar = LEGACY_BAR[size];
+    const fan = Math.max(0, (p.fans[clubId] || 0) - (p.flags?.fanCer?.[clubId] || 0)); const size = clubSize(clubId); const bar = LEGACY_BAR[size];
     const tro = p.trophies.filter(x => x.club === clubId); const major = tro.filter(x => MAJOR_T.has(x.type)).length;
     const capt = ss.filter(s => s.captain).length; const star = ss.filter(s => s.rating >= 7.25).length;
     const icon = capt >= 3 || sum.bdo > 0 || sum.peakOvr >= 89 || n >= 15;
@@ -3248,6 +3298,7 @@ const ENGINE = (() => {
   return {
     lgAt, clubsIn, movesAt, setActive, PAIRS, LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
+    farewellAsk, farewellAgree, farewellRefused, homecomingOffer, farewellOf, fwPact, fwClubLine, fanCer, fwSeasons, FW_CLUB,
     LG_SCHOOL, SCHOOLS, CLUB_SCHOOL, schoolOf, wiEcho, wiRewrite, goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
     isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
@@ -4216,6 +4267,16 @@ const PRESS = (() => {
   const HL = {
     transfer: { _: ['{s}, {to} 유니폼 입는다', '{to}의 선택은 {s}'], tabloid: ['딜 완료! {s}, {to}행 도장', '{to}, {s} 영입 쾌거'], korhome: ['[오피셜] {s}, {to} 이적 확정', "{s}, {to} 입성… '새 도전'"], turkey: ['{s} 왔다!!! {to} 팬들 공항 점령!'], italy: ['{to}, 전술 퍼즐의 마지막 조각 {s}'], germany: ['{s}, {to} 이적 공식 발표'] },
     loan: { _: ['{s}, {to}로 임대', '출전 시간 찾아 {to}로 떠난 {s}'], korhome: ['{s}, {to} 임대 이적… "뛰어야 산다"'] },
+    fw_pact: { _: ['{s}, {club}에서 은퇴 약속… "마지막 유니폼은 여기서"', '{club}와 {s}, 끝까지 함께하기로'], tabloid: ['종신 서약! {s}, {club}에서 은퇴한다'], korhome: ['{s}, {club}와 \'은퇴 약속\'… 현지 팬들 환호'] },
+    fw_no: { _: ['{club}, {s}의 은퇴 요청 거절… 이별 수순?', '{s}, {club}에 남고 싶었지만'], tabloid: ['냉정한 {club}! 레전드의 마지막 부탁 거절'], korhome: ['{s}, {club}서 은퇴 희망했지만… 구단은 \'글쎄\''] },
+    fw_last: { _: ['{s}, 이번 시즌이 마지막… {club}에서 은퇴 투어', '마지막 시즌을 선언한 {s}, 가는 곳마다 기립 박수'], korhome: ['{s}, 올 시즌 끝으로 현역 은퇴 선언'] },
+    fw_retire: { _: ['{club}의 {s}, 홈 관중 앞에서 축구화를 벗다', '{s}, {club}에서 은퇴… {n}시즌의 작별'], tabloid: ['눈물의 고별전! {s}, {club}에서 은퇴'], korhome: ['{s}, {club}에서 명예로운 은퇴… {n}시즌 마침표'] },
+    fw_home: { _: ['돌아온 {s}, 처음 공을 찬 {club}에서 은퇴', '{s}의 귀향, 그리고 작별'], korhome: ['{s}, 친정 {club}에서 현역 마침표'] },
+    fw_homecoming: { _: ['{s}, 친정 {to}로 돌아온다', '귀향! {s}, {to} 복귀… "여기서 끝내고 싶었다"'], korhome: ['{s}, 친정 {to} 복귀… 마지막 무대는 고향에서'] },
+    fw_break: { _: ['"여기서 끝내겠다"던 {s}, {to}로', '{from} 팬들 분노… {s}, 은퇴 약속 깨고 이적'], tabloid: ['약속은 휴지조각! {s}, {to}행'], korhome: ['{s}, {from} 은퇴 약속 뒤집고 {to} 이적'] },
+    fw_diss: { _: ['{s}, 옛 구단 {old} 직격 "나를 버린 팀"', '{s}의 작심 발언… {old}를 겨냥하다'], tabloid: ['폭탄 발언! {s} "{old}는 나를 버렸다"'], korhome: ['{s}, 친정 아닌 \'전 소속팀\' {old}에 쓴소리'] },
+    fw_grace: { _: ['{s} "{old}에 섭섭함은 없다"', '{s}, 옛 구단 {old}에 감사 인사'], korhome: ['{s} "{old}는 고마운 팀"… 품격 있는 작별'] },
+    fw_cold: { _: ['{s} "{old}는 원래 그런 곳"', '{s}의 냉소, {old}를 향한 한마디'] },
     renewleave: { _: ['잉크도 마르기 전에… {s}, 재계약 몇 주 만에 {to}로', '{from} 팬들 "약속은 어디 갔나" — {s}, {to} 이적'], tabloid: ['서명하고 떠났다! {s}, {to}행 충격'], korhome: ['{s}, {from} 재계약 직후 {to} 이적… 현지 팬들 반발'] },
     // 이적 기사는 선수의 무게만큼만: 무명은 단신으로, 스타는 1면으로
     t_small: { _: ['{to}, {s} 영입 발표', '{s}, {to}와 계약', '{to}에 새 얼굴… {s} 합류', '{to}, {age}세 {pos} {s} 영입'], tabloid: ['{to}, 조용히 {s} 영입', '{s}? {to}의 새 영입생'], korhome: ['{s}, {to} 이적… 새 무대에서 도전'], italy: ['{to}, 스쿼드 보강 {s}'], germany: ['{to}, {s}와 계약 체결'], turkey: ['{to}, {s} 영입! 팬들은 아직 반신반의'] },
@@ -4319,6 +4380,7 @@ const PRESS = (() => {
     if (of.type === 'loan') return 'loan'; if (of.buyout) return 'buyout';
     if (p.flags?.renewLeave?.year === p.year && p.flags.renewLeave.to === of.club) return 'renewleave';
     const rep = p.rep || 0, fee = of.fee || 0, toBig = E.clubStr(of.club, p.year) >= 84;
+    if (of.homecoming) return 'fw_homecoming'; if (p.flags?.retireHere?.broken === p.year && p.flags.retireHere.club === from) return 'fw_break';
     if (E.isRival(from, of.club) && !pushed) return rep >= 30 || fee >= 30 ? 'rival' : 'rival_small';
     if (pushed) return 't_fresh';
     if (rep >= 55 || fee >= 60 || (toBig && rep >= 40)) return 't_big';
@@ -4361,7 +4423,7 @@ const PRESS = (() => {
   }
   // 대기열: 시즌 사이에 생긴 헤드라인을 다음 시즌 결과에 붙인다
   function queue(p, items) { p.pressQ = p.pressQ || []; (Array.isArray(items) ? items : [items]).filter(Boolean).forEach(x => p.pressQ.push(x)); }
-  const PRI = { mourn: 13, medend: 10.5, legend: 11, jinxbreak: 10, ucl: 9, bdo: 9, tourwin: 9, league: 8, contwin: 8, uclloss: 7, scorer: 6, jinx: 6, jinxcrown: 6, pkmiss: 6, cup: 5, rival: 5, farewell: 4.5, transfer: 4, t_big: 4.5, t_mid: 4, t_free: 3.5, t_fresh: 3.5, t_young: 3.5, t_small: 3, rival_small: 3.5, buyout: 4, loan: 3 };
+  const PRI = { fw_retire: 8.5, fw_home: 8.5, fw_pact: 5, fw_no: 4.5, fw_last: 5, fw_homecoming: 5, fw_break: 6, fw_diss: 5.5, fw_grace: 4, fw_cold: 4.5, mourn: 13, medend: 10.5, legend: 11, jinxbreak: 10, ucl: 9, bdo: 9, tourwin: 9, league: 8, contwin: 8, uclloss: 7, scorer: 6, jinx: 6, jinxcrown: 6, pkmiss: 6, cup: 5, rival: 5, farewell: 4.5, transfer: 4, t_big: 4.5, t_mid: 4, t_free: 3.5, t_fresh: 3.5, t_young: 3.5, t_small: 3, rival_small: 3.5, buyout: 4, loan: 3 };
   function flushInto(p, res) {
     // 그 시즌을 대표하는 사건이 먼저: 우승·징크스 해소가 이적 소식보다 위
     const items = [...(p.pressQ || []), ...seasonHeads(p, res)].map((x, i) => ({ x, i })).sort((a, b) => (String(b.x?.kind).startsWith('legend') ? 11 : PRI[b.x?.kind] ?? 4) - (String(a.x?.kind).startsWith('legend') ? 11 : PRI[a.x?.kind] ?? 4) || a.i - b.i).map(o => o.x); p.pressQ = [];
@@ -4508,7 +4570,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   } });
   def({ id: 'lastseason', phase: 'window', cd: 2, w: (c) => c.p.age >= 34 && !c.p.flags.lastSeason ? 20 : 0, make(c) {
     return { title: '마지막 시즌을 선언할까', tone: 'legacy', text: '몸이 신호를 보낸다. 미리 마지막 시즌을 알리면 가는 곳마다 박수를 받을 것이다.', options: [
-      { label: '이번 시즌이 마지막이다', hint: '사기 +10 · 팬심 +10 · 시즌 후 은퇴', run(x) { x.p.flags.lastSeason = x.p.year; const h = H(x); return '은퇴 시즌을 공식 발표했다. ' + [h.b('morale', 10), h.b('fans', 10)].join(' · '); } },
+      { label: '이번 시즌이 마지막이다', hint: '사기 +10 · 팬심 +10 · 시즌 후 은퇴', run(x) { x.p.flags.lastSeason = x.p.year; const h = H(x); E.fanCer(x.p, x.p.club, 10); press(x.p, PR('both', 'fw_last', x.p, {})); return '은퇴 시즌을 공식 발표했다. ' + [h.b('morale', 10), '팬심 +10'].join(' · '); } },
       { label: '아직 아니다', hint: '변화 없음', run() { return '아직 뛸 수 있다.'; } },
     ] };
   } });
@@ -4946,6 +5008,29 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return { title: fam ? `감독은 우리 가문의 ${m.name}` : `레전드 감독 ${m.name}`, tone: 'legacy', text: fam ? `벤치에 앉은 사람은 같은 피를 나눈 ${m.name}이다. 기자들은 "족벌 기용"을 의심하지만, 그는 누구보다 엄격하다.` : `세계선의 레전드 ${J(m.name, '이')} 이 팀을 이끌고 있다. 그의 현역 시절 영상을 보며 자랐다.`, options: [
       { label: '조언을 구한다', hint: '성장 ×1.06 · 감독 신뢰 +6', run(x) { x.p.flags['metL_' + m.legendId] = 1; x.p.flags['adv_' + m.legendId] = 1; const h = H(x); h.mod('growth', 1.06); return h.b('trust', 6); } },
       { label: '실력으로만 인정받겠다', hint: '사기 +4', run(x) { x.p.flags['metL_' + m.legendId] = 1; return H(x).b('morale', 4); } },
+    ] };
+  } });
+
+  // 거절당한 은퇴의 뒷이야기: 새 팀 입단 인터뷰
+  def({ id: 'fwdiss', phase: 'pre', cd: 0, w: (c) => c.p.flags.dissPending && c.p.flags.dissPending.year >= c.p.year - 1 && !c.p.youth ? 200 : 0, make(c) {
+    const p = c.p; const d = p.flags.dissPending; const old = club(d.club); const hard = (E.FW_CLUB[d.club]?.[0] || 0) <= -.25;
+    const done = (x) => { x.p.flags.dissPending = null; };
+    return { title: '입단 기자회견', tone: 'neutral', text: `${club(p.club)} 유니폼을 처음 입고 앉은 자리. 세 번째 질문에서 기자가 ${J(old, '를')} 꺼냈다. "거기서 은퇴하고 싶었다고 들었는데요."`, options: [
+      { label: '"그 팀은 나를 버렸다"', hint: '옛 팀 팬심 ▼▼ · 새 팀 팬심 ▲ · 명성 +1', run(x) { done(x); const h = H(x); E.bump(x.p, 'fans', -20, d.club); E.bump(x.p, 'fans', 5, x.p.club); press(x.p, PR('both', 'fw_diss', x.p, { old })); h.note(`${old} 직격 인터뷰`); return `마이크 앞에서 숨기지 않았다. 다음 날 ${old} 서포터 게시판이 불탔다. ` + h.b('rep', 1); } },
+      { label: '"고마운 팀이다. 섭섭함은 없다"', hint: '옛 팀 팬심 ▲ · 명성 +2', run(x) { done(x); const h = H(x); E.bump(x.p, 'fans', 4, d.club); press(x.p, PR('both', 'fw_grace', x.p, { old })); return '웃으며 넘겼다. 품위 있는 대답이라는 평이 따라왔다. ' + h.b('rep', 2); } },
+      ...(hard ? [{ label: `"${old}는 원래 그런 곳이다"`, hint: '옛 팀 팬심 ▼ · 명성 +1', run(x) { done(x); const h = H(x); E.bump(x.p, 'fans', -8, d.club); press(x.p, PR('both', 'fw_cold', x.p, { old })); return '짧게, 차갑게. 그 한마디가 하루 종일 돌았다. ' + h.b('rep', 1); } }] : []),
+      { label: '말을 아낀다', hint: '사기 +1', run(x) { done(x); return '"지금은 여기 이야기만 하고 싶다." ' + H(x).b('morale', 1); } },
+    ] };
+  } });
+  // 약속한 팀에서 맞는 마지막 경기
+  def({ id: 'fwfinal', phase: 'post', cd: 0, w: (c) => { const p = c.p; return p.flags.lastSeason === p.year && E.fwPact(p) && !p.flags.fwFinal ? 300 : 0; }, make(c) {
+    const p = c.p; const f = E.fwPact(p); const cn = club(f.club); const n = E.fwSeasons(p, f.club); const kids = (p.kids || []).length;
+    const fin = (x, t) => { x.p.flags.fwFinal = x.p.year; E.fanCer(x.p, f.club, 4); H(x).note(t); };
+    return { title: '고별전', tone: 'legacy', major: true, text: `${cn}의 마지막 홈경기. ${f.home ? '처음 공을 찼던 그 경기장이다. ' : ''}${n}시즌. 경기장 전체가 ${p.number ? p.number + '번이 적힌 ' : ''}카드를 들고 있다. 후반 막판, 교체 사인이 올라갔다.`, options: [
+      { label: '센터 서클에서 잔디에 입을 맞춘다', hint: '', run(x) { fin(x, `${cn} 고별전 · 잔디에 입맞춤`); return '무릎을 꿇고 잔디에 입을 맞췄다. 일어나 보니 상대 선수들까지 박수를 치고 있었다.'; } },
+      { label: '마이크를 잡는다', hint: '', run(x) { fin(x, `${cn} 고별전 · 마지막 연설`); return '준비한 말은 첫 문장에서 끊겼다. 대신 관중석이 그의 이름을 불렀다. 오래, 아주 오래.'; } },
+      ...(kids ? [{ label: '아이들 손을 잡고 한 바퀴 돈다', hint: '', run(x) { fin(x, `${cn} 고별전 · 아이들과 함께`); return '아이들이 관중석에 손을 흔들었다. 언젠가 이 아이들도 오늘을 기억할 것이다.'; } }] : []),
+      { label: '조용히 손을 흔들고 터널로 들어간다', hint: '', run(x) { fin(x, `${cn} 고별전`); return '돌아보지 않으려 했다. 터널 입구에서 한 번만 돌아봤다.'; } },
     ] };
   } });
 
@@ -6531,8 +6616,24 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       else { const asked = p.flags.retAsk === p.year; nat = `<div class="drow"><span><b>대표팀 은퇴 중</b><span class="muted small"> · ${p.flags.intlRetY ? p.flags.intlRetY + '년부터' : ''}</span></span><button class="btn sm" data-act="intlback" ${asked ? 'disabled' : ''}>${asked ? '이번 시즌 답을 들었다' : '복귀 의사 밝히기'}</button></div>${asked ? '' : `<p class="muted small">받아줄지는 감독이 정해요. ${askWord(E.natReturnChance(p))}.</p>`}`; }
     }
     const ret = p.age < 32 ? `<div class="drow"><span><b>현역 은퇴</b><span class="muted small"> · ${p.age - 1}세, 이른 은퇴</span></span><button class="btn sm" data-act="retire">조기 은퇴…</button></div>` : '';
-    if (!nat && !ret) return '';
-    return det('decide', '커리어 결정', `${S.intlMsg ? `<p class="note">${esc(S.intlMsg)}</p>` : ''}${nat}${ret}`, 'panel');
+    const fw = farewellRows(p);
+    if (!nat && !ret && !fw) return '';
+    return det('decide', '커리어 결정', `${S.intlMsg ? `<p class="note">${esc(S.intlMsg)}</p>` : ''}${S.fwMsg ? `<p class="note">${esc(S.fwMsg)}</p>` : ''}${fw}${nat}${ret}`, 'panel');
+  }
+  // 명예로운 은퇴: 이 구단에서 끝내고 싶다 / 친정에서 끝내고 싶다
+  function farewellRows(p) {
+    if (p.youth || p.forcedRetire) return ''; const L = []; const pact = E.fwPact(p); const A = p.flags.fwAsk || {};
+    if (pact) {
+      L.push(`<div class="drow"><span><b>${pact.home ? '귀향의 약속' : '여기서 끝내는 약속'}</b><span class="muted small"> · ${esc(club(pact.club).name)}${pact.home ? '에서 축구화를 벗기로 했다' : `와 ${pact.year}년에 약속했다`}</span></span>${p.flags.lastSeason === p.year ? '<span class="pill gold">마지막 시즌</span>' : `<button class="btn sm" data-act="fwlast">이번 시즌을 마지막으로</button>`}</div>`);
+    } else if (!p.loanFrom && p.age >= 30) {
+      const a = A.here; const n = E.fwSeasons(p, p.club);
+      if (a && a.club === p.club && a.out === 'cond' && a.year === p.year && !a.done) L.push(`<div class="confirm"><p>${esc(club(p.club).name)}${E.hasJong(club(p.club).name) ? '은' : '는'} 조건을 걸었다. ${a.terms === 'wage' ? '연봉을 30% 낮춘다면, 마지막까지 함께하겠다고.' : '주전은 약속할 수 없다고. 벤치에서 시작해도 괜찮다면.'}</p><div class="row"><button class="btn" data-act="fwcondno">거절한다</button><button class="btn primary" data-act="fwcondyes">받아들인다</button></div></div>`);
+      else if (n >= 3) { const wait = a && a.club === p.club && a.out !== 'yes' && p.year - a.year < 2; L.push(`<div class="drow"><span><b>여기서 은퇴하고 싶다</b><span class="muted small"> · ${esc(club(p.club).name)}에서 ${n}시즌</span></span><button class="btn sm" data-act="fwask" ${wait ? 'disabled' : ''}>${wait ? `${a.year + 2}년에 다시` : '의사 전하기'}</button></div>`); }
+      const hc = p.homeClub; const ha = A.home; const offered = (p.pendingOffers || []).some(o => o.homecoming);
+      if (hc && E.CLUB[hc] && hc !== p.club && !offered) { const wait = ha && p.year - ha.year < 3; L.push(`<div class="drow"><span><b>친정에서 끝내고 싶다</b><span class="muted small"> · 처음 공을 찬 ${esc(club(hc).name)}</span></span><button class="btn sm" data-act="fwhome" ${wait ? 'disabled' : ''}>${wait ? `${ha.year + 3}년에 다시` : '연락해 본다'}</button></div>`); }
+      if (L.length) L.push('<p class="muted small">구단이 받아 주면 그 팀에서 축구화를 벗는 약속이 생겨요. 다른 구단 제안은 줄고, 그래도 떠나면 큰 상처가 남아요. 결번 판정은 그대로예요.</p>');
+    }
+    return L.join('');
   }
   function chgPanel(p) {
     const last = p.seasons[p.seasons.length - 1]; if (!last || !last.attrD) return '';
@@ -6592,7 +6693,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const market = p.youth ? '' : `<section class="panel"><div class="ptitle"><h2>이적 시장</h2>${p.released ? '<span class="pill red">방출</span>' : ''}${p.contract <= 0 && !p.loanFrom ? '<span class="pill gold">자유계약</span>' : ''}</div>
       <div class="offers">
         ${p.released ? '' : offerRow(-1, p.club, '잔류', '', `${lgTag(p.club, p.year, p)}${p.contract <= 0 && !p.loanFrom ? ` · 2년 재계약 · 연봉 ${E.fmtWon(p.renewOffer ?? E.renewWage(p))}` : p.wage ? ` · 연봉 ${E.fmtWon(p.wage)}` : ''}`, S.offerPick === -1, false, null)}
-        ${offers.map((of, i) => { const oc = club(of.club); const m2 = E.managerFor(of.club, p.year, S.world, p); const pills = `${of.mentor ? `<span class="pill gold">은사 ${esc(of.mentor)}</span>` : ''}${of.type === 'loan' ? '<span class="pill">임대</span>' : of.type === 'free' ? '<span class="pill gold">자유</span>' : ''}${of.blocked ? '<span class="pill red">거절됨</span>' : ''}${E.isRival(p.club, of.club) ? '<span class="pill red">라이벌</span>' : ''}${of.home ? '<span class="pill">친정</span>' : ''}${m2.legend ? '<span class="pill gold">레전드 감독</span>' : ''}${of.buyout ? '<span class="pill gold">바이아웃</span>' : ''}${of.withdrawn ? '<span class="pill red">철회</span>' : ''}${of.release ? '<span class="pill">바이아웃 조항</span>' : ''}${of.minutes ? '<span class="pill">출전 보장</span>' : ''}`; E.offerTerms(p, of); return offerRow(i, of.club, oc.name, pills, `${lgTag(of.club, p.year, p)}${of.type !== 'loan' ? ` · ${of.years}년 · <span class="fee">연봉 ${E.fmtWon(of.wage)}</span>${of.fee ? ` · <span class="fee">이적료 ${E.fmtFee(of.fee)}</span>` : ''}` : ' · 연봉은 원 소속팀 그대로'}`, S.offerPick === i, of.blocked || of.withdrawn, of); }).join('')}
+        ${offers.map((of, i) => { const oc = club(of.club); const m2 = E.managerFor(of.club, p.year, S.world, p); const pills = `${of.homecoming ? '<span class="pill gold">귀향</span>' : ''}${of.mentor ? `<span class="pill gold">은사 ${esc(of.mentor)}</span>` : ''}${of.type === 'loan' ? '<span class="pill">임대</span>' : of.type === 'free' ? '<span class="pill gold">자유</span>' : ''}${of.blocked ? '<span class="pill red">거절됨</span>' : ''}${E.isRival(p.club, of.club) ? '<span class="pill red">라이벌</span>' : ''}${of.home ? '<span class="pill">친정</span>' : ''}${m2.legend ? '<span class="pill gold">레전드 감독</span>' : ''}${of.buyout ? '<span class="pill gold">바이아웃</span>' : ''}${of.withdrawn ? '<span class="pill red">철회</span>' : ''}${of.release ? '<span class="pill">바이아웃 조항</span>' : ''}${of.minutes ? '<span class="pill">출전 보장</span>' : ''}`; E.offerTerms(p, of); return offerRow(i, of.club, oc.name, pills, `${lgTag(of.club, p.year, p)}${of.type !== 'loan' ? ` · ${of.years}년 · <span class="fee">연봉 ${E.fmtWon(of.wage)}</span>${of.fee ? ` · <span class="fee">이적료 ${E.fmtFee(of.fee)}</span>` : ''}` : ' · 연봉은 원 소속팀 그대로'}`, S.offerPick === i, of.blocked || of.withdrawn, of); }).join('')}
         ${!offers.length && !p.released ? '<p class="muted small">들어온 제안이 없어요.</p>' : ''}
         ${(() => { const pl = p.flags.renewPledge; if (!pl || pl.year !== p.year || pl.club !== p.club || !offers.some(o => o.type !== 'loan' && !o.blocked)) return ''; return pl.open ? `<p class="note">이번 여름 ${esc(J(club(p.club).name, '와'))} 계약을 연장하면서, 좋은 제안이 오면 이적을 추진하기로 합의했어요.</p>` : `<p class="note">이번 여름 ${esc(J(club(p.club).name, '와'))} 장기 재계약에 서명했어요. 팬들은 잔류 선언으로 받아들였어요. 지금 떠나면 약속을 깬 이적이 돼요.</p>`; })()}
       </div></section>`;
@@ -6958,8 +7059,11 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (!r.done) {
       if (p.flags.deceased) return `<section class="panel mournp"><h1 class="h1">${esc(p.name)}, ${p.flags.deceased.age}세</h1><p class="muted">${p.seasons.length}시즌. 커리어 카드는 그를 기억하는 사람들의 말로 채워져요.</p><div class="row"><button class="btn primary" data-act="confirmretire">카드를 남긴다</button></div></section>`;
       const early = p.age - 1 <= 31 && !p.forcedRetire;
+      const rf = p.flags.retireHere; const fwOk = E.fwPact(p) && E.fwPact(p).club === p.club;
+      const words = rf && rf.state === 'refused' && !fwOk && !p.flags.dissPending && p.year - rf.year <= 4 ? `<p class="flbl">마지막 인터뷰 · ${esc(club(rf.club).name)}에 대해</p><div class="chips">${[['diss', '"그 팀은 나를 버렸다"', '숨기지 않는다'], ['grace', '"고마운 팀이다"', '품위 있게'], ['none', '말을 아낀다', '']].map(([k, n, d]) => `<button class="chip ${r.words === k ? 'on' : ''}" data-words="${k}"><b>${esc(n)}</b>${d ? `<span class="small">${d}</span>` : ''}</button>`).join('')}</div>` : '';
+      const fwNote = fwOk ? `<p class="note">${esc(club(p.club).name)}에서 축구화를 벗는다. ${E.fwPact(p).home ? '처음 공을 찬 곳으로 돌아와서.' : '약속대로.'}</p>` : '';
       const why = early ? `<p class="flbl">왜 이렇게 일찍?</p><div class="chips">${EARLY.map(([k, n, d]) => `<button class="chip ${r.reason === k ? 'on' : ''}" data-why="${k}"><b>${n}</b><span class="small">${d}</span></button>`).join('')}</div>` : '';
-      return `<section class="panel"><h1 class="h1">${esc(p.name)}의 ${early ? '이른 ' : ''}은퇴</h1><p class="muted">${p.age - 1}세, ${p.seasons.length}시즌. ${early ? '아직 한창인 나이다. 이유와 은퇴 뒤의 길을 골라 주세요.' : '은퇴 뒤의 길을 골라 주세요.'}</p>${why}
+      return `<section class="panel"><h1 class="h1">${esc(p.name)}의 ${early ? '이른 ' : ''}은퇴</h1><p class="muted">${p.age - 1}세, ${p.seasons.length}시즌. ${early ? '아직 한창인 나이다. 이유와 은퇴 뒤의 길을 골라 주세요.' : '은퇴 뒤의 길을 골라 주세요.'}</p>${fwNote}${why}${words}
         <div class="chips">${[['coach', '감독의 길', '은퇴 2~4년 뒤 감독으로 데뷔. 커리어가 화려할수록 큰 구단을 맡아요. 이후 커리어에서 벤치에 나타나요.'], ['legend', '구단 앰배서더', '가장 오래 뛴 구단의 앰배서더로 남아요.'], ['none', '조용히 은퇴', '축구계를 떠나요.']].map(([k, n, d]) => `<button class="chip ${r.post === k ? 'on' : ''}" data-post="${k}"><b>${n}</b><span class="small">${d}</span></button>`).join('')}</div>
         ${r.post === 'coach' ? `<label class="fld"><span>감독 스타일</span><select id="r-style" class="inp">${Object.entries(E.STYLES).map(([k, v]) => `<option value="${k}" ${r.style === k ? 'selected' : ''}>${v} · ${E.STYLE_DESC[k]}</option>`).join('')}</select></label>` : ''}
         <div class="row"><button class="btn" data-act="cancelretire" ${p.forcedRetire ? 'hidden' : ''}>더 뛸래요</button><button class="btn primary" data-act="confirmretire" ${p.age - 1 <= 31 && !p.forcedRetire && !r.reason ? 'disabled' : ''}>은퇴 확정</button></div></section>`;
@@ -7001,12 +7105,13 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       ${sum.talent && sum.curve ? (() => { const bn = E.bloomNote(sum); return `<p class="cc-sub small">숨겨져 있던 재능: <b>${esc(E.TALENT[sum.talent]?.label || '')}</b> · 성장 곡선: <b>${esc(({ early: '조숙형', normal: '보통형', late: '대기만성형' })[sum.curve] || '')}</b>${bn ? ` · <b class="cc-bloom ${bn.kind}">${esc(bn.badge)}</b>` : ''}</p>${bn ? `<p class="cc-bloomtxt">${esc(bn.text)}</p>` : ''}`; })() : ''}
       ${sum.natPick && (sum.natPick.over || []).length ? `<p class="cc-sub small">${sum.natPick.switched ? `${esc(sum.natPick.switched)}에서 ${esc(sum.natPick.chose)}로 대표팀을 바꿨다` : `${esc(sum.natPick.over.join(', '))} 대신 ${esc(sum.natPick.chose)}${E.hasJong(sum.natPick.chose) ? '을' : '를'} 택했다`} (${sum.natPick.year})</p>` : ''}
       ${(sum.mentors || []).length ? `<p class="cc-sub small">은사 · ${sum.mentors.map(m => `${esc(m.name)} <span class="muted">(${esc(m.clubs.map(c => club(c).name).join('·'))} ${m.seasons}시즌)</span>`).join(' · ')}</p>` : ''}
+      ${sum.farewell ? `<p class="cc-sub small cc-fw">${sum.farewell.home ? `처음 공을 찬 ${esc(club(sum.farewell.club).name)}로 돌아와 축구화를 벗었다` : `${esc(club(sum.farewell.club).name)}에서 축구화를 벗었다 · ${sum.farewell.seasons}시즌`}${sum.farewell.rare ? ' · 그 구단에서는 드문 일이다' : ''}</p>` : ''}${sum.lastWords ? `<p class="cc-sub small">마지막 인터뷰 · ${sum.lastWords.k === 'diss' ? `"${esc(club(sum.lastWords.club).name)}는 나를 버렸다"` : `"${esc(club(sum.lastWords.club).name)}는 고마운 팀이다"`}</p>` : ''}
       ${sum.ghost ? `<p class="cc-sub small">세계선이 기억하던 ${sum.ghost.Y} 발롱도르의 주인 · ${sum.ghost.kept ? '기억대로 들어 올렸다' : '이번에는 그에게 오지 않았다'}</p>` : ''}
       ${heirBlock}
       <div class="cc-stats"><div><b>${nf(sum.apps)}</b><span>출전</span></div>${isGK ? `<div><b>${nf(sum.saves)}</b><span>선방</span></div><div><b>${nf(sum.cs)}</b><span>클린시트</span></div>` : `<div><b>${nf(sum.goals)}</b><span>골</span></div><div><b>${nf(sum.assists)}</b><span>도움</span></div>`}<div><b>${sum.avgRating.toFixed(2)}</b><span>평균 평점</span></div><div><b>${sum.trophies}회</b><span>우승</span></div><div><b>${sum.awards}회</b><span>개인상</span></div></div>
       ${!isGK && (sum.gt || p?.seasons) ? routeBlock(p?.seasons ? E.routeSum(p) : sum.gt, sum.foot ?? p?.foot, { title: '득점 루트', pct: true, style: true, cls: 'gr-cc', line: p?.seasons ? E.routeShiftLine(p) : null }) : ''}
       </div><div class="cc-r">
-      <div class="cc-badges">${badges.map(([k, v]) => `<span class="pill gold">${esc(k)}${v > 1 ? ' ' + v : ''}</span>`).join('')}${retN.map(x => `<span class="pill">${esc(x)} 영구결번</span>`).join('')}${hofN.map(x => `<span class="pill">${esc(x)} 명예의 전당</span>`).join('')}</div>
+      <div class="cc-badges">${sum.farewell ? `<span class="pill gold">${sum.farewell.home ? '귀향' : '명예로운 작별'}</span>` : ''}${badges.map(([k, v]) => `<span class="pill gold">${esc(k)}${v > 1 ? ' ' + v : ''}</span>`).join('')}${retN.map(x => `<span class="pill">${esc(x)} 영구결번</span>`).join('')}${hofN.map(x => `<span class="pill">${esc(x)} 명예의 전당</span>`).join('')}</div>
       ${(sum.legends || []).length || (sum.feats || []).length ? `<div class="cc-legend"><span>사람들이 기억하는 장면</span>${(sum.feats || []).map(e => `<p><b class="cc-feat">${esc(e.title)}</b> ${esc(e.line || E.featLine(e))}</p>`).join('')}${(sum.legends || []).map(e => `<p>${esc(e.line || E.legendLine(e))}</p>`).join('')}</div>` : ''}
       <div class="cc-clubs ${sum.topClubs.length > 5 ? 'many' : ''}">${sum.topClubs.map(t => `<span>${crest(t.club, 'md')}<small>${t.n}시즌</small></span>`).join('')}</div>${uf}${sum.earned ? `<p class="small">커리어 총수입 ${E.fmtWon(sum.earned)}${sum.peakWage ? ` · 최고 연봉 ${E.fmtWon(sum.peakWage)}` : ''}</p>` : ''}${coachLine}${bestBlock}${lineBlock}${tmBlock}
       </div></div>
@@ -7148,7 +7253,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
         <li><b>▲ / ▼</b>는 수치가 오르거나 내린다는 뜻이고, <b>▲▲ / ▼▼</b>는 10 이상 크게 움직인다는 뜻이에요.</li>
         <li>확률 표현: <b>거의 확실히</b> 80% 이상 · <b>높은 확률로</b> 60~79% · <b>반반으로</b> 45~59% · <b>낮은 확률로</b> 25~44% · <b>드물게</b> 25% 미만. 위험도는 높음 60%+ · 꽤 있음 40%+ · 있음 25%+ · 낮음.</li>
         <li><b>역할 적성 글자</b>는 (역할 적성 − 오버롤) 기준이에요. S +4 이상 · A +1.5 · B ±1.5 · C −4 · D 그 아래.</li>
-        <li><b>리그·구단의 색깔</b>: 리그마다, 몇몇 구단마다 사람들이 떠올리는 이미지가 있어요(라리가의 기술, 세리에 A의 수비, 발렌시아의 윙어, 아약스의 유스…). 정확한 통계가 아니라 평판이고, 그 팀에서 뛰는 동안 해당 능력치 성장에 3~6% 정도가 더 얹혀요(20대 초반까지 한 팀에 있으면 OVR 1 안팎). 유스 명가·빅리그행 정거장은 21세까지 성장이 조금 빨라지고, 별들의 무대·지옥의 홈구장에서 주전으로 뛰면 큰 경기 체질이 조금씩 단단해져요. 구단의 전력과 돈은 시대마다 바뀌지만 이 색깔은 문화라서 그대로 남아요. 제안 목록에서 구단 꼬리표의 ↑ 표시는 내 자리에 효과가 닿는다는 뜻이에요.</li>
+        <li><b>여기서 은퇴하고 싶다</b>: 30세가 넘고 한 구단에서 3시즌 이상 뛰었으면 커리어 결정에서 의사를 전할 수 있어요. 구단은 그 팀에서 뛴 시간, 팬심, 감독 신뢰, 주장 여부, 그 팀에서 든 트로피, 지금 실력이 팀 수준에 맞는지를 보고 답해요. 구단 규모와 문화도 들어가요. 레알 마드리드·PSG·첼시처럼 전설에게도 쉽게 은퇴식을 열어 주지 않는 팀이 있고, 아틀레틱·로마처럼 자기 사람을 품는 팀도 있어요. 답은 약속·조건부(연봉 삭감이나 벤치)·거절 셋 중 하나예요. 약속이 생기면 다른 구단 제안이 줄고, 마지막 시즌은 원할 때 선언해요. 그 팀에서 은퇴하면 고별전과 함께 카드에 '명예로운 작별'로 남아요. 약속을 깨고 떠나면 그 팀 팬심이 크게 깎여요. 거절당한 뒤 다른 팀으로 가거나 은퇴하면, 인터뷰에서 그 팀을 직격할 수도, 품위 있게 넘길 수도 있어요. 처음 공을 찬 구단으로 돌아가 끝내고 싶다는 연락(귀향)도 같은 방식이에요. 선언·고별전으로 오른 팬심은 결번 판정에 들어가지 않아서, 결번 문턱은 그대로예요.</li>
+        <li><b>리그·구단의 색깔</b>: 리그마다, 몇몇 구단마다 사람들이 떠올리는 이미지가 있어요(라리가의 기술, 세리에 A의 수비, 발렌시아의 윙어, 아약스의 유스…). 정확한 통계가 아니라 평판이고, 그 팀에서 뛰는 동안 해당 능력치 성장에 3~6% 정도가 더 얹혀요(20대 초반까지 한 팀에 있으면 OVR 1 안팎). 유스 화수분·빅리그행 환승역은 21세까지 성장이 조금 빨라지고, 별들의 무대·지옥의 홈구장에서 주전으로 뛰면 큰 경기 체질이 조금씩 단단해져요. 구단의 전력과 돈은 시대마다 바뀌지만 이 색깔은 문화라서 그대로 남아요. 제안 목록에서 구단 꼬리표의 ↑ 표시는 내 자리에 효과가 닿는다는 뜻이에요.</li>
         <li><b>출전 표현</b>: 붙박이 주전 80%+ · 주전 60%+ · 로테이션 40%+ · 교체 자원 20%+ · 벤치.</li>
         <li><b>이번 오프시즌 변화</b>: 지난 시즌 동안 0.6 이상 오른 능력치 셋, 내린 능력치 둘. ▲▲ / ▼▼는 2 이상. 능력치 창의 화살표도 같은 기준이에요.</li>
         <li><b>리그 표시</b>: 1부·2부, 그리고 그 시즌 나가는 대륙 대회(챔스·유로파·컨퍼런스·리베르타도레스·ACL). 대륙 대회는 지난 시즌 순위로 정해지고, 내가 그 구단에서 뛴 시즌이면 내 시즌의 실제 순위를 써요.</li>
@@ -7315,6 +7421,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     }
     if (S.view === 'retire' && !S.retire.done) {
       $$('[data-post]').forEach(b => b.onclick = () => { S.retire.post = b.dataset.post; render(); });
+      $$('[data-words]').forEach(b => b.onclick = () => { S.retire.words = b.dataset.words; render(); });
       $$('[data-why]').forEach(b => b.onclick = () => { S.retire.reason = b.dataset.why; if (['dream', 'quiet', 'family'].includes(b.dataset.why) && S.retire.post === 'coach') S.retire.post = 'none'; render(); });
       const st = $('#r-style'); if (st) st.onchange = () => { S.retire.style = st.value; };
     }
@@ -7753,7 +7860,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (S.mods && Object.keys(S.mods).length) { p.nextMods = p.nextMods || {}; for (const k of ['form', 'share', 'rating']) if (S.mods[k]) p.nextMods[k] = (p.nextMods[k] || 0) + S.mods[k]; if (S.mods.ceil) p.ceil += S.mods.ceil; }
     S.mods = {}; S.tour = null;
     try { const b = E.ballonLate(p, S.world); ballonCut(p, b); if (b?.branch) branchCut(b.branch, b.year - 1); } catch (e) { console.warn('cut', e); }
-    E.endOfSeason(p, S.world); p.stage = 'prep'; S.open.clear(); S.numAsk = null; S.qn = null; S.confirmIntl = false; S.intlMsg = '';
+    E.endOfSeason(p, S.world); p.stage = 'prep'; S.open.clear(); S.numAsk = null; S.qn = null; S.confirmIntl = false; S.intlMsg = ''; S.fwMsg = '';
     S.choice = defaultChoice(p); S.offerPick = -1; S.pendingNumber = null;
     S.windowQ = p.forcedRetire ? [] : EVENTS.draw('window', ctxFor(p), Math.random() < .45 ? 1 : 0);
     S.phase = 'prep'; autoNumber();
@@ -7841,6 +7948,27 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       try { PRESS.queue(p, PRESS.natHead(early ? 'intlearly' : 'intlretire', p, { caps: p.caps })); } catch { }
       p.pendingEvents = (p.pendingEvents || []).concat(`대표팀 은퇴 (A매치 ${p.caps}경기)`); S.intlMsg = '대표팀 은퇴를 발표했다.'; Store.save('career', p); render(); return;
     }
+    if (a === 'fwask' || a === 'fwhome') {
+      keepMemo(); const home = a === 'fwhome'; const ask = E.farewellAsk(p, home ? 'home' : 'here'); if (!ask) return; const cn = club(ask.club).name; const fl = E.fwClubLine(ask.club);
+      S.open.add('decide');
+      if (home) {
+        if (ask.out === 'no') { S.fwMsg = `${cn}의 답은 정중했다. "지금은 자리가 없다." ${fl}`.trim(); }
+        else { const of = E.homecomingOffer(p); if (ask.out === 'cond') of.benchStart = true; p.pendingOffers = [of, ...(p.pendingOffers || [])]; S.offerPick = 0; S.fwMsg = ask.out === 'yes' ? `${cn}에서 전화가 왔다. "돌아와. 네 자리는 늘 여기 있었다." 이적 시장에 친정의 마지막 제안이 올라왔다.` : `${cn}는 문을 열어 두겠다고 했다. 주전은 장담 못 한다고. 이적 시장에 제안이 올라왔다.`; }
+      } else {
+        if (ask.out === 'yes') { E.farewellAgree(p, ask); p.pendingOffers = (p.pendingOffers || []).filter(o => o.homecoming || Math.random() < .35); S.offerPick = -1; try { PRESS.queue(p, PRESS.both('fw_pact', p, {})); } catch { } S.fwMsg = `${cn}가 고개를 끄덕였다. "당신의 마지막 유니폼은 우리 것이다." 마지막 계약, 연봉은 조금 줄었다.`; }
+        else if (ask.out === 'no') { E.farewellRefused(p, ask); try { PRESS.queue(p, PRESS.both('fw_no', p, {})); } catch { } S.fwMsg = `${cn}는 약속하지 않았다. "계약이 끝날 때 다시 이야기하자." ${fl}`.trim(); }
+        else S.fwMsg = '';
+      }
+      Store.save('career', p); render(); return;
+    }
+    if (a === 'fwcondyes' || a === 'fwcondno') {
+      const ask = p.flags.fwAsk?.here; if (!ask) return; ask.done = true; const cn = club(ask.club).name;
+      S.open.add('decide');
+      if (a === 'fwcondyes') { E.farewellAgree(p, ask, ask.terms); p.pendingOffers = (p.pendingOffers || []).filter(o => o.homecoming || Math.random() < .35); S.offerPick = -1; try { PRESS.queue(p, PRESS.both('fw_pact', p, {})); } catch { } S.fwMsg = `조건을 받아들였다. ${cn}에서 끝낸다.`; }
+      else { E.farewellRefused(p, ask); S.fwMsg = `조건은 받아들일 수 없었다. ${cn}와의 이야기는 거기서 멈췄다.`; }
+      Store.save('career', p); render(); return;
+    }
+    if (a === 'fwlast') { keepMemo(); if (p.flags.lastSeason === p.year) return; p.flags.lastSeason = p.year; E.fanCer(p, p.club, 10); p.morale = Math.min(100, (p.morale ?? 60) + 8); try { PRESS.queue(p, PRESS.both('fw_last', p, {})); } catch { } S.fwMsg = '이번 시즌이 마지막이라고 발표했다. 남은 경기마다 박수가 따라올 것이다.'; Store.save('career', p); render(); return; }
     if (a === 'intlback') {
       keepMemo(); if (p.flags.retAsk === p.year) return; p.flags.retAsk = p.year;
       if (Math.random() < E.natReturnChance(p)) { p.intlRetired = false; p.flags.intlReturned = p.year; E.nudge(p, 'nat', .06, 'return'); try { PRESS.queue(p, PRESS.natHead('intlreturn', p, {})); } catch { } p.pendingEvents = (p.pendingEvents || []).concat('대표팀 복귀'); S.intlMsg = '대표팀 감독이 반겼다. 다시 국기를 단다.'; }
@@ -7860,6 +7988,10 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       if (p.stage === 'post') { const l = p.seasons[p.seasons.length - 1]; if (l?.pendingFinal) E.autoClubFinal(p, l, S.world); E.ballonLate(p, S.world); E.endOfSeason(p, S.world); }
       const early = p.age - 1 <= 31 && !p.forcedRetire; if (early) { if (!S.retire.reason) return; p.flags.early = { reason: S.retire.reason, age: p.age - 1 }; }
       { const mm = (S.choice?.memo || '').trim(); if (mm) p.retireMemo = { text: mm.slice(0, 600), q: S.choice.q || '', year: p.year, age: p.age - 1, club: p.club }; }
+      { const rf = p.flags.retireHere; if (S.retire.words && S.retire.words !== 'none' && rf) p.flags.lastWords = { club: rf.club, k: S.retire.words };
+        const fw = E.farewellOf(p); const ls = p.seasons[p.seasons.length - 1];
+        if (ls && fw) ls.notes = (ls.notes || []).concat(fw.home ? `귀향 · ${club(fw.club).name}에서 축구화를 벗었다` : `명예로운 작별 · ${club(fw.club).name}에서 축구화를 벗었다`);
+        if (ls && p.flags.lastWords) ls.notes = (ls.notes || []).concat(p.flags.lastWords.k === 'diss' ? `은퇴 인터뷰 · ${club(p.flags.lastWords.club).name} 직격` : `은퇴 인터뷰 · ${club(p.flags.lastWords.club).name}에 감사`); }
       const sum = E.summarize(p); sum.post = S.retire.post; sum.line = p.line || 'L0'; sum.v10 = 1; sum.v14 = 1;
       const parS = p.parentId ? S.world.careers.find(c => c.id === p.parentId) : null; if (parS) sum.heirLines = E.heirContrast(sum, parS);
       if (S.retire.post === 'coach' && !p.flags.deceased) sum.coach = E.makeCoach(sum, S.retire.style);
@@ -7874,7 +8006,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       p.bdoYears.forEach(y => S.world.bdo[y] = p.name);
       S.world.activeId = null;
       Store.save('career', p); Store.save('world', S.world);
-      let heads = []; try { heads = [...PRESS.both(early ? 'retireEarly_' + p.flags.early.reason : sum.peakOvr >= 85 || sum.bdo || sum.trophies >= 6 ? 'retireLegend' : 'retire', p, { age: p.age - 1 }), ...((p.legends || []).length ? PRESS.both('retiremyth', p, { y: p.legends[0].y, comp: p.legends[0].comp }) : []), ...rn.map(r => PRESS.make('retnum', p, { club: club(r.club).name, n: r.num })), ...hof.slice(0, 1).map(h => PRESS.make('hof', p, { club: club(h.club).name }))].filter(Boolean); PRESS.record(p, heads); Store.save('career', p); } catch (e) { heads = []; }
+      let heads = []; try { const fwS = sum.farewell; const lw = p.flags.lastWords; heads = [...(fwS ? PRESS.both(fwS.home ? 'fw_home' : 'fw_retire', p, { club: club(fwS.club).name, n: fwS.seasons }) : []), ...(lw ? PRESS.both(lw.k === 'diss' ? 'fw_diss' : 'fw_grace', p, { old: club(lw.club).name }) : []), ...PRESS.both(early ? 'retireEarly_' + p.flags.early.reason : sum.peakOvr >= 85 || sum.bdo || sum.trophies >= 6 ? 'retireLegend' : 'retire', p, { age: p.age - 1 }), ...((p.legends || []).length ? PRESS.both('retiremyth', p, { y: p.legends[0].y, comp: p.legends[0].comp }) : []), ...rn.map(r => PRESS.make('retnum', p, { club: club(r.club).name, n: r.num })), ...hof.slice(0, 1).map(h => PRESS.make('hof', p, { club: club(h.club).name }))].filter(Boolean); PRESS.record(p, heads); Store.save('career', p); } catch (e) { heads = []; }
       S.retire = { done: true, summary: sum, career: p, retiredNums: rn, hof, heads }; S.p = null; S.lastRes = null; S.phase = 'prep';
       render(); window.scrollTo(0, 0); return;
     }
