@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v90'</script>
+<script>window.SK_VER='v91'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -858,25 +858,26 @@ const ENGINE = (() => {
     RO('stopper', '스토퍼', 'CB', '앞으로 튀어나가 상대 공격수를 끊는다. 적극적이지만 뒷공간이 빈다.', 1.0, .7, 1.1, F(0, 1, .5, .5, 0, .5), { TKL: .3, STR: .25, AIR: .2, DEF: .15, PRS: .1 }),
     RO('covercb', '커버형 CB', 'CB', '뒤에 남아 공간을 지킨다. 실수가 가장 적은 안정형.', .8, .6, .7, F(0, -.5, .5, 1, .5, .5), { DEF: .35, PAC: .25, TKL: .2, AIR: .1, STR: .1 }),
     RO('widecb', '와이드 센터백', 'CB', '3백의 측면 센터백이 측면으로 오버래핑한다. 요즘 유행하는 공격적인 센터백.', 1.2, 1.8, 1.1, F(.5, .5, .5, -.5, 1, 0), { PAC: .2, DRI: .15, CRO: .15, DEF: .25, STA: .15, TKL: .1 }),
-    RO('libero', '리베로', 'CB', '공을 몰고 중원까지 전진하는 센터백. 화려하지만 위험하다.', 1.5, 1.6, 1.3, F(1, 0, .5, -1, 0, -.5), { DRI: .2, PAS: .25, VIS: .15, DEF: .25, PAC: .15 }),
-    RO('invfb', '인버티드 풀백', 'FB', '빌드업 때 중앙으로 좁혀 들어와 미드필더 한 명이 된다.', .8, 1.0, .8, F(1, .5, -.5, 0, -.5, 0), { PAS: .3, DEF: .25, TEC: .15, VIS: .15, STA: .15 }),
+    RO('libero', '리베로', 'CB', '공을 몰고 중원까지 올라가는 센터백. 볼 플레잉 CB가 패스로 전진한다면 리베로는 드리블로 전진한다. 화려하지만 위험하다.', 1.5, 1.6, 1.3, F(1, 0, .5, -1, 0, -.5), { DRI: .3, PAC: .2, DEF: .25, PAS: .15, STR: .1 }),
+    RO('invfb', '인버티드 풀백', 'FB', '빌드업 때 중앙으로 좁혀 들어와 미드필더 한 명이 된다.', .8, 1.0, .8, F(1, 1, -.5, 0, -.5, 0), { PAS: .3, DEF: .25, TEC: .15, VIS: .15, STA: .15 }),
     RO('overlapfb', '오버래핑 풀백', 'FB', '측면을 끝까지 올라가 크로스를 올린다.', 1.0, 1.5, 1.0, F(.5, .5, .5, -.5, 1, 0), { PAC: .25, CRO: .3, STA: .25, DEF: .2 }),
     RO('holdfb', '홀딩 풀백', 'FB', '공격 시 센터백 옆에 남아 3백을 만든다. 공격 포인트는 적고 안정적이다.', .5, .5, .7, F(.5, 0, .5, 1, -.5, .5), { DEF: .35, TKL: .25, AIR: .15, STR: .15, PAC: .1 }),
     RO('hybridfb', '하이브리드 풀백', 'FB', '빌드업 땐 중앙, 공격 땐 측면, 수비 땐 3백. 경기 중 위치를 계속 바꾼다.', 1.0, 1.2, 1.0, F(.5, 1, .5, 0, .5, 0), { PAS: .2, PAC: .2, DEF: .2, STA: .2, DRI: .2 }),
     RO('attwb', '공격형 윙백', 'WB', '사실상 윙어처럼 높게 머문다. 공격 포인트가 크게 늘고 기복도 크다.', 1.3, 1.7, 1.2, F(0, .5, 1, -.5, 1, 0), { PAC: .25, CRO: .25, DRI: .2, STA: .2, DEF: .1 }),
     RO('compwb', '컴플리트 윙백', 'WB', '측면 전체를 혼자 오르내린다. 체력이 생명.', 1.0, 1.3, 1.0, F(.5, 1, .5, .5, .5, 0), { STA: .3, PAC: .2, DEF: .2, CRO: .2, TKL: .1 }),
-    RO('invwb', '인버티드 윙백', 'WB', '안쪽 하프스페이스로 들어와 직접 슈팅한다.', 1.6, 1.0, 1.2, F(1, .5, .5, -.5, 0, 0), { DRI: .25, SHO: .2, PAS: .2, PAC: .2, STA: .15 }),
+    RO('invwb', '인버티드 윙백', 'WB', '안쪽 하프스페이스로 들어와 공을 몰고 전진한다. 측면보다 중앙에서 공격을 만든다.', 1.3, 1.15, 1.2, F(1, .5, .5, -.5, 0, 0), { DRI: .3, PAS: .25, PAC: .2, STR: .15, SHO: .1 }),
     RO('anchor', '앵커', 'DM', '수비 라인 앞을 지키는 데만 집중한다. 가장 안정적이다.', .5, .6, .7, F(0, 0, .5, 1, .5, .5), { DEF: .35, TKL: .25, STR: .2, PAS: .2 }),
     RO('regista', '레지스타', 'DM', '깊은 곳에서 경기 전체를 지휘한다. 도움이 크게 늘고 수비 부담은 동료가 나눠 진다.', .8, 1.6, 1.0, F(1, -.5, 0, -.5, .5, .5), { PAS: .35, VIS: .3, TEC: .2, DEF: .15 }),
-    RO('halfback', '하프백', 'DM', '센터백 사이로 내려가 3백을 만들고 빌드업을 돕는다.', .6, .9, .8, F(1, .5, 0, .5, 0, 0), { DEF: .3, PAS: .25, AIR: .15, TKL: .15, STR: .15 }),
+    RO('halfback', '하프백', 'DM', '센터백 사이로 내려가 3백을 만들고 첫 패스를 맡는다. 흘러나온 공도 그가 줍는다.', .6, .9, .8, F(1, .5, 0, .5, 0, 0), { DEF: .3, PAS: .3, AIR: .2, STR: .1, TKL: .1 }),
     RO('destroyer', '데스트로이어', 'DM', '공을 가진 상대를 끝까지 쫓아가 끊는다. 게겐프레싱의 엔진.', .6, .6, .9, F(-.5, 1, .5, .5, 0, .5), { TKL: .35, PRS: .25, STA: .2, STR: .2 }),
     RO('b2b', '박스 투 박스', 'CM', '양쪽 박스를 오가며 공격과 수비에 모두 관여한다.', 1.4, 1.0, 1.0, F(.5, 1, .5, .5, 0, .5), { STA: .3, SHO: .15, TKL: .15, PAS: .15, MOV: .15, STR: .1 }),
     RO('mezzala', '메짤라', 'CM', '하프스페이스로 전진해 공격에 가담하는 8번.', 1.35, 1.2, 1.1, F(.5, .5, .5, -.5, .5, 0), { MOV: .25, DRI: .25, PAS: .2, SHO: .15, STA: .15 }),
-    RO('dlp', '딥 라잉 플레이메이커', 'CM', '수비 라인 앞에서 롱패스로 경기를 연다.', .6, 1.4, .8, F(1, -.5, .5, 0, .5, .5), { PAS: .35, VIS: .3, TEC: .2, DEF: .15 }),
+    RO('dlp', '딥 라잉 플레이메이커', 'CM', '수비 라인 앞에서 긴 패스로 방향을 바꾸고 경기를 연다.', .6, 1.2, .8, F(1, -.5, .5, 0, .5, .5), { PAS: .4, VIS: .3, DEF: .2, DRI: .1 }),
     RO('carrier', '볼 캐리어', 'CM', '압박을 드리블로 뚫고 공을 전방까지 운반한다. 요즘 가장 비싼 유형의 미드필더.', 1.1, 1.1, 1.1, F(.5, .5, 1, 0, 0, 0), { DRI: .35, PAC: .2, STR: .2, TEC: .15, STA: .1 }),
     RO('carrilero', '카릴레로', 'CM', '측면 수비를 커버하며 성실하게 오르내린다. 감독이 가장 믿는 유형.', .6, .8, .7, F(.5, .5, .5, 1, .5, 0), { STA: .3, DEF: .25, PAS: .25, PRS: .2 }),
-    RO('treq', '트레콰르티스타', 'AM', '수비 의무에서 풀려난 자유인. 결정적인 패스와 슈팅을 노린다. 골과 도움이 모두 늘지만 기복이 크고 압박형 감독은 싫어한다.', 1.15, 1.15, 1.5, F(.5, -1, .5, -.5, 0, 0), { TEC: .25, VIS: .25, DRI: .2, SHO: .15, PAS: .15 }),
-    RO('ap', '어드밴스드 플레이메이커', 'AM', '하프스페이스에서 공을 받아 템포를 조절하고 기회를 만든다. 수비도 어느 정도 한다. 도움이 가장 많고 안정적이다.', .85, 1.3, .8, F(1, .5, 0, 0, 0, 0), { PAS: .35, VIS: .3, TEC: .2, DRI: .15 }),
+    RO('ballwin', '볼 위닝 미드필더', 'CM', '중원에서 상대에게 먼저 달려들어 공을 빼앗고 바로 동료에게 넘긴다. 데스트로이어보다 높은 위치에서 압박한다. 앞으로 나간 만큼 뒷공간이 빈다.', .7, .8, .9, F(-.5, 1, .5, .5, 0, .5), { TKL: .35, PRS: .3, DEF: .2, STR: .15 }),
+    RO('treq', '트레콰르티스타', 'AM', '수비 의무에서 풀려난 자유인. 결정적인 패스와 슈팅을 노린다. 골과 도움이 모두 늘지만 기복이 크고 압박형 감독은 싫어한다.', 1.15, 1.15, 1.5, F(1, -1, .5, -.5, 0, 0), { TEC: .25, VIS: .25, DRI: .2, SHO: .15, PAS: .15 }),
+    RO('ap', '어드밴스드 플레이메이커', 'AM', '하프스페이스로 움직여 공을 받고 템포를 조절하며 기회를 만든다. 수비도 어느 정도 한다. 도움이 가장 많고 안정적이다.', .85, 1.3, .8, F(1, .5, 0, 0, 0, 0), { PAS: .4, DRI: .3, MOV: .2, VIS: .1 }),
     RO('shadow', '섀도 스트라이커', 'AM', '2선에서 박스로 침투하는 두 번째 공격수. 골이 크게 늘고 도움은 준다.', 1.6, .75, 1.2, F(0, .5, 1, .5, 0, .5), { MOV: .3, SHO: .3, PAC: .2, TEC: .2 }),
     RO('free10', '프리 롤 10', 'AM', '측면과 중앙을 자유롭게 오가며 수적 우위를 만든다.', 1.1, 1.2, 1.2, F(1, 0, .5, -.5, .5, 0), { DRI: .3, TEC: .2, PAS: .2, MOV: .15, PAC: .15 }),
     RO('raum', '라움도이터', 'AM', '기술보다 공간을 읽는 눈으로 골을 넣는 공간 해석자. 화려하지 않지만 늘 그 자리에 있다.', 1.4, 1.1, .9, F(.5, 1, .5, 0, .5, .5), { MOV: .45, SHO: .25, STA: .15, VIS: .15 }),
@@ -888,33 +889,48 @@ const ENGINE = (() => {
     RO('poacher', '포처', 'ST', '경기 관여는 적지만 박스 안 한 번의 기회를 골로 바꾼다. 기복이 크다.', 1.25, .55, 1.4, F(0, -.5, .5, .5, .5, .5), { SHO: .45, MOV: .35, PAC: .2 }),
     RO('target', '타깃맨', 'ST', '최전방에서 몸싸움과 헤더로 공을 지키고 마무리한다.', 1.05, .85, 1.0, F(-.5, 0, .5, .5, 1, 1), { AIR: .35, STR: .35, SHO: .3 }),
     RO('presser', '프레싱 포워드', 'ST', '최전방 수비의 시작. 득점보다 상대 빌드업을 망가뜨리는 데 쓰인다.', .9, .9, .9, F(.5, 1, .5, 0, 0, .5), { PRS: .35, STA: .3, PAC: .15, SHO: .2 }),
-    RO('complete', '컴플리트 포워드', 'ST', '골, 연계, 침투를 모두 하는 만능형.', 1.0, 1.0, 1.0, F(.5, .5, .5, .5, .5, .5), { SHO: .25, TEC: .2, DRI: .15, STR: .15, PAS: .15, MOV: .1 }),
+    RO('complete', '컴플리트 포워드', 'ST', '골, 연계, 침투, 몸싸움을 모두 하는 만능형.', 1.0, 1.0, 1.0, F(.5, .5, .5, .5, .5, .5), { SHO: .3, DRI: .2, STR: .2, AIR: .1, PAS: .1, MOV: .1 }),
     RO('false9', '폴스 나인', 'ST', '내려와서 공을 받고 2선 침투를 살린다. 골은 줄고 도움이 크게 는다.', .7, 1.6, 1.0, F(1, .5, -.5, -.5, 0, -.5), { PAS: .3, VIS: .25, TEC: .25, DRI: .2 }),
     RO('channel', '채널 러너', 'ST', '센터백과 풀백 사이 채널로 끊임없이 뛰어든다. 역습 팀의 최전방.', 1.15, .85, 1.1, F(-.5, .5, 1, .5, .5, .5), { PAC: .4, MOV: .3, SHO: .3 }),
     // v3 추가 역할
     RO('commandgk', '공중 장악형 키퍼', 'GK', '크로스와 세트피스 때 과감하게 튀어나와 공을 잡아챈다. 박스 안이 그의 영역이다.', 1, 1, .9, F(-.5, 0, .5, 1, .5, 1), { COM: .35, HAN: .25, GPO: .2, REF: .2 }),
     RO('aerialcb', '헤더형 센터백', 'CB', '양쪽 박스의 제공권을 지배한다. 세트피스 득점이 쏠쏠하다.', 1.6, .5, 1.0, F(-.5, 0, .5, 1, .5, 1), { AIR: .4, STR: .3, DEF: .2, TKL: .1 }),
-    RO('leadercb', '수비 리더', 'CB', '라인을 조율하고 동료에게 끊임없이 소리친다. 감독이 가장 먼저 믿는 센터백.', .8, .7, .7, F(.5, .5, .5, .5, .5, .5), { DEF: .4, VIS: .15, AIR: .15, TKL: .15, STR: .15 }),
+    RO('leadercb', '라인 조율형 CB', 'CB', '수비 라인을 올리고 내리며 간격을 맞춘다. 위치 선정과 공간 통제가 무기다.', .8, .7, .7, F(.5, .5, .5, .5, .5, .5), { DEF: .45, VIS: .2, PAC: .15, AIR: .1, TKL: .1 }),
     RO('underlap', '언더래핑 풀백', 'FB', '윙어 바깥이 아니라 안쪽 채널로 뛰어든다. 하프스페이스 침투가 무기.', 1.3, 1.25, 1.1, F(.5, .5, .5, -.5, .5, 0), { MOV: .25, PAC: .2, PAS: .2, STA: .2, DEF: .15 }),
     RO('wbplay', '플레이메이킹 윙백', 'WB', '측면에서 안쪽으로 들어와 패스로 경기를 만든다. 크로스보다 컷백과 대각 패스.', .8, 1.5, 1.0, F(1, 0, .5, 0, .5, 0), { PAS: .3, VIS: .2, CRO: .2, STA: .15, DEF: .15 }),
     RO('defwb', '수비형 윙백', 'WB', '5백의 측면을 단단히 닫는다. 공격 가담은 신중하다.', .6, .9, .7, F(0, .5, .5, 1, 0, .5), { DEF: .3, TKL: .2, PAC: .2, STA: .2, AIR: .1 }),
-    RO('volante', '볼란치', 'DM', '남미식 수비형 미드필더. 넓은 범위를 거칠게 커버하고 기회가 오면 전진한다.', .9, .8, 1.0, F(0, 1, 1, .5, 0, .5), { TKL: .25, STA: .25, PAS: .2, DRI: .15, PRS: .15 }),
+    RO('volante', '기동형 볼란치', 'DM', '넓은 구역을 쉬지 않고 커버하며 공을 회수한다. 공을 쫓는 데스트로이어와 달리 공간을 지킨다.', .9, .8, 1.0, F(0, 1, 1, .5, 0, .5), { STR: .3, DEF: .25, PAC: .2, TKL: .15, PAS: .1 }),
     RO('segundo', '세군도 볼란치', 'DM', '깊은 곳에서 출발해 박스까지 늦게 침투한다. 수비형 미드필더치고 골이 많다.', 1.4, .9, 1.1, F(.5, .5, .5, 0, 0, .5), { MOV: .25, SHO: .2, PAS: .2, STA: .2, TKL: .15 }),
-    RO('roam', '로밍 플레이메이커', 'CM', '정해진 자리 없이 공을 따라 움직이며 어디서든 연결고리가 된다.', 1.1, 1.3, 1.2, F(1, .5, 0, -.5, 0, 0), { PAS: .25, DRI: .2, VIS: .2, STA: .2, TEC: .15 }),
-    RO('linebreaker', '라인 브레이커', 'CM', '압박 라인 사이로 한 번에 꽂는 전진 패스가 전문. 키 패스 숫자가 남다르다.', .8, 1.4, 1.0, F(1, .5, .5, 0, 0, .5), { PAS: .35, VIS: .3, TEC: .2, STA: .15 }),
+    RO('roam', '로밍 플레이메이커', 'CM', '정해진 자리 없이 끊임없이 움직이며 동료에게 패스 길을 열어 준다. 화려한 패스보다 이동과 연결이 무기다.', 1.1, 1.3, 1.2, F(1, .5, 0, -.5, 0, 0), { STR: .35, MOV: .25, PAS: .25, DRI: .15 }),
+    RO('linebreaker', '라인 브레이커', 'CM', '압박 라인 사이로 한 번에 찌르는 수직 패스가 전문. 키 패스 숫자가 남다르다.', .8, 1.5, 1.0, F(1, .5, .5, 0, 0, .5), { VIS: .4, PAS: .35, MOV: .1, STR: .15 }),
     RO('boxcrash', '박스 크래셔', 'CM', '2선에서 늦게 박스로 쇄도해 세컨드볼을 마무리한다.', 1.6, .8, 1.2, F(0, 1, .5, 0, .5, .5), { MOV: .3, SHO: .25, STA: .25, STR: .2 }),
-    RO('enganche', '엔간체', 'AM', '움직임은 적지만 모든 공이 그를 거친다. 고전적인 10번. 압박형 감독과는 상극이다.', .9, 1.5, 1.3, F(.5, -1, 0, -.5, 0, -.5), { VIS: .35, PAS: .3, TEC: .25, DRI: .1 }),
+    RO('enganche', '엔간체', 'AM', '움직임은 적지만 모든 공이 그를 거친다. 고전적인 10번. 압박형 감독과는 상극이다.', .9, 1.5, 1.3, F(.5, -1, 0, -.5, 0, -.5), { VIS: .45, PAS: .35, DRI: .2 }),
     RO('mediapunta', '메디아푼타', 'AM', '10번과 9번 사이. 내려와서 받고, 돌아서고, 직접 마무리까지 한다.', 1.3, 1.1, 1.1, F(.5, .5, .5, 0, 0, .5), { MOV: .25, TEC: .25, SHO: .2, PAS: .15, DRI: .15 }),
     RO('wide10', '와이드 플레이메이커', 'W', '터치라인에 붙어 대각 패스와 얼리 크로스로 기회를 만든다. 측면의 10번.', .7, 1.5, 1.0, F(1, 0, 0, 0, .5, 0), { PAS: .3, CRO: .25, VIS: .25, TEC: .2 }),
     RO('farpost', '파 포스트 윙어', 'W', '반대편 크로스가 올라갈 때 먼 포스트로 뛰어들어 마무리한다.', 1.5, .7, 1.2, F(0, .5, .5, 0, 1, .5), { MOV: .3, SHO: .3, AIR: .2, PAC: .2 }),
     RO('trackback', '헌신형 윙어', 'W', '상대 풀백을 끝까지 따라 내려온다. 공격 포인트는 적어도 감독이 사랑한다.', .7, .8, .7, F(0, 1, .5, 1, 0, .5), { STA: .3, PRS: .2, PAC: .2, TKL: .15, DRI: .15 }),
     RO('secondst', '세컨드 스트라이커', 'ST', '투톱의 짝. 파트너 주변을 돌며 연계하고 흘러나온 공을 마무리한다.', 1.1, 1.2, 1.1, F(0, .5, 1, .5, .5, .5), { TEC: .25, SHO: .25, PAS: .2, MOV: .15, DRI: .15 }),
-    RO('dlf', '딥 라잉 포워드', 'ST', '내려와서 등지고 연계한 뒤 다시 박스로 들어간다. 폴스 나인보다 골 욕심이 있다.', .95, 1.25, 1.0, F(.5, .5, .5, .5, 0, .5), { TEC: .25, PAS: .2, STR: .2, SHO: .2, VIS: .15 }),
+    RO('dlf', '딥 라잉 포워드', 'ST', '등지고 공을 지켜 연계한 뒤 다시 박스로 들어간다. 폴스 나인과 달리 몸싸움이 핵심이다.', .95, 1.25, 1.0, F(.5, .5, .5, .5, 0, .5), { STR: .3, PAS: .25, SHO: .25, DRI: .1, VIS: .1 }),
   ];
   // 감독 신뢰를 빨리 얻는 역할
-  const ROLE_TRUST = { leadercb: 4, trackback: 3, carrilero: 3, anchor: 2, holdfb: 2, defwb: 2, presser: 2 };
+  // v91 대표 기록 사양(계산은 v92). 롤마다 시즌 대표 기록 하나. 'ga'는 골·도움으로 충분해서 추가 기록이 없다는 뜻
+  const STAT_FAM = { ti: '태클+가로채기', rec: '볼 회수', air: '공중볼 경합 승리', prs: '압박 성공', prog: '전진 패스', kp: '키 패스', cross: '크로스 성공', carry: '전진 운반', drb: '1대1 돌파 성공', work: '활동량', sweep: '스위핑', dist: '롱패스 성공', claim: '크로스 처리', sv: '선방', ga: '골·도움' };
+  const ROLE_STAT = { sweeperk: 'sweep', shotstop: 'sv', buildgk: 'dist', commandgk: 'claim', bpd: 'prog', stopper: 'ti', covercb: 'rec', widecb: 'cross', libero: 'carry', aerialcb: 'air', leadercb: 'rec', invfb: 'prog', overlapfb: 'cross', holdfb: 'ti', underlap: 'kp', attwb: 'cross', compwb: 'work', invwb: 'carry', wbplay: 'kp', defwb: 'ti', anchor: 'ti', regista: 'prog', halfback: 'rec', destroyer: 'prs', volante: 'rec', segundo: 'work', b2b: 'rec', mezzala: 'ga', dlp: 'prog', carrier: 'carry', carrilero: 'work', ballwin: 'ti', roam: 'work', linebreaker: 'kp', boxcrash: 'ga', treq: 'ga', ap: 'kp', shadow: 'ga', raum: 'ga', enganche: 'prog', mediapunta: 'ga', insidef: 'ga', invwinger: 'kp', winger: 'cross', iso: 'drb', widetm: 'air', wide10: 'kp', farpost: 'ga', trackback: 'ti', poacher: 'ga', target: 'air', presser: 'prs', complete: 'ga', false9: 'kp', channel: 'ga', secondst: 'ga', dlf: 'kp' };
+  const ROLE_TRUST = { leadercb: 2, trackback: 3, carrilero: 3, anchor: 2, holdfb: 2, defwb: 2, presser: 2 };
+  // v91 통합: 지난 시즌 기록의 롤 이름은 남기고, 새로 고를 수는 없다. into: 옮겨 갈 롤(함수면 능력치로 고른다)
+  const MERGED = { hybridfb: { into: null, pref: 'invfb', label: '인버티드 풀백 등 다른 풀백 롤로 통합(v91)' }, free10: { into: 'treq', label: '트레콰르티스타로 통합(v91)' } };
+  for (const r of ROLES) if (MERGED[r.id]) r.retired = true;
   const ROLE = Object.fromEntries(ROLES.map(r => [r.id, r]));
-  const rolesFor = (pos) => ROLES.filter(r => r.grp === roleGroup(pos));
+  const rolesFor = (pos) => ROLES.filter(r => r.grp === roleGroup(pos) && !r.retired);
+  // 통합된 롤에 있던 선수를 옮긴다: 정해진 곳이 있으면 그리로, 없으면 지금 능력치(+이미 익힌 롤, 기본 목적지 약간 우대)에 가장 맞는 롤로. 숙련도는 70%만 넘어간다(옛 롤의 경험을 새 롤과 같다고 보지 않는다)
+  function normalizeRole(p) {
+    if (!p || !ROLE[p.role]?.retired) return false; const old = p.role; const m = MERGED[old] || {};
+    const cands = ROLES.filter(r => r.grp === ROLE[old].grp && !r.retired);
+    const dest = m.into && cands.some(r => r.id === m.into) ? m.into : cands.map(r => [r.id, roleScore(p, r.id) + 3 * clamp(((p.roleXp || {})[r.id] || 0) / FAM_MASTER, 0, 1) + (r.id === m.pref ? 1 : 0)]).sort((a, b) => b[1] - a[1])[0][0];
+    p.role = dest; if (p.roleXp && p.roleXp[old] != null) { p.roleXp[dest] = Math.max(p.roleXp[dest] || 0, Math.round(p.roleXp[old] * .7)); }
+    if (p.flags?.converted?.role === old) p.flags.converted.role = dest; (p.flags = p.flags || {}).roleMerged = { from: old, to: dest };
+    return true;
+  }
 
   const attrsFor = (pos) => pos === 'GK' ? GK_ATTR : OUT_ATTR;
   const groupsFor = (pos) => pos === 'GK' ? ATTR_GROUPS.gk : ATTR_GROUPS.out;
@@ -967,12 +983,12 @@ const ENGINE = (() => {
     return wsum(p.attrs, w);
   }
   // 포지션·롤별 기준점: 그 포지션의 전형적인 24세(포지션 맞춤으로 자란 선수)에서 '행동 능력 − 포지션 OVR'의 평균 [득점, 찬스]. 이 기준에서 벗어난 만큼만 생산성이 달라진다
-    // 기준점 버전: v90 · 2026-10-18 · seed 20261018 (calib/calib-v90.json, tests/calib.js로 재생성)
-  const CALIB = { act: {"CB":{"bpd":[-15.4,-1.5],"stopper":[-10.5,-25.5],"covercb":[-15.4,-24.5],"widecb":[-13.3,-16.7],"libero":[-15.5,-7],"aerialcb":[-8.9,-27.7],"leadercb":[-13.1,-17.7]},"LB":{"invfb":[-11.9,-5.1],"overlapfb":[-7.5,-7.2],"holdfb":[-13.1,-22],"hybridfb":[-12.9,-11.5],"underlap":[-5,-4.7]},"RB":{"invfb":[-11.6,-1.8],"overlapfb":[-6,-6.2],"holdfb":[-13.5,-18],"hybridfb":[-11.8,-7.2],"underlap":[-5.9,-7.7]},"LWB":{"attwb":[-8.5,-5.9],"compwb":[-6.7,-8.3],"invwb":[-4.8,-3.2],"wbplay":[-21.5,-0.5],"defwb":[-10.4,-21.1]},"RWB":{"attwb":[-8,-3.6],"compwb":[-6.1,-8.7],"invwb":[-4.9,-2],"wbplay":[-23.1,5.3],"defwb":[-10.3,-18.3]},"DM":{"anchor":[-11.2,-5],"regista":[-13.8,5],"halfback":[-18.7,-1.1],"destroyer":[-9.4,-18.2],"volante":[-16.2,-8.4],"segundo":[-6.8,1.7]},"CM":{"b2b":[-1.5,-4.1],"mezzala":[-2.7,6.2],"dlp":[-3.1,8.3],"carrier":[-0.6,6.5],"carrilero":[-1.9,8.2],"roam":[-4.3,4.9],"linebreaker":[-7.5,8.5],"boxcrash":[6.7,-6.5]},"AM":{"treq":[-3.4,2.3],"ap":[-5.6,5.1],"shadow":[-5.2,2],"free10":[-5.7,4.2],"raum":[0.1,-4.8],"enganche":[-4.9,4.8],"mediapunta":[-1,1]},"LW":{"insidef":[2.3,-5],"invwinger":[2,-3],"winger":[-2.4,-7.2],"iso":[0.7,-3.3],"widetm":[2.1,-12.9],"wide10":[0.1,0.6],"farpost":[5.5,-17.2],"trackback":[-1.6,-15.3]},"RW":{"insidef":[2.8,-6.1],"invwinger":[2.2,0.6],"winger":[-1.6,-7],"iso":[1,-4.4],"widetm":[6.9,-11.8],"wide10":[-0.3,3.2],"farpost":[3.8,-17.9],"trackback":[-1,-14.1]},"ST":{"poacher":[8.8,-27.2],"target":[4.6,-26.4],"presser":[3,-21.7],"complete":[4.6,-6.3],"false9":[8.9,9.1],"channel":[7.2,-26.1],"secondst":[8.5,-3],"dlf":[4.1,-4.8]}},
+    // 기준점 버전: v91 · 2026-10-18 · seed 20261018 (calib/calib-v91.json, tests/calib.js로 재생성)
+  const CALIB = { act: {"CB":{"bpd":[-17.6,-1.7],"stopper":[-13.2,-24.9],"covercb":[-14.3,-24.3],"widecb":[-13.1,-16.6],"libero":[-10.1,-10],"aerialcb":[-9.4,-27.4],"leadercb":[-13.7,-10.5]},"LB":{"invfb":[-10.4,1.1],"overlapfb":[-8.4,-10.4],"holdfb":[-12.5,-17.7],"underlap":[-4.2,-3.2]},"RB":{"invfb":[-10.3,0],"overlapfb":[-7.9,-8.6],"holdfb":[-11.8,-21.9],"underlap":[-5.2,-6]},"LWB":{"attwb":[-8.1,-4.5],"compwb":[-7.2,-7.9],"invwb":[-7.5,0],"wbplay":[-22.7,4.7],"defwb":[-9.8,-17.7]},"RWB":{"attwb":[-7.7,-2.9],"compwb":[-6.9,-4.6],"invwb":[-4.7,3.5],"wbplay":[-21.8,6.9],"defwb":[-10.1,-18.2]},"DM":{"anchor":[-11.9,-5.1],"regista":[-18.7,2.3],"halfback":[-18.5,0.6],"destroyer":[-6.7,-17],"volante":[-12.6,-15.4],"segundo":[-3.2,2.1]},"CM":{"b2b":[0.8,-6],"mezzala":[-4,5.2],"dlp":[-18.3,9.1],"carrier":[-2.9,5.2],"carrilero":[-2.9,5.8],"ballwin":[-13.5,-5.6],"roam":[-3.1,4.9],"linebreaker":[-9.4,7.9],"boxcrash":[5,-6.5]},"AM":{"treq":[-4.2,2.8],"ap":[-6.7,4.2],"shadow":[1.8,-0.9],"raum":[1.6,-5.9],"enganche":[-7.2,6.8],"mediapunta":[-2.7,1.8]},"LW":{"insidef":[1.7,-5.5],"invwinger":[1,4.6],"winger":[-2.5,-7.5],"iso":[1.1,-4.3],"widetm":[-1.9,-13.6],"wide10":[2,-5.1],"farpost":[-2.2,-16.2],"trackback":[-2.7,-14.9]},"RW":{"insidef":[2,-5.4],"invwinger":[1.3,-2.9],"winger":[-1.9,-6.5],"iso":[0.4,-3.6],"widetm":[0.8,-12.5],"wide10":[-0.4,4.7],"farpost":[3.7,-16.5],"trackback":[-2.1,-14.1]},"ST":{"poacher":[6.8,-24.1],"target":[3.6,-24.9],"presser":[5,-21.6],"complete":[2.6,-10.2],"false9":[11.3,10.7],"channel":[6.9,-23.6],"secondst":[7.8,-2.4],"dlf":[3.9,-9.3]}},
     // 실현 배율의 그룹 평균을 롤 원래 배율 평균에 맞추는 계수 [골, 도움]. 능력과 실현이 같은 방향으로 움직여 생기는 평균 상승을 없앤다
-    norm: {"ST":[0.949,1.036],"W":[0.96,0.985],"AM":[0.928,0.989],"WB":[0.986,0.961],"FB":[0.97,0.952],"CM":[0.996,0.96],"CB":[0.963,0.946],"DM":[0.936,0.94]},
+    norm: {"CM":[0.943,0.99],"ST":[0.924,1.004],"W":[0.942,0.97],"FB":[0.96,0.914],"DM":[0.92,1],"AM":[0.977,0.965],"CB":[1,0.958],"WB":[0.982,1.034]},
     // (참고용) 롤별 평균 적합도 [포지션][롤]: 그 롤로 실제로 뛴 선수들의 (롤 점수 − 포지션 OVR) 평균. 엔진 계산에는 쓰지 않는다
-    mu: {"ST":{"presser":10.4,"poacher":11.7,"target":9.8,"complete":9.2,"secondst":8.5,"false9":14.9,"channel":12.1},"GK":{"commandgk":9.5,"sweeperk":8.6,"shotstop":8.5,"buildgk":10.4},"LW":{"farpost":11.7,"insidef":9,"widetm":12.7,"wide10":12.5,"invwinger":11,"iso":10.7,"winger":10.7},"AM":{"free10":8.1,"ap":9.4,"mediapunta":7,"treq":7,"raum":10.3,"enganche":9.4,"shadow":10},"RWB":{"compwb":6.3,"wbplay":9.1,"defwb":8.5,"invwb":5.2,"attwb":7.6},"RB":{"holdfb":7.3,"underlap":7.8,"hybridfb":4.7,"overlapfb":10.2,"invfb":8.7},"RW":{"insidef":6,"iso":6.5,"widetm":9.1,"trackback":10,"invwinger":6.3,"winger":7.5,"farpost":5.8,"wide10":10.3},"LB":{"underlap":7.4,"holdfb":9.2,"invfb":8.4,"overlapfb":10.5,"hybridfb":5.1},"LWB":{"compwb":6.1,"attwb":6.5,"invwb":8.1,"defwb":6.5,"wbplay":8.1},"CM":{"roam":9.6,"linebreaker":10.7,"dlp":12.4,"carrier":16.2,"boxcrash":12.9,"mezzala":9.7,"b2b":9.2,"carrilero":10.8},"CB":{"leadercb":6.4,"stopper":5.9,"aerialcb":6.8,"covercb":6,"libero":8.1,"bpd":5.7,"widecb":6.2},"DM":{"volante":9.6,"destroyer":14.3,"regista":12.4,"segundo":10.6,"anchor":7.4,"halfback":10}} };
+    mu: {"CM":{"roam":10.5,"b2b":11.3,"boxcrash":13.6,"carrier":13.1,"linebreaker":12,"dlp":13.4,"carrilero":9.6,"ballwin":9.1,"mezzala":10.3},"ST":{"false9":14.5,"presser":8.5,"poacher":11.8,"channel":12.2,"complete":7,"secondst":11,"target":11.1,"dlf":11.3},"LW":{"insidef":8.9,"iso":10.1,"trackback":11.5,"farpost":10.1,"widetm":11.6,"invwinger":11.6,"winger":10.5},"RB":{"underlap":7.8,"holdfb":8.6,"invfb":9.4,"overlapfb":10.7},"DM":{"anchor":5.6,"destroyer":10.9,"halfback":6.7,"volante":6.9,"regista":6,"segundo":10},"AM":{"enganche":11.5,"ap":8.7,"treq":7.6,"shadow":9.2,"mediapunta":7.3,"raum":8.3},"RW":{"farpost":10.4,"iso":8.5,"insidef":6.7,"winger":10,"widetm":10.3,"trackback":11,"invwinger":10,"wide10":11.7},"LB":{"overlapfb":8.6,"holdfb":8.4,"invfb":8.1,"underlap":8.9},"GK":{"shotstop":8.1,"buildgk":10,"sweeperk":7.7,"commandgk":8.3},"CB":{"covercb":6.2,"aerialcb":8.8,"widecb":6.8,"stopper":6.8,"bpd":9.3,"libero":6.8,"leadercb":8.3},"LWB":{"invwb":5.4,"defwb":7.8,"compwb":6.6,"wbplay":10.7,"attwb":7.4},"RWB":{"wbplay":9.7,"compwb":6.7,"attwb":7.8,"invwb":9.4,"defwb":8.7}} };
   const ACT_BIAS = CALIB.act;
   const PROD = { act: .022, actLo: .72, actHi: 1.25, real: 8, realHi: 1.25 };
   // 실현된 롤 배율. 1보다 큰 배율(그 행동을 더 하는 역할)은 그 행동 능력만큼만 실현되고, 1보다 작은 배율(그 행동을 줄이는 역할)은 그대로 적용된다.
@@ -1643,7 +1659,7 @@ const ENGINE = (() => {
   // 포지션별로 감독이 배정한 롤의 평균 적합도(롤 점수 − OVR). 이 평균을 기준으로 위아래만 크게 본다. 평균 선수의 평점은 예전(.006)과 같다
   // 기준 적합도: 포지션 평균(FIT0)을 쓴다. 롤별 평균(CALIB.mu)은 그 롤에 이미 특화된 선수들의 값이라, 기준으로 쓰면 포지션 맞춤으로 자란 선수가 불리해진다(v89-B 실험). 참고용으로만 남긴다
   const muOf = (pos) => FIT0[pos] ?? 4;
-  const FIT0 = { GK: 9.2, CB: 6.4, LB: 8, RB: 7.6, LWB: 6.8, RWB: 7.4, DM: 10.5, CM: 11.4, AM: 8.6, LW: 10.9, RW: 7.4, ST: 10.7 }; CALIB.fit0 = FIT0;
+  const FIT0 = { GK: 8.6, CB: 7.4, LB: 8.5, RB: 9.4, LWB: 7.3, RWB: 8.2, DM: 7.4, CM: 11.5, AM: 9, LW: 10.6, RW: 9.3, ST: 10.9 }; CALIB.fit0 = FIT0;
   function rateBase(p, o, rs, teamStr, roleId) { const mu = muOf(p.pos, roleId); const g = POS[p.pos].grp; return 6.5 + (o - 75) * .036 + ((rs - o - mu) * RATE_FIT + (FIT0[p.pos] ?? 4) * .006) + (teamStr - 76) * .006 + (g === 'DF' || p.pos === 'DM' ? .16 : 0); }
   // 큰 경기 한 판의 의미: 결정적 장면(이긴 경기의 결승골·최우수 선수·승부차기 마무리)과 무너진 경기
   function bigOutcome(f) {
@@ -2035,6 +2051,7 @@ const ENGINE = (() => {
   const arcOn = (p, id, year = p.year) => (p.arcs || []).find(a => a.id === id && year >= a.from && year <= a.to) || null;
   function addArc(p, arc) { p.arcs = (p.arcs || []).filter(a => a.id !== arc.id || a.to < arc.from); p.arcs.push(arc); return arc; }
   function simulateSeason(p, choice, world, mods = {}) {
+    if (normalizeRole(p) && ROLE[choice.role]?.retired) choice = { ...choice, role: p.role };
     setClubMods(p.clubMods); setActive(p);
     const year = p.year, age = p.age;
     mods = arcMods(p, year, mods);
@@ -3112,7 +3129,7 @@ const ENGINE = (() => {
   const GR_LONG = { CB: .05, FB: .08, WB: .09, DM: .26, CM: .17, AM: .16, W: .1, ST: .06 };
   const GR_ROLE = { target: [1.9, .5], aerialcb: [1.4, .6], widetm: [2.2, .6], farpost: [1.8, .6], boxcrash: [1.35, .55], poacher: [1.15, .35], channel: [.8, .5], raum: [1.3, .4], shadow: [1, .7], complete: [1, 1.1], dlf: [1, 1.3], false9: [.6, 1.4],
     insidef: [.6, 1.5], invwinger: [.7, 1.2], iso: [.6, .9], winger: [.8, .8], trackback: [1, .9], wide10: [.6, 1.3],
-    regista: [.8, 1.6], dlp: [.8, 1.5], linebreaker: [.8, 1.4], mezzala: [1, 1.25], b2b: [1.2, 1.25], segundo: [1.2, .9], carrier: [.8, 1.2], roam: [.8, 1.2], carrilero: [1, 1], anchor: [1.3, 1.1], destroyer: [1.1, 1.2], volante: [1, 1.3], halfback: [1.3, 1],
+    regista: [.8, 1.6], dlp: [.8, 1.5], linebreaker: [.8, 1.4], mezzala: [1, 1.25], b2b: [1.2, 1.25], segundo: [1.2, .9], carrier: [.8, 1.2], roam: [.8, 1.2], carrilero: [1, 1], ballwin: [1, 1.1], anchor: [1.3, 1.1], destroyer: [1.1, 1.2], volante: [1, 1.3], halfback: [1.3, 1],
     treq: [.6, 1.45], enganche: [.5, 1.6], mediapunta: [.9, 1.2], free10: [.6, 1.3], ap: [.6, 1.3],
     libero: [.9, 1.5], bpd: [1, 1.4], stopper: [1.1, .8], invwb: [.7, 1.5], underlap: [.8, 1.1], attwb: [1, 1] };
   const GR_KEYS = ['r', 'l', 'h', 'ls', 'pk', 'fk'];
@@ -3416,7 +3433,7 @@ const ENGINE = (() => {
     coachStints, parentsAlive, coachNow, recordDeath, farewellAsk, farewellAgree, farewellRefused, homecomingOffer, farewellOf, fwPact, fwClubLine, fanCer, fwSeasons, FW_CLUB,
     LG_SCHOOL, SCHOOLS, CLUB_SCHOOL, schoolOf, wiEcho, wiRewrite, goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    roleProd, actAbility, growMul, GCFG, CALIB, ASG, MCFG, effOvr, muOf, isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    roleProd, actAbility, normalizeRole, MERGED, STAT_FAM, ROLE_STAT, growMul, GCFG, CALIB, ASG, MCFG, effOvr, muOf, isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, hasJong, sharedPast, splitSummer, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -6332,6 +6349,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
 
   // ---------- render root ----------
   function render() {
+    try { const rm = S.p?.flags?.roleMerged; if (rm && !rm.shown) { rm.shown = true; setTimeout(() => { const a = E.ROLE[rm.from]?.name || rm.from, b = E.ROLE[rm.to]?.name || rm.to; toast(`${a}${E.hasJong(a) ? '은' : '는'} 다른 역할로 통합돼서, 이제 ${b}${E.hasJong(b) ? '으로' : '로'} 뛰어요. 지난 시즌 기록은 그대로예요.`); }, 300); Store.save('career', S.p); } } catch { }
     const app = $('#app'); try { E.setActive(S.p && S.p.status !== 'retired' ? S.p : null); } catch { }
     if (!S.ready) { app.innerHTML = `<div class="wrap main"><p class="muted">세계선을 불러오는 중…</p></div>`; return; }
     const nav = `<header class="top"><div class="wrap topin">
@@ -7435,7 +7453,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function viewRules() {
     const posRows = Object.entries(E.POS).map(([k, v]) => `<tr><td><b>${k}</b> ${v.name}</td><td class="small">${Object.entries(v.w).sort((a, b) => b[1] - a[1]).map(([a, x]) => `${E.ATTR_NAME[a]} ${Math.round(x * 100)}%`).join(' · ')}</td></tr>`).join('');
     const gname = { GK: '골키퍼', CB: '센터백', FB: '풀백', WB: '윙백', DM: '수비형 미드필더', CM: '중앙 미드필더', AM: '공격형 미드필더', W: '윙어', ST: '스트라이커' };
-    const roleRows = Object.keys(gname).map(g => `<tr class="grp"><td colspan="4">${gname[g]}</td></tr>` + E.ROLES.filter(r => r.grp === g).map(r => `<tr><td><b>${esc(r.name)}</b><div class="small muted">${esc(r.desc)}</div></td><td class="num small">${g === 'GK' ? '–' : `${mult(r.g)} / ${mult(r.a)}`}</td><td class="small">${Object.entries(r.w).sort((a, b) => b[1] - a[1]).map(([k]) => E.ATTR_NAME[k]).join('·')}</td><td class="small">${Object.entries(r.fit).filter(([, x]) => x >= .5).map(([s]) => E.STYLES[s]).join(', ') || '–'}</td></tr>`).join('')).join('');
+    const roleRows = Object.keys(gname).map(g => `<tr class="grp"><td colspan="4">${gname[g]}</td></tr>` + E.ROLES.filter(r => r.grp === g && !r.retired).map(r => `<tr><td><b>${esc(r.name)}</b><div class="small muted">${esc(r.desc)}</div></td><td class="num small">${g === 'GK' ? '–' : `${mult(r.g)} / ${mult(r.a)}`}</td><td class="small">${Object.entries(r.w).sort((a, b) => b[1] - a[1]).map(([k]) => E.ATTR_NAME[k]).join('·')}</td><td class="small">${Object.entries(r.fit).filter(([, x]) => x >= .5).map(([s]) => E.STYLES[s]).join(', ') || '–'}</td></tr>`).join('')).join('');
     return `<section class="panel prose"><h1 class="h1">규칙</h1>
       <p>플레이 화면에서는 숫자를 대부분 숨겨요. 성장, 출전, 이적, 사건, 대표팀이 실제로 어떻게 계산되는지는 전부 여기 있어요.</p>
       <h2>화면 표기 읽는 법</h2><ul>
@@ -8345,7 +8363,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (q.lastFocus && !['pos', 'role', 'bal', 'weak', ...Object.keys(E.groupsFor(q.pos))].includes(q.lastFocus) && !E.attrsFor(q.pos).includes(q.lastFocus)) q.lastFocus = 'pos';
     q.v4 = true; return q;
   }
-  function migrateCareer(p) { const q = migrateV4(migrateCareer0(p)); if (q && !q.body) q.body = E.inferBody(q); if (q && !q.roleXp) { q.roleXp = {}; (q.seasons || []).forEach(x => { if (x.role) q.roleXp[x.role] = Math.min(100, (q.roleXp[x.role] || 0) + 22); }); if (q.role && q.roleXp[q.role] == null) q.roleXp[q.role] = 30; } return q; }
+  function migrateCareer(p) { const q = migrateV4(migrateCareer0(p)); try { if (q && q.status !== 'retired') E.normalizeRole(q); } catch { } if (q && !q.body) q.body = E.inferBody(q); if (q && !q.roleXp) { q.roleXp = {}; (q.seasons || []).forEach(x => { if (x.role) q.roleXp[x.role] = Math.min(100, (q.roleXp[x.role] || 0) + 22); }); if (q.role && q.roleXp[q.role] == null) q.roleXp[q.role] = 30; } return q; }
   function migrateCareer0(p) {
     if (!p) return p;
     if (p.v === 2) { (p.seasons || []).forEach(x => x.bdoDone = true); p.v = 3; return p; }
