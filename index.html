@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v74'</script>
+<script>window.SK_VER='v75'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -214,7 +214,7 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .rolec .rd, .rd { color: var(--muted); grid-column: 2; line-height: 1.5; }
 .rolec.noin { grid-template-columns: 1fr auto; } .rolec.noin .rd, .rolec.noin .rt { grid-column: 1 / -1; }
 .rolec:has(.reqb) { grid-template-columns: 1fr auto; } .rolec:has(.reqb) .rt, .rolec:has(.reqb) .rd { grid-column: 1; } .rolec:has(.reqb) .reqb { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
-.offer { display: flex; gap: 12px; align-items: center; padding: 10px 12px; }
+.offer { display: flex; gap: 12px; align-items: flex-start; padding: 11px 12px; } .offer > input { margin-top: 9px; } .offer > .crest, .offer > img { margin-top: 2px; }
 .offer.dis { opacity: .5; }
 .of-main { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .of-t { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -482,6 +482,13 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .vs .crest.md { width: 34px; height: 37px; }
 
 /* v9: 커리어 갈림길 · 세계선 */
+.of-sch { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.sch { display: inline-flex; align-items: center; gap: 2px; font-size: 11.5px; line-height: 1.5; padding: 0 7px; border-radius: 999px; background: var(--panel-3); color: var(--muted); white-space: nowrap; }
+.sch.cl { background: var(--gold-bg); color: var(--gold); font-weight: 700; } .sch.hit i { font-style: normal; font-weight: 800; color: var(--pos); margin-left: 1px; }
+.of-more { display: flex; flex-direction: column; gap: 3px; margin-top: 7px; padding-top: 7px; border-top: 1px dashed var(--line); }
+.sch-d { font-size: 12.5px; color: var(--muted); line-height: 1.5; } .sch-d b { color: var(--ink); font-weight: 700; margin-right: 2px; } .sch-d em { font-style: normal; color: var(--pos); font-weight: 700; white-space: nowrap; }
+.of-more .cityl { margin-top: 2px; }
+.sch-box { padding: 10px 12px; border-radius: var(--r-sm); background: var(--panel-2); margin: 4px 0 10px; } .sch-box .sch-h { display: block; font-size: 12px; color: var(--muted); font-weight: 700; } .sch-box .of-more { border-top: 0; padding-top: 0; margin-top: 6px; }
 .ol { display: flex; flex-wrap: wrap; gap: 2px 0; margin-top: 3px; font-size: 12px; color: var(--muted); line-height: 1.5; }
 .ol > span { display: inline-flex; align-items: center; gap: 4px; }
 .ol > span:not(:last-child)::after { content: "·"; color: var(--faint); margin: 0 6px; }
@@ -2236,6 +2243,7 @@ const ENGINE = (() => {
     p.ceil = clamp(p.ceil + (mods.ceil || 0), -6, 8);
     const ceiling = p.P + p.ceil;
     const rho = clamp(GROW.r0 + GROW.rk * perf, GROW.rmin, GROW.rmax);
+    const SC = schoolOf(p.club, p.year, p); res.school = [SC.lg?.tag, ...SC.club.map(c => c.tag)].filter(Boolean);
     let g;
     if (base > 0) {
       const mult = .55 + .75 * clamp(share, 0, 1);
@@ -2243,12 +2251,13 @@ const ENGINE = (() => {
       const gap = Math.max(clamp((ceiling - o) / 6.5, -.2, 1), over > 0 ? Math.min(.45, over * .8) * clamp((ceiling + 3 - o) / 3, 0, 1) : -1);
       const coach = 1 + (mgr.q - 70) / 250;
       g = base * mult * gap * coach * rho * (1 + gauss() * .15) * (mods.growth || 1) * (1 + (p.morale - 60) / 400);
+      g *= schoolYoung(p, SC);
     } else g = base * (choice.attitude === 'manage' ? .8 : 1) * (1 + gauss() * .15) * (p.trait === 'pro' ? .9 : 1) * (mods.decay || 1) * clamp(1 - .35 * perf, .75, 1.25);
     const keys = attrsFor(p.pos); const fs = focusSet(p, choice.focus, choice.role);
     const weakT = choice.focus === 'weak' && p.pos !== 'GK';
     const hi = fs.size === 1 ? 2.0 : 1.7, lo = weakT ? WEAK_COST : fs.size ? .78 : 1;
     for (const k of keys) {
-      let m = fs.has(k) ? hi : lo;
+      let m = fs.has(k) ? hi : lo; if (g > 0) m *= schoolMul(p, k, SC);
       if (g < 0) m = (PHYS.has(k) ? 1.5 : MIND.has(k) ? .45 : 1) * bodyAge(p, k);
       let d = g * m; if (d > 0 && p.attrs[k] > 88) d *= Math.max(.1, (99 - p.attrs[k]) / 11);
       if (MIND.has(k) && age >= 26 && age <= 32) d += .35;
@@ -2256,6 +2265,7 @@ const ENGINE = (() => {
       { const old = p.attrs[k]; let nv = clamp(old + d + gauss() * .25, 10, 99); const cap = bodyCap(p, k); if (nv > cap) nv = Math.max(Math.min(old, nv), cap); p.attrs[k] = nv; }
     }
     for (const [k, v] of Object.entries(mods.attr || {})) if (p.attrs[k] != null) p.attrs[k] = clamp(p.attrs[k] + v, 10, 99);
+    if (!p.youth && share >= .5 && SC.club.some(c => c.big) && R() < .5) nudge(p, 'big', .04, 'stage');
     if (weakT) { res.weakTry = true; if (R() < weakChance(p, mgr, mods)) { p.weak = Math.min(5, (p.weak || 3) + 1); res.weakUp = p.weak; } }
     res.growth = +(ovr(p) - o).toFixed(1);
   }
@@ -2876,6 +2886,104 @@ const ENGINE = (() => {
       hist: histOf(p), scars: scarsOf(p), nations: nationsOf(p), natTeam: natT(p), natPick: p.flags.natPick || null, mentors: mentorsOf(p).slice(0, 3).map(m => ({ name: m.name, seasons: m.seasons, clubs: m.clubs, first: m.first, last: m.last })), ghosts: p.seasons.filter(x => x.bdoGhost).map(x => x.bdoGhost), gv: 2, ghost: p.ghost ? { ...p.ghost, kept: (p.bdoYears || []).includes(p.ghost.Y) } : null, spouse: p.flags.partner ? { name: p.flags.partnerName || '', job: p.flags.partner, nation: p.flags.partnerNation || null, married: p.flags.married || null } : null, severity: p.severity || 'normal', medEnd: p.flags.medEnd || null, deceased: p.flags.deceased || null, whatIf: p.whatIf ? { of: p.whatIf.of, y: p.whatIf.y, kind: p.whatIf.kind, label: p.whatIf.label } : null, line: p.line || 'L0', branches: (p.branches || []).slice(), best: bestOf(p),
     };
   }
+  // ---------- 리그·구단의 색깔 ----------
+  // 사람들 머릿속에 있는 '이미지'다. 정확한 통계가 아니라 평판. 성장에는 아주 조금만 얹힌다(해당 능력치 성장 +3~6%).
+  // 리그·구단의 위상(전력·재정)은 시대마다 바뀌지만, 이 색깔은 문화라서 그대로 남는다.
+  const LG_SCHOOL = {
+    ENG: ['강도와 속도', '쉴 틈 없는 템포. 몸이 빨라지고 단단해진다', { PAC: .06, STR: .06, PRS: .05 }],
+    ENG2: ['46경기 강행군', '거친 몸싸움과 끝없는 일정. 버티는 법을 배운다', { STR: .07, AIR: .05 }],
+    ESP: ['기술과 점유', '공을 오래 갖는 축구. 발밑과 시야가 늘어난다', { DRI: .06, PAS: .06, VIS: .05 }],
+    ESP2: ['기술 축구의 2부', '느리지만 공을 소중히 다룬다', { PAS: .05 }],
+    ITA: ['수비 전술의 교과서', '위치와 간격을 집요하게 가르친다', { DEF: .08, TKL: .05, VIS: .03 }],
+    ITA2: ['전술의 2부', '이기는 것보다 지지 않는 법을 먼저 배운다', { DEF: .05 }],
+    GER: ['전환과 압박', '공을 뺏고 3초 안에 슈팅까지. 젊은 선수에게 기회가 많다', { PRS: .06, MOV: .05, PAC: .04 }, 1.03],
+    GER2: ['전통 구단의 2부', '거대한 관중 앞에서 뛰는 2부', { PRS: .04 }],
+    FRA: ['재능의 진열장', '운동 능력 좋은 유망주가 넘친다', { PAC: .05, STR: .04, DRI: .04 }, 1.03],
+    FRA2: ['유망주의 2부', '어린 선수들이 먼저 뛰어 보는 무대', {}, 1.02],
+    POR: ['빅리그로 가는 관문', '사서 키워서 판다. 어린 선수의 성장이 빠르다', { DRI: .05 }, 1.05],
+    NED: ['유망주의 학교', '공격 축구와 토털풋볼의 전통. 어린 선수가 일찍 뛴다', { PAS: .05, DRI: .04, MOV: .04 }, 1.05],
+    TUR: ['지옥의 원정', '경기장 소음이 귀를 찢는다. 거칠고 뜨겁다', { STR: .05 }],
+    BEL: ['재능의 수출 창구', '여기서 크면 빅리그가 부른다', {}, 1.04],
+    SCO: ['두 거인의 리그', '올드펌 더비가 시즌의 전부다. 공중볼이 많다', { STR: .05, AIR: .05 }],
+    GRE: ['전술 수비', '버티는 축구, 뜨거운 관중', { DEF: .05 }],
+    BRA: ['드리블과 즉흥', '공을 갖고 노는 나라. 발재간이 는다', { DRI: .09, VIS: .04 }],
+    ARG: ['투지와 압박', '거칠고 끈질기다. 정신력이 단단해진다', { TKL: .06, PRS: .05, STR: .04 }],
+    KSA: ['즉시 전력의 리그', '세계적인 스타가 모이지만, 키우기보다는 쓰는 리그', {}, .97],
+    USA: ['운동 능력과 이동 거리', '대륙을 가로지르는 원정. 체력과 속도가 는다', { PAC: .05, STR: .05 }],
+    KOR: ['활동량과 조직력', '많이 뛰고 함께 움직인다', { PRS: .05, STR: .04 }],
+    JPN: ['패스와 조직', '정확한 패스와 촘촘한 간격', { PAS: .06, MOV: .04 }],
+    CRO: ['테크니션 공장', '작은 나라에서 거장들이 나온다', { DRI: .05, PAS: .05, VIS: .05 }, 1.03],
+    SRB: ['유고의 기술, 발칸의 투지', '재능과 거친 원정이 함께 있다', { DRI: .04, STR: .04 }, 1.03],
+    UKR: ['과학 축구의 전통', '로바노우스키가 남긴 체계와 움직임', { MOV: .05, PRS: .04 }],
+    CZE: ['조직과 체력', '단단한 중원과 성실한 축구', { STR: .04, PRS: .04 }],
+    POL: ['몸싸움의 리그', '피지컬이 먼저다', { STR: .05, AIR: .04 }],
+    HUN: ['푸슈카시의 나라', '전설의 그림자 아래에서 다시 일어서는 중', { PAS: .04 }, 1.02],
+    ROU: ['하지의 후예', '왼발 마법사의 나라. 기술을 아낀다', { DRI: .05 }],
+    BUL: ['거친 동유럽', '작은 리그, 큰 승부욕', { STR: .05 }],
+    AUT: ['압박의 실험실', '레드불이 바꿔 놓은 리그. 뛰고 또 뛴다', { PRS: .07, PAC: .04 }, 1.04],
+    SUI: ['안정된 육성', '조용히, 꾸준히 키워서 내보낸다', {}, 1.03],
+    DEN: ['데이터와 육성', '숫자로 뽑고 체계로 키운다', { PAS: .04 }, 1.03],
+    NOR: ['인조잔디와 겨울', '빠른 공과 추운 날씨. 템포가 빨라진다', { PAC: .04, STR: .04 }],
+    SWE: ['조직과 피지컬', '키 크고 성실한 축구', { STR: .04, AIR: .04 }],
+  };
+  // 구단 색깔 유형: a = 성장이 조금 더 붙는 능력치, pos = 그 효과를 받는 자리(역할 그룹), young = 21세 이하 성장 배수, big = 큰 경기 체질
+  const SCHOOLS = {
+    wing: { tag: '윙어 사관학교', desc: '측면 공격수와 포워드를 잘 키워 낸다는 평판', pos: ['W', 'ST', 'AM', 'WB'], a: { DRI: .12, PAC: .1, SHO: .08, CRO: .05 } },
+    academy: { tag: '유스 명가', desc: '어린 선수에게 기회를 주고 잘 키운다', young: 1.06 },
+    tiki: { tag: '점유 철학', desc: '짧은 패스와 위치 선정이 몸에 밴다', a: { PAS: .1, VIS: .1, DRI: .05 } },
+    def: { tag: '수비 명가', desc: '수비 조직과 대인 방어를 철저히 가르친다', pos: ['CB', 'FB', 'WB', 'DM'], a: { DEF: .12, TKL: .1, AIR: .06 } },
+    press: { tag: '압박의 팀', desc: '전방 압박과 빠른 전환을 몸으로 배운다', a: { PRS: .12, MOV: .06, PAC: .05 } },
+    grit: { tag: '투지의 팀', desc: '거칠고 끈질긴 축구. 몸싸움이 늘고 정신력이 단단해진다', a: { STR: .1, TKL: .06 } },
+    gk: { tag: '골키퍼 명가', desc: '좋은 골키퍼를 꾸준히 배출해 왔다', pos: ['GK'], a: { REF: .1, ONE: .1, GPO: .08, HAN: .06 } },
+    fullback: { tag: '풀백 명가', desc: '공격적인 풀백을 잘 키운다', pos: ['FB', 'WB'], a: { CRO: .1, PAC: .08, TKL: .05 } },
+    stepping: { tag: '빅리그행 정거장', desc: '젊은 재능을 키워 비싸게 판다. 빅클럽 스카우트가 늘 지켜본다', young: 1.04 },
+    flair: { tag: '드리블러의 산실', desc: '공을 오래 갖고 노는 선수를 사랑한다', a: { DRI: .12, VIS: .04 } },
+    striker: { tag: '골잡이 계보', desc: '이름난 9번들이 거쳐 간 팀', pos: ['ST'], a: { SHO: .1, MOV: .08 } },
+    playmaker: { tag: '10번의 전통', desc: '경기를 읽고 마지막 패스를 넣는 선수를 키운다', pos: ['AM', 'CM', 'DM'], a: { VIS: .1, PAS: .08 } },
+    big: { tag: '별들의 무대', desc: '압박감이 다르다. 여기서 뛰면 큰 경기에 익숙해진다', big: 1 },
+    cauldron: { tag: '지옥의 홈구장', desc: '관중이 경기를 바꾼다. 웬만한 큰 경기에는 떨지 않게 된다', big: 1 },
+    star: { tag: '오일 머니', desc: '세계적인 스타가 모여든다. 배울 사람도 많고 경쟁도 치열하다' },
+    dakgong: { tag: '닥공', desc: '닥치고 공격. 공격수가 숫자를 쌓기 좋은 팀', pos: ['ST', 'W', 'AM'], a: { SHO: .08, MOV: .06 } },
+  };
+  const CLUB_SCHOOL = {
+    mci: ['tiki'], ars: ['academy', 'tiki'], liv: ['press', 'fullback'], che: ['academy'], mun: ['academy', 'wing'], tot: ['wing'], new: ['grit'], bha: ['stepping'], whu: ['academy'], cry: ['wing'], eve: ['grit'], bre: ['stepping'],
+    sou: ['academy', 'wing'], lee: ['grit'], sto: ['grit'],
+    rma: ['big'], bar: ['tiki', 'academy'], atm: ['def', 'grit'], ath: ['academy', 'grit'], vil: ['stepping'], rso: ['academy'], bet: ['flair'], sev: ['fullback', 'stepping'], val: ['wing', 'academy'], gir: ['stepping'], cel: ['academy'], osa: ['grit'], spg: ['academy'],
+    int: ['def'], nap: ['flair', 'cauldron'], mil: ['def', 'big'], juv: ['def', 'big'], ata: ['academy', 'press'], rom: ['academy'], fio: ['playmaker'], tor: ['grit'], par: ['gk'],
+    bay: ['big'], lev2: ['stepping'], bvb: ['stepping', 'wing'], rbl: ['press', 'stepping'], vfb: ['academy'], scf: ['academy'], tsg: ['academy'], bmg: ['stepping'], m05: ['press'], fcu: ['grit'], s04: ['academy', 'gk'], fck: ['grit'],
+    psg: ['big'], om: ['cauldron'], asm: ['academy', 'stepping'], ol: ['academy'], losc: ['stepping'], rcl: ['grit'], srfc: ['academy'], fcn2: ['academy'], asse: ['academy'],
+    slb: ['academy', 'stepping'], scp: ['academy', 'wing'], fcp: ['stepping', 'grit'], scb: ['stepping'],
+    psv: ['stepping', 'wing'], aja: ['academy', 'tiki'], fey: ['academy'], az: ['stepping'], hee: ['striker'],
+    gal: ['cauldron'], fen: ['cauldron'], bjk: ['cauldron'],
+    bru: ['stepping'], and: ['academy'], gnk: ['academy', 'gk'], stl: ['academy'], usg: ['stepping'],
+    cel2: ['cauldron'], ran: ['cauldron'], oly: ['cauldron'], paok: ['cauldron'],
+    fla: ['flair', 'big'], pal2: ['academy'], spfc: ['academy'], cor: ['grit'], gre: ['academy'], san: ['wing', 'academy'],
+    riv: ['academy', 'playmaker'], boc: ['grit', 'cauldron'], est: ['grit'], arj: ['academy', 'playmaker'], vel: ['academy'],
+    hil: ['star'], nas: ['star'], itt: ['star'], ahl: ['star'], mia: ['star'],
+    uls: ['grit'], jbh: ['dakgong'], poh: ['academy'], fcs: ['academy'], gwj: ['tiki'],
+    kaw: ['tiki'], yok: ['press'], kas2: ['grit'], hir: ['academy'], gam: ['academy'],
+    din: ['academy', 'playmaker'], haj: ['cauldron'], crv: ['academy', 'cauldron'], prt: ['academy'], shk: ['flair'], dyn: ['academy'],
+    sla: ['press'], spa: ['academy'], lech: ['academy'], pus: ['academy'], far: ['academy'], lud: ['stepping'],
+    sal: ['press', 'stepping'], bas: ['stepping'], mjy: ['stepping'], nsj: ['academy'], bod: ['press'], mff: ['academy'],
+  };
+  // 이 구단에서 이 선수가 받는 색깔: 효과가 닿는 능력치(hit)와 함께
+  function schoolOf(clubId, year, p) {
+    const lgK = CLUB[clubId] ? lgAt(clubId, year) : null; const L = LG_SCHOOL[lgK]; const grp = p ? roleGroup(p.pos) : null; const keys = p ? new Set(attrsFor(p.pos)) : null;
+    const hitOf = (a, pos) => !p || !a || (pos && !pos.includes(grp)) ? [] : Object.keys(a).filter(k => keys.has(k));
+    const lg = L ? { name: LEAGUES[lgK]?.name, tag: L[0], desc: L[1], a: L[2] || {}, young: L[3] || 1, hit: hitOf(L[2]) } : null;
+    const cl = (CLUB_SCHOOL[clubId] || []).map(id => ({ id, ...SCHOOLS[id], hit: hitOf(SCHOOLS[id].a, SCHOOLS[id].pos) }));
+    return { lg, club: cl };
+  }
+  // 성장 배수: 그 능력치에 리그·구단 색깔이 얹힌 만큼 (성장할 때만)
+  // 표의 수치는 '이미지의 세기'. 실제로는 그 절반 남짓만 얹는다 (발렌시아 윙어가 23세까지 OVR +1 안팎)
+  const SCH_K = .5;
+  function schoolMul(p, k, sc) {
+    let m = 1; if (sc.lg && sc.lg.hit.includes(k)) m += (sc.lg.a[k] || 0) * SCH_K;
+    for (const c of sc.club) if (c.hit.includes(k)) m += (c.a[k] || 0) * SCH_K;
+    return m;
+  }
+  function schoolYoung(p, sc) { if (p.age > 21) return 1; let m = 1 + ((sc.lg?.young || 1) - 1) * SCH_K; for (const c of sc.club) if (c.young) m *= 1 + (c.young - 1) * SCH_K; return m; }
+
   // ---------- 득점 루트 ----------
   // 그 시즌 골이 어떤 경로로 들어갔는지: 주발/약발 · 헤더 · 중거리 · PK · 프리킥.
   // 능력치(시즌 시작 시점)·역할·키·주발/약발 레벨로 나눈다. 시즌마다 고정 시드라 옛 시즌도 다시 계산해도 같다.
@@ -3140,7 +3248,7 @@ const ENGINE = (() => {
   return {
     lgAt, clubsIn, movesAt, setActive, PAIRS, LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
-    wiEcho, wiRewrite, goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
+    LG_SCHOOL, SCHOOLS, CLUB_SCHOOL, schoolOf, wiEcho, wiRewrite, goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
     isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
@@ -6349,6 +6457,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
         <label class="fld"><span>선호 등번호</span><input id="f-num" class="inp" type="number" min="1" max="99" value="${f.number}"></label>
       </div>
       <p class="muted small">${esc(E.ROLE[f.role].desc)}</p>
+      ${(() => { const fp = { pos: f.pos, age: 16, youth: true }; const ch = schoolChips(fp, f.club, f.startYear), mo = schoolMore(fp, f.club, f.startYear); return ch ? `<div class="sch-box"><span class="sch-h">${esc(club(f.club).name)}의 색깔</span>${ch}<span class="of-more">${mo}</span></div>` : ''; })()}
       <div class="fld"><span>성격</span><div class="seg">${Object.entries(E.TRAITS).map(([k, t]) => `<button data-trait="${k}" class="${f.trait === k ? 'on' : ''}">${t.name}</button>`).join('')}</div><p class="muted small">${esc(E.TRAITS[f.trait]?.desc || '')}</p></div>
       <div class="fld"><span>주발</span><div class="seg">${[['', '랜덤'], ['R', '오른발'], ['L', '왼발']].map(([k, n]) => `<button data-foot="${k}" class="${(f.foot || '') === k ? 'on' : ''}">${n}</button>`).join('')}</div><p class="muted small">${footHint(f)}</p></div>
       <div class="fld"><span>운명의 가혹함</span><div class="seg">${Object.entries(E.SEVERITY).map(([k, v]) => `<button data-sev="${k}" class="${(f.severity || 'real') === k ? 'on' : ''}">${v.name}</button>`).join('')}</div><p class="muted small">${esc(E.SEVERITY[f.severity || 'real'].desc)}${f.severity === 'harsh' ? ' 장면 묘사 없이, 담담하게 다뤄져요.' : ''} 커리어를 시작하면 바꿀 수 없어요.</p></div>
@@ -6479,11 +6588,11 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const offers = p.pendingOffers || [];
     const pickedOffer = S.offerPick >= 0 ? offers[S.offerPick] : null;
     const numberTarget = pickedOffer ? pickedOffer.club : (p.needNumber || !p.number) && !p.youth ? p.club : null;
-    const offerRow = (i, cid, title, pills, sub, on, dis, of) => `<label class="offer ${on ? 'on' : ''} ${dis ? 'dis' : ''}"><input type="radio" name="offer" value="${i}" ${on ? 'checked' : ''} ${dis ? 'disabled' : ''}>${crest(cid, 'sm')}<span class="of-main"><span class="of-t"><b>${esc(title)}</b>${pills}</span><span class="small muted">${sub}</span>${outlookLine(p, cid, of)}${i >= 0 ? cityLine(p, cid) : ''}${econTag(cid, p.year)}</span></label>`;
+    const offerRow = (i, cid, title, pills, sub, on, dis, of) => { const ol = outlookLine(p, cid, of); return `<label class="offer ${on ? 'on' : ''} ${dis ? 'dis' : ''}"><input type="radio" name="offer" value="${i}" ${on ? 'checked' : ''} ${dis ? 'disabled' : ''}>${crest(cid, 'sm')}<span class="of-main"><span class="of-t"><b>${esc(title)}</b>${pills}</span><span class="of-meta small muted">${sub}${!ol && of?.expect ? ` · ${of.expect}` : ''}</span>${ol}${schoolChips(p, cid)}${econTag(cid, p.year)}${on ? `<span class="of-more">${schoolMore(p, cid)}${i >= 0 ? cityLine(p, cid) : ''}</span>` : ''}</span></label>`; };
     const market = p.youth ? '' : `<section class="panel"><div class="ptitle"><h2>이적 시장</h2>${p.released ? '<span class="pill red">방출</span>' : ''}${p.contract <= 0 && !p.loanFrom ? '<span class="pill gold">자유계약</span>' : ''}</div>
       <div class="offers">
-        ${p.released ? '' : offerRow(-1, p.club, '잔류', '', `${lgTag(p.club, p.year, p)} · ${E.expectRole(o, E.clubStr(p.club, p.year))}${p.contract <= 0 && !p.loanFrom ? ` · 2년 재계약 · 연봉 ${E.fmtWon(p.renewOffer ?? E.renewWage(p))}` : p.wage ? ` · 연봉 ${E.fmtWon(p.wage)}` : ''}`, S.offerPick === -1, false, null)}
-        ${offers.map((of, i) => { const oc = club(of.club); const m2 = E.managerFor(of.club, p.year, S.world, p); const pills = `${of.mentor ? `<span class="pill gold">은사 ${esc(of.mentor)}</span>` : ''}${of.type === 'loan' ? '<span class="pill">임대</span>' : of.type === 'free' ? '<span class="pill gold">자유</span>' : ''}${of.blocked ? '<span class="pill red">거절됨</span>' : ''}${E.isRival(p.club, of.club) ? '<span class="pill red">라이벌</span>' : ''}${of.home ? '<span class="pill">친정</span>' : ''}${m2.legend ? '<span class="pill gold">레전드 감독</span>' : ''}${of.buyout ? '<span class="pill gold">바이아웃</span>' : ''}${of.withdrawn ? '<span class="pill red">철회</span>' : ''}${of.release ? '<span class="pill">바이아웃 조항</span>' : ''}${of.minutes ? '<span class="pill">출전 보장</span>' : ''}`; E.offerTerms(p, of); return offerRow(i, of.club, oc.name, pills, `${lgTag(of.club, p.year, p)} · ${of.expect}${of.type !== 'loan' ? ` · ${of.years}년 · <span class="fee">연봉 ${E.fmtWon(of.wage)}</span>${of.fee ? ` · <span class="fee">이적료 ${E.fmtFee(of.fee)}</span>` : ''}` : ' · 연봉은 원 소속팀 그대로'}`, S.offerPick === i, of.blocked || of.withdrawn, of); }).join('')}
+        ${p.released ? '' : offerRow(-1, p.club, '잔류', '', `${lgTag(p.club, p.year, p)}${p.contract <= 0 && !p.loanFrom ? ` · 2년 재계약 · 연봉 ${E.fmtWon(p.renewOffer ?? E.renewWage(p))}` : p.wage ? ` · 연봉 ${E.fmtWon(p.wage)}` : ''}`, S.offerPick === -1, false, null)}
+        ${offers.map((of, i) => { const oc = club(of.club); const m2 = E.managerFor(of.club, p.year, S.world, p); const pills = `${of.mentor ? `<span class="pill gold">은사 ${esc(of.mentor)}</span>` : ''}${of.type === 'loan' ? '<span class="pill">임대</span>' : of.type === 'free' ? '<span class="pill gold">자유</span>' : ''}${of.blocked ? '<span class="pill red">거절됨</span>' : ''}${E.isRival(p.club, of.club) ? '<span class="pill red">라이벌</span>' : ''}${of.home ? '<span class="pill">친정</span>' : ''}${m2.legend ? '<span class="pill gold">레전드 감독</span>' : ''}${of.buyout ? '<span class="pill gold">바이아웃</span>' : ''}${of.withdrawn ? '<span class="pill red">철회</span>' : ''}${of.release ? '<span class="pill">바이아웃 조항</span>' : ''}${of.minutes ? '<span class="pill">출전 보장</span>' : ''}`; E.offerTerms(p, of); return offerRow(i, of.club, oc.name, pills, `${lgTag(of.club, p.year, p)}${of.type !== 'loan' ? ` · ${of.years}년 · <span class="fee">연봉 ${E.fmtWon(of.wage)}</span>${of.fee ? ` · <span class="fee">이적료 ${E.fmtFee(of.fee)}</span>` : ''}` : ' · 연봉은 원 소속팀 그대로'}`, S.offerPick === i, of.blocked || of.withdrawn, of); }).join('')}
         ${!offers.length && !p.released ? '<p class="muted small">들어온 제안이 없어요.</p>' : ''}
         ${(() => { const pl = p.flags.renewPledge; if (!pl || pl.year !== p.year || pl.club !== p.club || !offers.some(o => o.type !== 'loan' && !o.blocked)) return ''; return pl.open ? `<p class="note">이번 여름 ${esc(J(club(p.club).name, '와'))} 계약을 연장하면서, 좋은 제안이 오면 이적을 추진하기로 합의했어요.</p>` : `<p class="note">이번 여름 ${esc(J(club(p.club).name, '와'))} 장기 재계약에 서명했어요. 팬들은 잔류 선언으로 받아들였어요. 지금 떠나면 약속을 깬 이적이 돼요.</p>`; })()}
       </div></section>`;
@@ -6584,6 +6693,19 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   }
   const nickT = (x) => x.nickLocal ? `${x.nickLocal} (${x.nickname})` : x.nickname;
   // 연고 도시: 어디서 살게 되는지
+  // 리그·구단의 색깔: 목록에서는 짧은 꼬리표만, 고른 제안에서는 설명과 내게 붙는 효과까지
+  const schHit = (x, p) => { const hs = (x.hit || []).map(k => E.ATTR_NAME[k]).filter((v, i, a) => v && a.indexOf(v) === i); const young = x.young && x.young > 1 && p.age <= 21; return { hs, young, any: hs.length > 0 || young || (x.big && !p.youth) }; };
+  function schoolChips(p, cid, y = p.year) {
+    let sc = null; try { sc = E.schoolOf(cid, y, p); } catch { return ''; } if (!sc || (!sc.lg && !sc.club.length)) return '';
+    const chip = (x, cls) => { const h = cls === 'cl' && schHit(x, p).any; return `<span class="sch ${cls}${h ? ' hit' : ''}">${esc(x.tag)}${h ? '<i aria-hidden="true">↑</i>' : ''}</span>`; };
+    return `<span class="of-sch">${sc.club.map(c => chip(c, 'cl')).join('')}${sc.lg ? chip(sc.lg, 'lg') : ''}</span>`;
+  }
+  function schoolMore(p, cid, y = p.year) {
+    let sc = null; try { sc = E.schoolOf(cid, y, p); } catch { return ''; } if (!sc) return '';
+    const eff = (x) => { const h = schHit(x, p); const b = []; if (h.hs.length) b.push(`${h.hs.join('·')} 성장 ↑`); if (h.young) b.push('21세까지 성장 ↑'); if (x.big && !p.youth) b.push('큰 경기 체질 ↑'); return b.length ? ` <em>${b.join(' · ')}</em>` : ''; };
+    const row = (x, head) => `<span class="sch-d"><b>${esc(head)}</b> ${esc(x.desc)}.${eff(x)}</span>`;
+    return [...sc.club.map(c => row(c, c.tag)), ...(sc.lg ? [row(sc.lg, `${sc.lg.name} · ${sc.lg.tag}`)] : [])].join('');
+  }
   const cityLine = (p, cid) => { try { const c = CITIES.of(cid); if (!c) return ''; if (CITIES.same(p.club, cid)) return `<span class="cityl small"><b>${esc(c.city)}</b> · 지금 사는 도시 그대로. 이사할 필요가 없다.</span>`; return `<span class="cityl small"><b>${esc(c.city)}</b> · ${esc(c.line)}</span>`; } catch { return ''; } };
   // ---------- 이미지로 저장 ----------
   async function shotNode(node, name, width) {
@@ -7026,6 +7148,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
         <li><b>▲ / ▼</b>는 수치가 오르거나 내린다는 뜻이고, <b>▲▲ / ▼▼</b>는 10 이상 크게 움직인다는 뜻이에요.</li>
         <li>확률 표현: <b>거의 확실히</b> 80% 이상 · <b>높은 확률로</b> 60~79% · <b>반반으로</b> 45~59% · <b>낮은 확률로</b> 25~44% · <b>드물게</b> 25% 미만. 위험도는 높음 60%+ · 꽤 있음 40%+ · 있음 25%+ · 낮음.</li>
         <li><b>역할 적성 글자</b>는 (역할 적성 − 오버롤) 기준이에요. S +4 이상 · A +1.5 · B ±1.5 · C −4 · D 그 아래.</li>
+        <li><b>리그·구단의 색깔</b>: 리그마다, 몇몇 구단마다 사람들이 떠올리는 이미지가 있어요(라리가의 기술, 세리에 A의 수비, 발렌시아의 윙어, 아약스의 유스…). 정확한 통계가 아니라 평판이고, 그 팀에서 뛰는 동안 해당 능력치 성장에 3~6% 정도가 더 얹혀요(20대 초반까지 한 팀에 있으면 OVR 1 안팎). 유스 명가·빅리그행 정거장은 21세까지 성장이 조금 빨라지고, 별들의 무대·지옥의 홈구장에서 주전으로 뛰면 큰 경기 체질이 조금씩 단단해져요. 구단의 전력과 돈은 시대마다 바뀌지만 이 색깔은 문화라서 그대로 남아요. 제안 목록에서 구단 꼬리표의 ↑ 표시는 내 자리에 효과가 닿는다는 뜻이에요.</li>
         <li><b>출전 표현</b>: 붙박이 주전 80%+ · 주전 60%+ · 로테이션 40%+ · 교체 자원 20%+ · 벤치.</li>
         <li><b>이번 오프시즌 변화</b>: 지난 시즌 동안 0.6 이상 오른 능력치 셋, 내린 능력치 둘. ▲▲ / ▼▼는 2 이상. 능력치 창의 화살표도 같은 기준이에요.</li>
         <li><b>리그 표시</b>: 1부·2부, 그리고 그 시즌 나가는 대륙 대회(챔스·유로파·컨퍼런스·리베르타도레스·ACL). 대륙 대회는 지난 시즌 순위로 정해지고, 내가 그 구단에서 뛴 시즌이면 내 시즌의 실제 순위를 써요.</li>
