@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v96'</script>
+<script>window.SK_VER='v97'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3475,7 +3475,7 @@ const ENGINE = (() => {
         etym: 'Mittel(가운데)+Läufer(달리는 사람). 독일 축구에서 Läufer는 하프백을 가리켜요.',
         hist: '2-3-5 시절 하프백 셋 가운데를 독일어로 미텔로이퍼라고 불렀어요. 1925년 오프사이드 규칙이 바뀐 뒤 WM 시스템에서 그 자리는 수비 라인으로 내려가 센터백의 원형이 됐어요.',
         why: '센터하프가 수비 라인으로 내려가 센터백이 됐다면, 이 플레이는 그 길을 거꾸로 되돌아가요. 공을 가질 때 센터백이 다시 센터하프 자리에 서는 거예요.',
-        act: { home: "독일 축구의 옛말을 다시 꺼냈어요.", away: "독일 축구의 옛말 '미텔로이퍼'를 빌려 왔어요." } },
+      },
       scene: (pl) => `공을 잡을 때마다 센터백 ${jo(pl, '이', '가')} 미드필더 줄에 서 있는`, ask: '센터백이냐 미드필더냐',
       def: '상대가 공을 가지면 센터백 자리에서 수비한다. 우리 팀이 공을 가지면 공을 받기 전부터 수비형 미드필더 옆으로 올라가 중원 숫자를 하나 늘리고, 거기서 전진 패스를 뿌린다.',
       diff: '볼 플레잉 CB는 제자리에서 패스하고, 리베로는 공을 몰고 올라간다. 이 플레이는 공을 갖기 전에 이미 미드필더 자리에 서 있다.',
@@ -3513,7 +3513,7 @@ const ENGINE = (() => {
         etym: 'Seite(측면)+Wechsel(바꿈)+-er(사람). 독일어 중계에서 Seitenwechsel은 반대편 측면으로 길게 넘기는 방향 전환 패스를 가리켜요. 하프타임에 진영을 바꾸는 것도 같은 말이에요.',
         hist: null,
         why: '이 풀백의 정체성은 위치보다 패스 한 번이에요. 중앙에서 반대편으로 길게 넘겨 상대 수비 블록 전체를 한쪽으로 끌었다가 다른 쪽을 연다는 점에서, 행동의 이름을 그대로 사람에게 붙였어요.',
-        act: { home: "방향 전환을 뜻하는 중계 용어에 사람을 붙였어요.", away: "독일어 중계 용어에서 '자이텐베크슬러'라는 말을 빌려 왔어요." } },
+      },
       scene: (pl) => `풀백 ${jo(pl, '이', '가')} 중앙으로 들어와 반대편 측면으로 길게 공을 넘기는`, ask: '풀백이냐 미드필더냐',
       def: '풀백 자리에서 출발해, 공을 가지면 중앙 미드필더 자리로 들어간다. 거기서 반대편 측면으로 긴 대각 패스를 뿌려 공격 방향을 한 번에 바꾼다.',
       diff: '인버티드 풀백은 중앙에서 짧게 연결하고, 언더래핑 풀백은 안쪽 공간으로 침투한다. 이 플레이는 중앙에서 경기의 방향을 바꾸는 긴 패스가 정체성이다.',
@@ -3543,7 +3543,7 @@ const ENGINE = (() => {
         etym: 'blade(칼날)+runner(달리는 사람). 오프사이드 라인을 칼날에 빗댄 말이에요. 축구 용어로는 이 게임 세계의 축구 언론에서 생긴 조어예요.',
         hist: null,
         why: '수비 라인은 한 발 차이로 온사이드와 오프사이드가 갈리는 칼날 같은 경계예요. 이 스트라이커는 그 날 위에 서 있다가, 수비수가 눈을 떼는 순간 넘어가요. 오프사이드가 쌓이는 것도 그 날 위를 달리는 대가예요.',
-        act: { home: "오프사이드 라인을 칼날에 빗댄 말을 붙였어요.", away: "영어 해설에서 쓰기 시작한 '블레이드러너'라는 말을 빌려 왔어요." } },
+      },
       scene: (pl) => `스트라이커 ${jo(pl, '이', '가')} 센터백 등 뒤에서 기다리다 패스가 나가는 순간 라인을 깨고 들어가는`, ask: '오프사이드가 너무 많은 것 아니냐',
       pos: ['ST'], roles: ['poacher', 'channel', 'complete'], styles: ['counter', 'direct', 'pos'], minShare: .55,
       short: '블라인드 사이드에서 라인을 깨는 스트라이커',
@@ -3680,39 +3680,39 @@ const ENGINE = (() => {
     ko: { tv: '채널 그라운드', press: '주간 «잔디»', web: '«잔디» 전술 칼럼', pod: '팟캐스트 «하프스페이스»' },
   };
   const inL = (lang, c) => (LANG_LG[lang] || []).includes(c.lg); const inN = (lang, c) => (LANG_NAT[lang] || []).includes(c.nat);
-  // 발견 이야기의 발언. 언어 → 명명자 유형 → [원문, 한국어]. 원문이 한국어면 한 번만 보인다
+  // 발견 이야기의 발언(v96 개정): 명명자는 언제나 그 이름의 언어를 쓰는 사람이다. 이름 하나, 그 이름을 처음 붙인 사람도 그 언어 화자.
+  //   리그가 다른 언어권이면 그 화자가 선수를 만난 경로(유럽 대항전 중계, 같은 팀의 그 나라 출신 동료, 해외 축구를 다루는 칼럼, 선수 자신의 모국어)를 이야기에 붙인다
+  //   명명자 유형 → [원문, 한국어]
   const TAC_TALK = {
     cbmid: {
-      de: { mgr: ['Ohne Ball ist er Innenverteidiger. Mit Ball ist er unser Mittelläufer.', '공이 없을 땐 센터백이에요. 공을 가지면 우리 미텔로이퍼죠.'], press: ['Die Rückkehr des Mittelläufers', '미텔로이퍼의 귀환'], comm: ['Da ist er wieder – ein echter Mittelläufer!', '또 올라옵니다. 진짜 미텔로이퍼예요!'], self: ['Mit Ball fühle ich mich wie ein Mittelläufer.', '공을 가지면 미텔로이퍼가 된 기분이에요.'] },
-      en: { mate: ['We call him the Mittelläufer. Don’t ask me to spell it.', '우린 미텔로이퍼라고 불러요. 철자는 묻지 마세요.'], comm: ['He’s not a centre-back in possession. He’s a Mittelläufer, like the old days.', '공을 가지면 그는 센터백이 아니에요. 옛날 같은 미텔로이퍼죠.'], opp: ['Their Mittelläufer ran the game.', '저쪽 미텔로이퍼가 경기를 쥐고 흔들었어요.'], press: ['The return of the Mittelläufer', '미텔로이퍼의 귀환'] },
-      es: { press: ['El regreso del Mittelläufer', '미텔로이퍼의 귀환'], mgr: ['Con balón no es un central: es un Mittelläufer, como los de antes.', '공을 가지면 센터백이 아니에요. 옛날 같은 미텔로이퍼죠.'] },
-      it: { press: ['Lo chiamano Mittelläufer: è il vecchio centromediano.', '사람들은 미텔로이퍼라고 부른다. 옛날의 첸트로메디아노다.'] },
-      fr: { opp: ['Leur Mittelläufer nous a pris le milieu.', '저쪽 미텔로이퍼가 우리 중원을 가져갔어요.'], press: ['Le retour du Mittelläufer', '미텔로이퍼의 귀환'] },
-      nl: { mate: ['In de kleedkamer noemen we hem de Mittelläufer.', '라커룸에선 그를 미텔로이퍼라고 불러요.'], comm: ['Daar schuift hij weer door. Een echte Mittelläufer!', '또 밀고 올라갑니다. 진짜 미텔로이퍼예요!'] },
-      pt: { comm: ['Olha ele aí de novo! Um Mittelläufer, como antigamente!', '또 올라갑니다! 옛날 같은 미텔로이퍼예요!'], fans: ['Nosso Mittelläufer!', '우리의 미텔로이퍼!'], self: ['Sem a bola, sou zagueiro. Com a bola, sou Mittelläufer.', '공이 없으면 센터백, 공을 가지면 미텔로이퍼예요.'] },
-      ko: { comm: ['공 잡으니까 또 올라가요. 저건 옛날 미텔로이퍼예요!', null], mgr: ['공이 없을 땐 센터백, 공을 가지면 우리 미텔로이퍼예요.', null], self: ['공을 잡으면 미텔로이퍼가 된 기분이에요.', null] },
+      mgr: ['Ohne Ball ist er Innenverteidiger. Mit Ball ist er unser Mittelläufer.', '공이 없을 땐 센터백이에요. 공을 가지면 우리 미텔로이퍼죠.'],
+      press: ['Die Rückkehr des Mittelläufers', '미텔로이퍼의 귀환'],
+      comm: ['Da ist er wieder – ein echter Mittelläufer!', '또 올라옵니다. 진짜 미텔로이퍼예요!'],
+      self: ['Mit Ball fühle ich mich wie ein Mittelläufer.', '공을 가지면 미텔로이퍼가 된 기분이에요.'],
+      mate: ['In der Kabine nennen wir ihn nur den Mittelläufer.', '라커룸에선 그냥 미텔로이퍼라고 불러요.'],
+      opp: ['Ihr Mittelläufer hat uns das Mittelfeld genommen.', '저쪽 미텔로이퍼가 우리 중원을 가져갔어요.'],
+      fans: ['Unser Mittelläufer!', '우리의 미텔로이퍼!'],
     },
     fbswitch: {
-      de: { mgr: ['Er ist unser Seitenwechsler: ein Pass, und das Spiel kippt auf die andere Seite.', '그는 우리 자이텐베크슬러예요. 패스 한 번에 경기가 반대편으로 넘어가요.'], comm: ['Wieder dieser Seitenwechsel – was für ein Seitenwechsler!', '또 방향 전환! 대단한 자이텐베크슬러예요!'], press: ['Der Seitenwechsler', '자이텐베크슬러'], self: ['Ich bin eher Seitenwechsler als Außenverteidiger.', '저는 풀백이라기보다 자이텐베크슬러예요.'] },
-      en: { comm: ['Another switch. He’s a proper Seitenwechsler.', '또 방향 전환. 제대로 된 자이텐베크슬러예요.'], mate: ['We call him the Seitenwechsler. Took us a month to pronounce it.', '우린 자이텐베크슬러라고 불러요. 발음하는 데 한 달 걸렸어요.'], opp: ['Every time we shifted across, their Seitenwechsler switched it.', '우리가 한쪽으로 몰릴 때마다 저쪽 자이텐베크슬러가 방향을 바꿨어요.'] },
-      es: { press: ['El Seitenwechsler: un lateral que cambia de frente', '자이텐베크슬러: 방향을 바꾸는 풀백'], mgr: ['Es nuestro Seitenwechsler: un pase y cambia el frente.', '그는 우리 자이텐베크슬러예요. 패스 한 번에 공격 방향이 바뀌죠.'] },
-      it: { press: ['Il Seitenwechsler, il terzino che cambia gioco', '자이텐베크슬러, 경기를 바꾸는 풀백'] },
-      fr: { opp: ['Leur Seitenwechsler a renversé le jeu à chaque fois.', '저쪽 자이텐베크슬러가 매번 방향을 뒤집었어요.'] },
-      nl: { comm: ['Weer die lange bal naar de andere kant. Een echte Seitenwechsler!', '또 반대편으로 긴 공. 진짜 자이텐베크슬러예요!'] },
-      pt: { comm: ['Inverteu de novo! É um Seitenwechsler!', '또 방향을 바꿨어요! 자이텐베크슬러예요!'], self: ['Sou lateral, mas com a bola sou Seitenwechsler.', '저는 풀백이지만, 공을 가지면 자이텐베크슬러예요.'] },
-      ko: { comm: ['또 반대편으로 길게! 저게 자이텐베크슬러예요.', null], self: ['공을 잡으면 반대편부터 봐요. 저는 자이텐베크슬러예요.', null] },
+      mgr: ['Er ist unser Seitenwechsler: ein Pass, und das Spiel kippt auf die andere Seite.', '그는 우리 자이텐베크슬러예요. 패스 한 번에 경기가 반대편으로 넘어가요.'],
+      comm: ['Wieder dieser Seitenwechsel – was für ein Seitenwechsler!', '또 방향 전환! 대단한 자이텐베크슬러예요!'],
+      press: ['Der Seitenwechsler', '자이텐베크슬러'],
+      self: ['Ich bin eher Seitenwechsler als Außenverteidiger.', '저는 풀백이라기보다 자이텐베크슬러예요.'],
+      mate: ['In der Kabine heißt er nur der Seitenwechsler.', '라커룸에선 그냥 자이텐베크슬러라고 불러요.'],
+      opp: ['Jedes Mal, wenn wir verschoben haben, kam der Seitenwechsel.', '우리가 한쪽으로 몰릴 때마다 방향 전환이 날아왔어요.'],
+      fans: ['Unser Seitenwechsler!', '우리의 자이텐베크슬러!'],
     },
     stblind: {
-      en: { comm: ['He lives on the edge of that line. A proper bladerunner.', '저 라인 끝에서 살아요. 제대로 된 블레이드러너죠.'], mate: ['We call him the Bladerunner. He’s always an inch from offside.', '우린 블레이드러너라고 불러요. 늘 오프사이드 한 뼘 앞에 있거든요.'], opp: ['Our line was right. Their bladerunner was just earlier.', '우리 라인은 맞았어요. 저쪽 블레이드러너가 한발 빨랐을 뿐이에요.'], press: ['The Bladerunner', '블레이드러너'], self: ['I live on the line. Sometimes I’m a centimetre over.', '저는 라인 위에서 살아요. 가끔은 1센티미터 넘어가고요.'] },
-      de: { press: ['Der Bladerunner: Leben auf der Abseitslinie', '블레이드러너: 오프사이드 라인 위의 삶'], comm: ['Wieder genau auf der Linie – ein echter Bladerunner!', '또 라인에 딱 맞춰 나갑니다. 진짜 블레이드러너예요!'] },
-      es: { comm: ['¡Otra vez al filo del fuera de juego! Es un bladerunner.', '또 오프사이드 칼날 위예요! 블레이드러너예요.'], press: ['El bladerunner del área', '박스의 블레이드러너'] },
-      it: { press: ['Il bladerunner che vive sul filo del fuorigioco', '오프사이드의 칼날 위에 사는 블레이드러너'] },
-      fr: { opp: ['Leur bladerunner jouait sur le fil du hors-jeu.', '저쪽 블레이드러너는 오프사이드 칼날 위에서 뛰었어요.'] },
-      nl: { comm: ['Weer precies op de lijn. Wat een bladerunner!', '또 라인에 딱 맞췄어요. 대단한 블레이드러너예요!'] },
-      pt: { comm: ['No limite do impedimento de novo! É um bladerunner!', '또 오프사이드 끝선이에요! 블레이드러너예요!'], self: ['Eu vivo no limite do impedimento.', '저는 오프사이드 끝선에서 살아요.'] },
-      ko: { comm: ['또 오프사이드 라인에 딱 붙어서 나가요. 블레이드러너예요!', null], mgr: ['오프사이드 몇 번은 감수합니다. 그게 블레이드러너니까요.', null], self: ['저는 오프사이드 라인 위를 달려요. 가끔은 떨어지기도 하고요.', null] },
+      comm: ['He lives on the edge of that line. A proper bladerunner.', '저 라인 끝에서 살아요. 제대로 된 블레이드러너죠.'],
+      mate: ['We call him the Bladerunner. He’s always an inch from offside.', '우린 블레이드러너라고 불러요. 늘 오프사이드 한 뼘 앞에 있거든요.'],
+      opp: ['Our line was right. Their bladerunner was just earlier.', '우리 라인은 맞았어요. 저쪽 블레이드러너가 한발 빨랐을 뿐이에요.'],
+      press: ['The Bladerunner', '블레이드러너'],
+      self: ['I live on the line. Sometimes I’m a centimetre over.', '저는 라인 위에서 살아요. 가끔은 1센티미터 넘어가고요.'],
+      mgr: ['I can live with a few offsides. That’s what a bladerunner costs.', '오프사이드 몇 번은 감수합니다. 블레이드러너의 값이니까요.'],
+      fans: ['Our Bladerunner!', '우리의 블레이드러너!'],
     },
   };
+  const LANG_FROM = { de: '독일', en: '잉글랜드', es: '스페인', it: '이탈리아', fr: '프랑스', nl: '네덜란드', pt: '브라질' };
   // 명명자의 발언 장소·매체. 시대와 언어에 맞춘다
   function namerFrame(type, lang, y, rng, home = true) {
     const M = MEDIA[lang] || MEDIA.en;
@@ -3725,46 +3725,54 @@ const ENGINE = (() => {
     if (type === 'fans') return { outlet: '', medium: y >= 2005 ? '관중석 걸개와 팬 커뮤니티' : '관중석 걸개' };
     return { outlet: '', medium: '' };
   }
-  // 이야기: 명명자 유형마다 다른 장면. 이 세계선 안의 일로만 쓴다. home: 명명자의 언어가 이름의 언어와 같은지
-  function namerStory(type, T, c, fr, home) {
-    const N = T.nm; const pl = c.pname; const cl = c.clubName; const mo = `${c.wy}년 ${c.wm}월`; const act = home ? N.act.home : N.act.away;
-    if (type === 'comm') return `${mo}, ${jo(cl, '과', '와')} ${c.oppName}의 ${c.uefaComp || '리그'} 경기. ${fr.outlet} 중계의 해설자 ${jo(c.who, '은', '는')} ${T.scene(pl)} 장면을 보고 ${act} 그 한마디가 다시 보기로 퍼졌어요.`;
-    if (type === 'mgr') return `${mo}, ${cl}의 ${c.who} 감독은 기자회견에서 새 빌드업을 설명하며 ${act} 훈련에서 ${pl}에게 맡겨 본 움직임이 시작이었다고요.`;
-    if (type === 'mate') return `${cl} 훈련장에서 먼저 나온 별명이에요. 동료 ${jo(c.who, '이', '가')} ${mo} ${fr.medium}에서 이렇게 털어놓았고, 그 뒤로 팬과 기자들도 그렇게 부르기 시작했어요.`;
-    if (type === 'press') return `${mo}, ${fr.outlet}의 ${c.who} 기자는 ${pl}의 움직임을 다룬 ${fr.medium}에서 ${act} 다른 매체들이 따라 쓰면서 이 세계선에서도 그 말이 하나의 개념이 됐어요.`;
-    if (type === 'self') return `${mo}, ${jo(pl, '이', '가')} ${fr.medium}에서 자기 역할을 이렇게 설명했어요. 기자가 '${T.ask}'고 묻자 나온 대답이었어요.`;
+  // 이야기: 명명자 유형마다 다른 장면. 이 세계선 안의 일로만 쓴다. via: 다른 언어권 리그에서 그 언어 화자가 선수를 만난 경로
+  function namerStory(type, T, c, fr, via) {
+    const N = T.nm; const pl = c.pname; const cl = c.clubName; const mo = `${c.wy}년 ${c.wm}월`; const lk = N.langKo; const from = LANG_FROM[N.lang] || '';
+    if (type === 'comm') return via === 'euro'
+      ? `${mo}, ${jo(cl, '과', '와')} ${c.oppName}의 ${c.uefaComp} 경기를 ${lk}로 중계하던 ${fr.outlet}의 해설자 ${jo(c.who, '은', '는')} ${T.scene(pl)} 장면을 보고 이렇게 외쳤어요. 그 한마디가 다시 보기로 퍼지면서, 리그 밖에서 먼저 붙은 이름이 그대로 따라다니게 됐어요.`
+      : via === 'nat' ? `${mo}, 해외파 ${jo(pl, '을', '를')} 따라다니던 모국 ${fr.outlet} 중계의 해설자 ${jo(c.who, '은', '는')} ${T.scene(pl)} 장면을 보고 이렇게 외쳤어요.`
+      : `${mo}, ${jo(cl, '과', '와')} ${c.oppName}의 리그 경기. ${fr.outlet} 중계의 해설자 ${jo(c.who, '은', '는')} ${T.scene(pl)} 장면을 보고 이렇게 외쳤어요. 그 한마디가 다시 보기로 퍼졌어요.`;
+    if (type === 'mgr') return `${mo}, ${cl}의 ${c.who} 감독은 기자회견에서 새 빌드업을 설명하며 이렇게 말했어요. 훈련에서 ${pl}에게 맡겨 본 움직임이 시작이었다고요.`;
+    if (type === 'mate') return via === 'mate'
+      ? `${cl} 라커룸에서 나온 별명이에요. 팀의 ${from} 출신 동료 ${jo(c.who, '이', '가')} 모국어로 부르던 말이 ${mo} ${fr.medium}에서 알려졌고, 그 뒤로 동료들도 팬들도 그렇게 부르기 시작했어요.`
+      : `${cl} 훈련장에서 먼저 나온 별명이에요. 동료 ${jo(c.who, '이', '가')} ${mo} ${fr.medium}에서 이렇게 털어놓았고, 그 뒤로 팬과 기자들도 그렇게 부르기 시작했어요.`;
+    if (type === 'press') return via === 'abroad'
+      ? `${mo}, 해외 축구를 다루는 ${lk}권 매체 ${fr.outlet}에서 ${c.who} 기자가 ${E_LG(c.lg)}에서 뛰는 ${pl}의 움직임을 소개하며 붙인 제목이에요. 낯선 리그의 낯선 플레이에 붙은 이름이 거꾸로 그 리그로 들어가 자리 잡았어요.`
+      : `${mo}, ${fr.outlet}에서 ${c.who} 기자가 ${pl}의 움직임을 다루며 붙인 제목이에요. 다른 매체들이 따라 쓰면서 이 세계선에서 그 말이 하나의 개념이 됐어요.`;
+    if (type === 'self') return `${mo}, ${jo(pl, '이', '가')} ${fr.medium}에서 자기 역할을 모국어로 이렇게 설명했어요. 기자가 '${T.ask}'고 묻자 나온 대답이었어요.`;
     if (type === 'opp') return `${mo}, ${cl}에 진 ${c.oppName}의 ${c.who} 감독이 ${fr.medium}에서 한 말이에요. 막지 못한 쪽이 먼저 그 움직임을 알아봤어요.`;
     if (type === 'fans') return `${cl} 팬들이 ${mo} 홈 경기 관중석에 내건 걸개예요. ${fr.medium.includes('커뮤니티') ? '팬 커뮤니티로 퍼진 뒤 중계진도 따라 불렀어요.' : '중계 화면에 잡힌 뒤 신문들도 따라 썼어요.'}`;
     return '';
   }
-  // 세계선별 발견 이야기(도감 B). ctx: { p, res } — 저장하지 않는다. UI가 최초 발견 때 한 번 불러 도감에 고정한다. 맞는 맥락이 없으면 null
+  const E_LG = (lg) => LEAGUES[lg]?.name || '해외 리그';
+  // 세계선별 발견 이야기(도감 B). ctx: { p, res } — 저장하지 않는다. UI가 최초 발견 때 한 번 불러 도감에 고정한다
+  //   명명자는 이름의 언어 화자. 그 언어권 리그면 모든 유형, 아니면 그 화자가 선수를 만날 수 있는 경로만(유럽 대항전 중계·그 나라 출신 동료·해외 축구 칼럼·선수 자신의 모국어·모국 중계)
   function tacStory(id, ctx) {
-    const T = TACS[id]; const TK = TAC_TALK[id] || {}; const { p, res } = ctx; if (!T || !p || !res) return null;
-    const rng = seeded('tacstory|' + TAC_VER + '|' + id + '|' + p.id + '|' + res.year);
+    const T = TACS[id]; const TK = TAC_TALK[id] || {}; const { p, res } = ctx; if (!T || !T.nm || !p || !res) return null;
+    const L = T.nm.lang; const rng = seeded('tacstory|' + TAC_VER + '|' + id + '|' + p.id + '|' + res.year);
     const uefaComp = res.cont && /^UEFA/.test(res.cont.comp || '') ? res.cont.comp : null;
-    const c = { lg: res.lg, nat: p.nation, uefa: !!uefaComp, y: res.year };
-    const opts = [];
-    for (const [lang, by] of Object.entries(TK)) for (const [type, q] of Object.entries(by)) {
-      let w = 0;
-      if (type === 'self') w = inN(lang, c) ? 2 : 0;
-      else if (inL(lang, c)) w = type === 'opp' ? 1 : 2;
-      else if (lang === 'en' && uefaComp && (type === 'comm' || type === 'press')) w = 1; // 유럽 대항전은 영어 중계·칼럼으로도 나간다
-      else if (lang === 'pt' && type === 'comm' && inN('pt', c)) w = 1; // 해외파 브라질 선수의 경기는 브라질 중계진이 따라간다
-      if (w > 0) opts.push({ lang, type, q, w: w + (lang === T.nm.lang ? 1 : 0) });
+    const c = { lg: res.lg, nat: p.nation, y: res.year }; const home = inL(L, c); const opts = [];
+    const add = (type, w, via = null) => { if (TK[type] && w > 0) opts.push({ type, w, via }); };
+    if (home) { add('mgr', 3); add('press', 2); add('comm', 2); add('mate', 2); add('opp', 1); add('fans', 1); add('self', inN(L, c) ? 2 : 0); }
+    else {
+      add('self', inN(L, c) ? 3 : 0); // 선수 자신이 그 언어 화자
+      add('comm', uefaComp ? 2 : 0, 'euro'); // 유럽 대항전은 그 언어로도 중계된다
+      add('comm', inN(L, c) ? 1 : 0, 'nat'); // 해외파는 모국 중계진이 따라간다
+      add('mate', 1, 'mate'); // 같은 팀의 그 나라 출신 동료
+      add('press', 1, 'abroad'); // 해외 축구를 다루는 그 언어권 칼럼
     }
     if (!opts.length) return null;
     const tot = opts.reduce((a, x) => a + x.w, 0); let u = rng() * tot; let ch = opts[opts.length - 1]; for (const x of opts) { u -= x.w; if (u <= 0) { ch = x; break; } }
-    const { lang, type, q } = ch; const home = lang === T.nm.lang; const fr = namerFrame(type, lang, res.year, rng, inL(lang, c));
+    const { type, via } = ch; const q = TK[type]; const fr = namerFrame(type, L, res.year, rng, home);
     const m = pick([9, 10, 11, 12, 1, 2, 3, 4], rng); const when = { wm: m, wy: m >= 8 ? res.year : res.year + 1 };
-    const pool = NM_POOL[lang] || NM_POOL.en; const fic = () => lang === 'ko' ? pick(pool[1], rng) + pick(pool[0], rng) : pick(pool[0], rng) + ' ' + pick(pool[1], rng);
+    const pool = NM_POOL[L] || NM_POOL.en; const fic = () => pick(pool[0], rng) + ' ' + pick(pool[1], rng);
     const ownLg = clubsIn(res.lg, res.year).filter(x => x.id !== res.club && !x.mil);
     const euOpp = uefaComp ? (res.cont.opps || []).filter(x => CLUB[x]) : [];
-    const euro = lang === 'en' && type === 'comm' && uefaComp && !inL('en', c);
-    const oppId = euro && euOpp.length ? pick(euOpp, rng) : ownLg.length ? pick(ownLg, rng).id : null;
+    const oppId = via === 'euro' && euOpp.length ? pick(euOpp, rng) : ownLg.length ? pick(ownLg, rng).id : null;
     const who = type === 'mgr' ? (res.mgr?.name || fic()) : type === 'self' ? p.name : type === 'fans' ? '' : fic();
-    const cc = { ...c, ...when, who, pname: p.name, clubName: CLUB[res.club]?.name || '', oppName: oppId ? CLUB[oppId]?.name || '' : '상대', uefaComp: euro ? uefaComp : null };
-    return { v: 2, lang, langKo: LANG_KO[lang], type, typeKo: NAMER[type].ko, theme: NAMER[type].theme, who: who || null, opp: oppId, outlet: fr.outlet || null, medium: fr.medium, y: when.wy, m: when.wm,
-      quote: { o: q[0], ko: q[1] }, story: namerStory(type, T, cc, fr, home) };
+    const cc = { ...c, ...when, who, pname: p.name, clubName: CLUB[res.club]?.name || '', oppName: oppId ? CLUB[oppId]?.name || '' : '상대', uefaComp: via === 'euro' ? uefaComp : null };
+    return { v: 3, lang: L, langKo: LANG_KO[L], type, via, typeKo: NAMER[type].ko, theme: NAMER[type].theme, who: who || null, opp: oppId, outlet: fr.outlet || null, medium: fr.medium, y: when.wy, m: when.wm,
+      quote: { o: q[0], ko: q[1] }, story: namerStory(type, T, cc, fr, via) };
   }
   // ---------- 기록 속 선수의 프로필 (v92) ----------
   // 이미 확정된 역사(이름·국적·생년·구단·골·도움·수상)는 그대로 두고, 그에 맞는 롤·능력치를 새로 모델링한다(복원이 아니다).
@@ -6809,11 +6817,14 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   const Codex = {
     KEY: 'sk_codex', d: { v: 2, e: {} },
     // v94 저장: 리그·국적마다 고르던 임시 이름(naming)은 legacy로 보존하고, 발견 이야기는 최초 발현 기록에서 공식 이름으로 다시 쓴다. 최초 발현자·시즌·세계선은 그대로
-    norm(e) { if (!e || !e.first || e.v >= 2) return e; const f = e.first; const old = e.naming || null;
+    norm(e) { if (!e || !e.first) return e;
+      // v96: 발견 이야기의 명명자는 이름의 언어 화자. 그 전 규칙(리그 언어 화자가 빌려 씀)으로 쓴 이야기는 최초 발현 기록에서 다시 쓴다. 최초 발현자·시즌·세계선은 그대로
+      if (e.v === 2) { const L = E.TACS[e.id]?.nm?.lang; if (!e.story || e.story.lang === L) { e.v = 3; return e; } const f = e.first; let story = null; try { story = E.tacStory(e.id, { p: { id: f.careerId || 'x', name: f.name, nation: f.nation }, res: { year: f.year, lg: f.lg, club: f.club, mgr: { name: f.mgr, style: f.style }, cont: null } }); } catch { } return { ...e, v: 3, story, prevStory: e.story }; }
+      if (e.v >= 3) return e; const f = e.first; const old = e.naming || null;
       let story = null; try { story = E.tacStory(e.id, { p: { id: f.careerId || 'x', name: f.name, nation: f.nation }, res: { year: f.year, lg: f.lg, club: f.club, mgr: { name: f.mgr, style: f.style }, cont: null, pos: f.pos } }); } catch { }
-      const n = { id: e.id, v: 2, first: { ...f, pos: f.pos || (E.TACS[e.id]?.pos || [])[0] }, story, at: e.at }; if (old || e.plain) n.legacy = { naming: old, plain: e.plain || null, from: 'v94' }; return n; },
-    normAll(d) { for (const k of Object.keys(d.e || {})) d.e[k] = this.norm(d.e[k]); d.v = 2; return d; },
-    load() { const v = LS.get(this.KEY); this.d = v && v.e ? v : { v: 2, e: {} }; const was = this.d.v; this.normAll(this.d); if (was !== 2 && Object.keys(this.d.e).length) LS.set(this.KEY, this.d); return this.d; },
+      const n = { id: e.id, v: 3, first: { ...f, pos: f.pos || (E.TACS[e.id]?.pos || [])[0] }, story, at: e.at }; if (old || e.plain) n.legacy = { naming: old, plain: e.plain || null, from: 'v94' }; return n; },
+    normAll(d) { for (const k of Object.keys(d.e || {})) d.e[k] = this.norm(d.e[k]); d.v = 3; return d; },
+    load() { const v = LS.get(this.KEY); this.d = v && v.e ? v : { v: 2, e: {} }; const was = JSON.stringify(this.d); this.normAll(this.d); if (was !== JSON.stringify(this.d)) LS.set(this.KEY, this.d); return this.d; },
     ref() { return Store.db.doc(`data/users/${Store.uid}/codex`); },
     has() { return Object.values(this.d.e || {}).some(e => e?.first && E.TACS[e.id]); },
     get(id) { return this.d.e[id] || null; },
@@ -7969,7 +7980,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function tacDiscover(p, res) {
     const id = res.tacNew.id; const T = E.TACS[id]; const t = E.tacOf(p, id); if (!T || !t) return;
     let e = Codex.get(id); let kind = 'again';
-    if (!e) { e = Codex.d.e[id] = { id, v: 2, first: tacFirstOf(p, res, t), story: E.tacStory(id, { p, res }), at: Date.now() }; kind = 'first'; Codex.save(); }
+    if (!e) { e = Codex.d.e[id] = { id, v: 3, first: tacFirstOf(p, res, t), story: E.tacStory(id, { p, res }), at: Date.now() }; kind = 'first'; Codex.save(); }
     t.kind = kind; res.tacNew.kind = kind;
   }
   // 발현 컷씬(소형): 아직 보지 않은 발현만. 우승·트로피·발롱도르 같은 큰 컷씬 뒤에 줄 선다. 닫으면 본 것으로 저장
