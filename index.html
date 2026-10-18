@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v77'</script>
+<script>window.SK_VER='v78'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2914,7 +2914,7 @@ const ENGINE = (() => {
     GRE: ['전술 수비', '버티는 축구, 뜨거운 관중', { DEF: .05 }],
     BRA: ['드리블과 즉흥', '공을 갖고 노는 나라. 발재간이 는다', { DRI: .09, VIS: .04 }],
     ARG: ['투지와 압박', '거칠고 끈질기다. 정신력이 단단해진다', { TKL: .06, PRS: .05, STR: .04 }],
-    KSA: ['즉시 전력의 리그', '세계적인 스타가 모이지만, 키우기보다는 쓰는 리그', {}, .97],
+    KSA: ['즉시 전력의 리그', '세계적인 스타가 모이지만, 키우기보다는 쓰는 리그', {}],
     USA: ['운동 능력과 이동 거리', '대륙을 가로지르는 원정. 체력과 속도가 는다', { PAC: .05, STR: .05 }],
     KOR: ['활동량과 조직력', '많이 뛰고 함께 움직인다', { PRS: .05, STR: .04 }],
     JPN: ['패스와 조직', '정확한 패스와 촘촘한 간격', { PAS: .06, MOV: .04 }],
@@ -2954,7 +2954,7 @@ const ENGINE = (() => {
   const CLUB_SCHOOL = {
  mci: ['tiki'], ars: ['tiki'], liv: ['press', 'fullback'], mun: ['academy', 'wing'], tot: ['wing'], new: ['grit'], bha: ['stepping'], cry: ['wing'], eve: ['grit'], bre: ['stepping'],
  sou: ['academy', 'wing'], lee: ['grit'], sto: ['grit'],
- rma: ['big'], bar: ['tiki', 'academy'], atm: ['def', 'grit'], ath: ['academy', 'grit'], vil: ['stepping'], rso: ['academy'], bet: ['flair'], sev: ['fullback', 'stepping'], val: ['wing'], gir: ['stepping'], osa: ['grit'], 
+ rma: ['big'], bar: ['tiki', 'academy'], atm: ['grit', 'striker'], ath: ['academy', 'grit'], vil: ['stepping', 'playmaker'], rso: ['academy'], bet: ['flair'], sev: ['fullback', 'stepping'], val: ['wing'], gir: ['stepping'], osa: ['grit'], 
  int: ['def'], nap: ['flair', 'cauldron'], mil: ['def', 'big'], juv: ['def', 'big'], ata: ['academy', 'press'], fio: ['playmaker'], tor: ['grit'], par: ['gk'],
  bay: ['big'], lev2: ['stepping'], bvb: ['stepping', 'wing'], rbl: ['press', 'stepping'], bmg: ['stepping'], m05: ['press'], fcu: ['grit'], s04: ['academy', 'gk'], fck: ['grit'],
  psg: ['big'], om: ['cauldron'], asm: ['stepping'], ol: ['academy'], losc: ['stepping'], rcl: ['grit'], srfc: ['academy'], fcn2: ['academy'], 
@@ -2968,9 +2968,11 @@ const ENGINE = (() => {
  hil: ['star'], nas: ['star'], itt: ['star'], ahl: ['star'], mia: ['star'],
  uls: ['grit'], jbh: ['dakgong'], poh: ['academy'], gwj: ['tiki'],
  kaw: ['tiki'], yok: ['press'], kas2: ['grit'], 
- din: ['academy', 'playmaker'], haj: ['cauldron'], crv: ['cauldron'], shk: ['flair'], 
- sla: ['press'], spa: ['academy'], pus: ['academy'], lud: ['stepping'],
- sal: ['press', 'stepping'], bas: ['stepping'], mjy: ['stepping'], bod: ['press'], 
+ din: ['academy', 'playmaker'], haj: ['cauldron'], crv: ['cauldron'], shk: ['flair', 'wing'], 
+ sla: ['press'],  pus: ['academy'], lud: ['stepping'],
+ sal: ['press', 'stepping'], bas: ['stepping'], mjy: ['stepping'], bod: ['press'],
+    rom: ['playmaker'],
+    nsj: ['academy'],
   };
   // 이 구단에서 이 선수가 받는 색깔: 효과가 닿는 능력치(hit)와 함께
   function schoolOf(clubId, year, p) {
@@ -3114,10 +3116,10 @@ const ENGINE = (() => {
   // 구단이 받아 주면 그 팀에서 축구화를 벗는 약속이 생긴다. 결번 판정에는 의식(선언·고별전)으로 오른 팬심을 넣지 않는다
   // 구단의 문화: 어떤 팀은 전설에게도 나가는 문만 열어 준다
   const FW_CLUB = {
-    rma: [-.42, '레알 마드리드는 전설에게도 문을 열어 준다. 대개는 나가는 문을.'], psg: [-.38, '파리는 지난 이름을 오래 붙잡지 않는다.'], che: [-.3, '첼시는 늘 내일의 선수를 산다.'],
-    mci: [-.2, '맨체스터 시티의 계획표에는 은퇴식 날짜가 잘 적히지 않는다.'], juv: [-.18, '유벤투스는 이기는 것만 기억한다. 작별도 계산한다.'], bar: [-.15, '바르셀로나도 레전드를 끝까지 지켜 주지는 못했다.'],
+    rma: [-.42, '레알 마드리드는 전설에게도 문을 열어 준다. 대개는 나가는 문을.'], psg: [-.38, '파리는 지난 이름을 오래 붙잡지 않는다.'], che: [-.2, '첼시는 늘 내일의 선수를 산다.'],
+    mci: [-.15, '맨체스터 시티의 계획표에는 은퇴식 날짜가 잘 적히지 않는다.'], juv: [-.1, '유벤투스는 이기는 것만 기억한다. 작별도 계산한다.'], bar: [-.1, '바르셀로나도 레전드를 끝까지 지켜 주지는 못했다.'],
     bay: [-.1, '바이에른은 이별에 능숙하다. 정중하고, 단호하게.'], hil: [-.2, '오일 머니의 시계는 다음 스타에 맞춰져 있다.'], nas: [-.2, '오일 머니의 시계는 다음 스타에 맞춰져 있다.'], itt: [-.2, '오일 머니의 시계는 다음 스타에 맞춰져 있다.'], ahl: [-.2, '오일 머니의 시계는 다음 스타에 맞춰져 있다.'],
-    ath: [.22, '아틀레틱은 자기 사람을 끝까지 품는다.'], rso: [.1, '레알 소시에다드는 제 아이들을 기억한다.'], rom: [.12, '로마는 제 아들에게 약하다.'], mil: [.05, '밀란은 깃발을 아낀다.'], mun: [.03, ''], liv: [.05, '리버풀은 혼자 걷게 두지 않는다.'],
+    ath: [.22, '아틀레틱은 자기 사람을 끝까지 품는다.'], rso: [.1, '레알 소시에다드는 제 아이들을 기억한다.'], rom: [.18, '로마는 제 아들에게 약하다.'], mil: [.08, '밀란은 깃발을 아낀다.'], mun: [.05, ''], liv: [.08, '리버풀은 혼자 걷게 두지 않는다.'],
   };
   const fwSize = (id) => { const s = CLUB[id]?.str || 60; return s >= 84 ? -.1 : s >= 77 ? .03 : .1; };
   const fwClubLine = (id) => FW_CLUB[id]?.[1] || '';
