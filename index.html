@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v97'</script>
+<script>window.SK_VER='v98'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2098,7 +2098,7 @@ const ENGINE = (() => {
     const o0 = ovr(p);
     const role = ROLE[choice.role] || rolesFor(p.pos)[0];
     // 희귀 전술(v94): 발현 이력이 있고 이 시즌 롤·감독 전술이 맞으면 켜진다. 켜진 시즌은 그 전술의 롤 점수로 뛴다(고정 보너스 없음)
-    const tst = !p.youth && p.tacs?.length ? tacState(p, role.id, mgr.style, p.pos, { rel: clubStr(p.club, year) - lgMeanStr(lgK, year) }) : null; const tOn = tst?.on ? tst.id : null;
+    const tst = !p.youth && p.tacs?.length ? tacState(p, role.id, mgr.style, p.pos, { rel: clubStr(p.club, year) - lgMeanStr(lgK, year), org: pressOrg(p.club, mgr.style, mgr) }) : null; const tOn = tst?.on ? tst.id : null;
     const rs = tOn ? tacScore(p, tOn, role.id) : roleScore(p, role.id);
     const xp0 = p.roleXp ? famOf(p, role.id) : FAM_MASTER; const fam = p.youth ? 1 : clamp(xp0 / FAM_MASTER, 0, 1);
     const res = { year, age, club: p.club, lg: lgK, pos: p.pos, role: role.id, focus: choice.focus, attitude: choice.attitude, number: p.number, mgr: { name: mgr.name, style: mgr.style, legend: mgr.legend, q: mgr.q, lid: mgr.legendId || null }, ovrStart: Math.round(o0), trophies: [], awards: [], finals: [], events: [], memo: choice.memo || '', memoQ: choice.memo && choice.q ? choice.q : '', notes: (mods.notes || []).slice(), captain: p.captain, loan: !!p.loanFrom, fam: famLevel(xp0), fit: +(rs - o0).toFixed(1), assigned: !!choice.assigned };
@@ -2190,6 +2190,10 @@ const ENGINE = (() => {
           const lamG = apps * POS[p.pos].g * rp.g * q * form; const lb = tacLineBreak(p, { year, club: p.club, lg: lgK, style: mgr.style }, tOn, lamG, apps * clamp(55 + 35 * share, 45, 88) / 90);
           res.goals = Math.max(mods.goals || 0, poisson(lamG * (1 - LB.s)) + lb.g); res.lb = lb;
           res.assists = poisson(apps * POS[p.pos].a * rp.a * q * form * LB.aMul);
+        } else if (tOn && TACS[tOn].wp) { // 히든 롤의 압박 사슬(v98 후보): 기대 골·도움의 일부를 높은 위치 탈취 기회로 다시 짠다
+          const W = TACS[tOn].wp; const lamG = apps * POS[p.pos].g * rp.g * q * form, lamA = apps * POS[p.pos].a * rp.a * q * form;
+          const wp = tacWingPress(p, { year, club: p.club, lg: lgK, style: mgr.style, mgr, age }, tOn, lamG, lamA, apps * clamp(55 + 35 * share, 45, 88) / 90);
+          res.goals = Math.max(mods.goals || 0, poisson(lamG * (1 - W.sg)) + wp.g); res.assists = poisson(lamA * (1 - W.sa)) + wp.a; res.wp = wp;
         } else {
         res.goals = Math.max(mods.goals || 0, poisson(apps * POS[p.pos].g * rp.g * q * form));
         res.assists = poisson(apps * POS[p.pos].a * rp.a * q * form);
@@ -2200,6 +2204,7 @@ const ENGINE = (() => {
       if (!isGK && apps > 0) { const rp = roleProd(p, role, o0); const xr = POS[p.pos].g * (rp.gR - 1) + POS[p.pos].a * (rp.aR - 1); rt += ((res.goals + res.assists) / Math.max(apps, 1) - .3 - xr) * .35 * (POS[p.pos].grp === 'DF' ? 2 : 1); }
       if (isGK && apps > 0) rt += (res.cs / apps - .3) * .8 + .08;
       if (res.tacx) rt += res.tacx.dr;
+      if (res.wp) rt += res.wp.dr;
       if (apps < 8) rt = 6.2 + gauss() * .2;
       res.rating = +clamp(rt, 5.6, 8.9).toFixed(2);
       // 결승 평점은 그 시즌 자기 평점과 비교한다
@@ -2209,6 +2214,7 @@ const ENGINE = (() => {
     }
     const a0 = { ...p.attrs }; const fam0 = famLevel(famOf(p, role.id)); res.a0 = {}; for (const k of Object.keys(a0)) res.a0[k] = +(+a0[k]).toFixed(2); res.ceil0 = +(p.ceil || 0).toFixed(2);
     if (!res.youthTeam) { try { const st = res.lb ? res.lb.rstat : seasonStat(p, res, 'sim'); if (st) res.rstat = st; } catch (e) { } }
+    if (res.wp && res.rstat) { res.wp.self = Math.min(res.wp.self, res.rstat.v); res.rstat.esc = res.wp.esc; } // 함정에서 본인이 뺏은 공은 개인 압박 성공의 일부. 압박 탈출 허용은 보조 기록
     if (!res.youthTeam) { try { const t = tacJudge(p, res); if (t) { (p.tacs = p.tacs || []).push(t); res.tacNew = { id: t.id, path: t.path }; } } catch (e) { } }
     if (!isGK && res.goals) { const gt = goalRoutes(p, res, mods.gk || {}); if (gt) res.gt = gt; }
     growth(p, res, share * (p.youth ? 1 : clamp(av + .15, 0, 1)), choice, mgr, mods);
@@ -3083,8 +3089,8 @@ const ENGINE = (() => {
       return { role: x.role, name: ROLE[x.role]?.name || x.role, from: x.from, to: x.to, n: x.n, age: x.age, why, temps: x.temps || [] }; });
     // 희귀 전술(v94): 켜진 시즌만 따로 모은다. 기본 롤 기록과 섞지 않는다
     const tac = (p.tacs || []).map(t => { const on = S.filter(r => r.tac?.on && r.tac.id === t.id); const rs = on.map(r => r.rstat).filter(o => o && o.tac === t.id); const m = rs.reduce((a, o) => a + (o.min || 0), 0); const v = rs.reduce((a, o) => a + (o.v || 0), 0);
-      const ex = on.reduce((a, r) => a + (r.tacx?.exp || 0), 0), ok = on.reduce((a, r) => a + (r.tacx?.ok || 0), 0); const offs = on.reduce((a, r) => a + (r.lb?.off || 0), 0); const att = rs.reduce((a, o) => a + (o.att || 0), 0);
-      return { id: t.id, year: t.year, age: t.age, seasons: on.length, off: S.filter(r => r.tac && !r.tac.on && r.tac.id === t.id).length, f: TACS[t.id]?.fam, v: rs.length ? v : null, p90: m ? +(v / m * 90).toFixed(2) : null, spct: att ? Math.round(v / att * 100) : null, offs: on.some(r => r.lb) ? offs : null, exp: ex, pct: ex ? Math.round(ok / ex * 100) : null }; });
+      const ex = on.reduce((a, r) => a + (r.tacx?.exp || 0), 0), ok = on.reduce((a, r) => a + (r.tacx?.ok || 0), 0); const offs = on.reduce((a, r) => a + (r.lb?.off || 0), 0); const trap = on.reduce((a, r) => a + (r.wp?.trap || 0), 0), stl = on.reduce((a, r) => a + (r.wp?.steal || 0), 0); const att = rs.reduce((a, o) => a + (o.att || 0), 0);
+      return { id: t.id, year: t.year, age: t.age, seasons: on.length, off: S.filter(r => r.tac && !r.tac.on && r.tac.id === t.id).length, f: TACS[t.id]?.fam, v: rs.length ? v : null, p90: m ? +(v / m * 90).toFixed(2) : null, spct: att ? Math.round(v / att * 100) : null, offs: on.some(r => r.lb) ? offs : null, trap: on.some(r => r.wp) ? trap : null, tsteal: on.some(r => r.wp) ? stl : null, exp: ex, pct: ex ? Math.round(ok / ex * 100) : null }; });
     return { v: 1, main, sec, timeline: timeline.length > 1 ? timeline : null, have: S.filter(r => r.rstat).length, total: S.length, tac: tac.length ? tac : null };
   }
   function summarize(p) {
@@ -3537,6 +3543,38 @@ const ENGINE = (() => {
       x: { e0: 1.3, r0: .6, rw: { PAC: .55, DEF: .3, TKL: .15 }, c0: 76, tac: { wide: 1.1, pos: 1 }, label: '측면 공간 노출' },
       off: { pos: '풀백이 아닌 자리에서 뛴 시즌', role: '인버티드·오버래핑·언더래핑 풀백이 아닌 시즌이라 측면에 머물렀다', style: '감독 아래에서는 측면을 지켰다' },
     },
+    // 네 번째 히든 롤(v98): 압박의 방향을 정하는 윙어
+    wpress: {
+      nm: { ko: '파스투흐', orig: 'Пастух', roman: 'Pastukh', lang: 'uk', langKo: '우크라이나어', mean: '목동', kind: '조어',
+        etym: 'Пастух(파스투흐)는 우크라이나어로 \'목동\'을 뜻해요. 러시아어에도 철자가 같은 단어가 있지만, 이 이름은 우크라이나어로 붙었어요. 축구 용어로는 게임 세계에서 생긴 조어예요.',
+        hist: '빅토르 마슬로프가 이끈 디나모 키이우(1964~70)의 조직적 압박은 현대 압박의 첫 형태로 평가받고, 이후 로바노우스키 시대를 거쳐 동유럽 압박 전술로 이어졌어요. 이 이름은 그 시절에 쓰인 말이 아니라, 그 흐름 위에서 게임 세계의 우크라이나어 화자가 붙인 이름이에요.',
+        why: '목동이 무리를 직접 붙잡기보다 이동할 방향을 통제하듯, 이 윙어는 곡선 압박으로 상대의 패스 선택지를 지우고 동료가 기다리는 압박 함정으로 유도해요.' },
+      tag: '상대를 쫓는 대신, 상대가 도망칠 방향을 정하는 윙어.',
+      scene: (pl) => `상대 센터백이 공을 잡을 때마다 윙어 ${jo(pl, '이', '가')} 휘어진 동선으로 풀백 쪽 길을 지우고, 패스가 동료들이 기다리는 쪽으로 끌려가는`, ask: '왜 공을 직접 뺏으러 가지 않느냐', topic: '새 압박 방식',
+      pos: ['LW', 'RW'], roles: ['insidef', 'invwinger', 'winger', 'trackback'], styles: ['gegen', 'pos'], minShare: .55,
+      short: '압박의 방향을 정하는 윙어',
+      // 점유형은 조건부: 팀의 압박 조직력(감독 성향·지도력·구단 압박 문화)이 충분할 때만. 구단 전력은 보지 않는다
+      envOk: (roleId, style, cx) => style !== 'pos' || (cx?.org ?? 0) >= .6,
+      def: '상대 센터백이 공을 잡으면 휘어진 동선으로 다가가 풀백으로 가는 패스 길을 등 뒤로 지운다. 상대를 정해 둔 방향으로 몰아 동료와 함께 함정에서 공을 뺏는다.',
+      diff: '헌신형 윙어는 내려와서 막고, 프레싱 포워드는 최전방에서 압박한다. 이 플레이는 윙어가 압박의 방향을 정하고, 공을 뺏는 건 동료와 함께 한다.',
+      line: '그가 달려간 방향으로, 상대의 패스가 끌려갔다.',
+      talent: '압박 강도와 속도, 패스 길을 읽는 눈을 함께 가진 윙어',
+      env: '게겐프레싱 감독 아래, 또는 압박 조직력이 갖춰진 점유형 팀에서 측면 공격수로 뛸 때',
+      cost: '함정이 뚫리면 비운 측면이 그대로 열린다. 후반으로 갈수록, 시즌 막판으로 갈수록 다리가 무거워진다. 동료가 따라오지 않으면 혼자 뛴 압박은 함정이 되지 않는다',
+      w: { PRS: .3, PAC: .25, STR: .15, DEF: .1, DRI: .1, SHO: .1 }, c: 3.2, // 기준점: 나타나는 윙어 평균에서 기본 롤 점수와 같게(측정 −3.2)
+      fam: 'prs', base: 3.2, c0: 80,
+      paths: (a, o, f, n, d) => [
+        a.PRS >= 80 + f && a.PAC >= 85 + f && a.VIS >= 70 + f && 'talent',
+        d && a.PRS >= o - 10 + f && a.PAC >= o + 5 && 'debut',
+        a.PRS >= o - 2 + f && a.VIS >= o - 12 + f && a.PAC >= o + 5 && 'shape',
+        n >= 3 && a.PRS >= 72 + f && a.PAC >= 80 && a.VIS >= 60 + f && 'exp'].filter(Boolean),
+      pathKo: { talent: '타고난 조합', debut: '1군 첫 시즌의 재능', shape: '자기 수준을 넘는 압박·시야', exp: '맞는 전술에서 쌓은 시즌' },
+      proofRole: 'presser', proofK: 1.0, proofPath: { debut: .75 },
+      // 압박 사슬(v98): 상대 빌드업 상황 → 곡선 압박 → 함정 방향으로 전개(유도) → 동료와 함께 탈취 또는 탈출 → 탈취 뒤 짧은 공격 / 탈출 뒤 측면 노출
+      //   기준 선수(이 히든 롤이 나타나는 윙어의 평균)는 기존 기대 골·도움의 sg·sa만큼을 탈취 기회에서 그대로 얻는다
+      wp: { n0: 9, tac: { gegen: 1.15, pos: 1 }, cw: { PRS: .4, PAC: .3, VIS: .2, DEF: .1 }, c0: 78, pt0: .45, ps0: .4, org0: .62, f0: .12, str0: 75, late: .06, fr0: .93, self: .35, sg: .25, sa: .3, e1: .3, e2: .45, rw: { PAC: .5, DEF: .3, STR: .2 }, rc0: 70, k: .1 },
+      off: { pos: '윙어가 아닌 자리에서 뛴 시즌', role: '측면 공격수 롤이 아닌 시즌이라 압박을 이끌지 않았다', style: '감독 아래에서는 압박을 이끌지 않았다', env: '점유형 팀이지만 압박 조직력이 모자라 함정을 만들 수 없었다' },
+    },
     // 세 번째 히든 롤(v96): 블라인드 사이드에서 출발해 수비 사이로 들어가는 스트라이커
     stblind: {
       nm: { ko: '블레이드러너', orig: 'Bladerunner', lang: 'en', langKo: '영어', mean: '칼날 위를 달리는 사람', kind: '조어',
@@ -3544,7 +3582,7 @@ const ENGINE = (() => {
         hist: null,
         why: '수비 라인은 한 발 차이로 온사이드와 오프사이드가 갈리는 칼날 같은 경계예요. 이 스트라이커는 그 날 위에 서 있다가, 수비수가 눈을 떼는 순간 넘어가요. 오프사이드가 쌓이는 것도 그 날 위를 달리는 대가예요.',
       },
-      scene: (pl) => `스트라이커 ${jo(pl, '이', '가')} 센터백 등 뒤에서 기다리다 패스가 나가는 순간 라인을 깨고 들어가는`, ask: '오프사이드가 너무 많은 것 아니냐',
+      scene: (pl) => `스트라이커 ${jo(pl, '이', '가')} 센터백 등 뒤에서 기다리다 패스가 나가는 순간 라인을 깨고 들어가는`, ask: '오프사이드가 너무 많은 것 아니냐', topic: '새 공격 방식',
       pos: ['ST'], roles: ['poacher', 'channel', 'complete'], styles: ['counter', 'direct', 'pos'], minShare: .55,
       short: '블라인드 사이드에서 라인을 깨는 스트라이커',
       // 점유형은 조건부: 최전방에 침투를 요구하는 롤(연계형 컴플리트 포워드 제외)이고, 팀의 패스 공급(리그 평균 이상 전력)이 있을 때만
@@ -3616,6 +3654,39 @@ const ENGINE = (() => {
     const min = Math.round(n90 * 90);
     return { att, off, miss, blk, suc, g, rstat: { f: L ? 'lbreak' : '', ver: RSTAT_VER, min, tac: id, v: suc, att, pct: att ? Math.round(suc / att * 100) : 0, off, g, p90: n90 ? +(suc / n90).toFixed(2) : 0 } };
   }
+  // 팀의 압박 조직력(0~1): 감독 성향, 감독의 지도력, 구단·감독 조합의 압박 문화(고정값). 구단 전력은 넣지 않는다 — 강팀이라고 함정이 저절로 완성되지 않는다
+  let WP_ORG = null; const setWpOrg = (v) => { WP_ORG = v; }; // 측정용: 같은 선수를 압박 조직력만 바꿔 비교
+  function pressOrg(club, style, mgr) {
+    if (WP_ORG != null) return WP_ORG;
+    const cult = ((hashStr('press|' + club + '|' + (mgr?.name || '')) % 25) - 12) / 100;
+    return clamp(.45 + ({ gegen: .15, pos: .05, counter: -.05, block: -.1, direct: -.05 }[style] ?? 0) + ((mgr?.q ?? 70) - 75) * .003 + cult, .2, .85);
+  }
+  // 압박 사슬(v98 후보). 함정 유도와 실제 탈취는 따로 센다. 동료가 뺏어도 유도한 공은 이 히든 롤의 기여로 남는다(개인 압박 성공과는 따로)
+  function tacWingPress(p, cx, id, lamG, lamA, n90) {
+    const W = TACS[id].wp; const a = p.attrs; const rng = seeded('tacwp|' + TAC_VER + '|' + p.id + '|' + cx.year + '|' + cx.club);
+    const org = pressOrg(cx.club, cx.style, cx.mgr);
+    const pt = clamp(W.pt0 + (wsum(a, W.cw) - W.c0) * .01, .15, .8);
+    const ps = clamp(W.ps0 + (org - W.org0) * .8, .1, .75);
+    const fat = clamp(1 - (W.f0 + Math.max(0, W.str0 - (a.STR || 60)) * .004 + Math.max(0, (cx.age || 25) - 29) * .01), .6, .97);
+    const rr = clamp(.6 + (wsum(a, W.rw) - W.rc0) * .012, .3, .85);
+    const lamN = n90 * W.n0 * (W.tac[cx.style] ?? 1); const N = poisson(lamN, rng);
+    const ref = Math.max(1, lamN * W.pt0 * W.ps0 * W.fr0); const pg = clamp(W.sg * lamG / ref, 0, .6), pa = clamp(W.sa * lamA / ref, 0, .6);
+    const H = [{ n: 0, trap: 0, steal: 0 }, { n: 0, trap: 0, steal: 0 }]; const late = { n: 0, trap: 0 };
+    let trap = 0, steal = 0, self = 0, esc = 0, escFail = 0, g = 0, as = 0;
+    for (let i = 0; i < N; i++) {
+      const h = (i % 2); const lt = i >= N * 2 / 3; // 상황을 전반·후반에 번갈아 배분, 시즌 마지막 1/3은 누적 피로
+      const px = pt * (h ? fat : 1) * (lt ? 1 - W.late : 1); H[h].n++; if (lt) late.n++;
+      let e = false;
+      if (rng() < px) { trap++; H[h].trap++; if (lt) late.trap++;
+        if (rng() < ps) { steal++; H[h].steal++; if (rng() < W.self) self++; const u = rng(); if (u < pg) g++; else if (u < pg + pa) as++; }
+        else e = rng() < W.e2;
+      } else e = rng() < W.e1;
+      if (e) { esc++; if (rng() >= rr) escFail++; }
+    }
+    const ref90 = W.n0 * (W.tac[cx.style] ?? 1) * ((1 - W.pt0) * W.e1 + W.pt0 * (1 - W.ps0) * W.e2) * (1 - .6);
+    const dr = n90 ? +clamp(-(escFail / n90 - ref90) * W.k, -.1, .1).toFixed(3) : 0;
+    return { org: +org.toFixed(2), sit: N, trap, steal, self, esc, escFail, g, a: as, dr, h1: H[0], h2: H[1], late, fat: +fat.toFixed(2) };
+  }
   // 발현 판정(B): 시즌이 끝날 때 한 번. 같은 입력이면 같은 결과. 무작위 당첨이 아니다
   // 나이·OVR·경력 연수 제한은 없다. 기록 속 선수의 추정 프로필은 시뮬레이션하지 않으므로 대상이 아니다
   function tacJudge(p, res) {
@@ -3623,7 +3694,7 @@ const ENGINE = (() => {
     for (const [id, T] of Object.entries(TACS)) {
       if (tacOf(p, id) || (T.draft && !TAC_DRAFT)) continue;
       if (!T.pos.includes(res.pos) || !T.roles.includes(res.role) || !T.styles.includes(res.mgr?.style) || (res.share || 0) < T.minShare) continue;
-      if (T.envOk && !T.envOk(res.role, res.mgr?.style, { rel: clubStr(res.club, res.year) - lgMeanStr(res.lg, res.year) })) continue;
+      if (T.envOk && !T.envOk(res.role, res.mgr?.style, { rel: clubStr(res.club, res.year) - lgMeanStr(res.lg, res.year), org: pressOrg(res.club, res.mgr?.style, res.mgr) })) continue;
       const a = res.a0; const o = ovrOf(a, res.pos); const f = (hashStr((p.tacKey || p.id) + '|tacaff|' + id) % 5) - 2; // 숨은 친화도: 같은 사람이면 '만약에'에서도 같다
       const n = 1 + (p.seasons || []).filter(s => s !== res && !s.youthTeam && s.pos === res.pos && T.roles.includes(s.role) && T.styles.includes(s.mgr?.style) && (s.share || 0) >= .5).length;
       const d = !(p.seasons || []).some(s => s !== res && !s.youthTeam);
@@ -3654,9 +3725,9 @@ const ENGINE = (() => {
     fans: { ko: '팬들의 걸개', theme: '관중석에서 먼저 불린 이름' },
   };
   // 언어권: 리그(나라)와 국적. 스위스·벨기에는 여러 언어
-  const LANG_LG = { de: ['GER', 'GER2', 'AUT', 'SUI'], nl: ['NED', 'BEL'], es: ['ESP', 'ESP2', 'ARG'], pt: ['BRA'], it: ['ITA', 'ITA2', 'SUI'], fr: ['FRA', 'FRA2', 'BEL', 'SUI'], en: ['ENG', 'ENG2', 'SCO', 'USA'], ko: ['KOR'] };
-  const LANG_NAT = { de: ['독일', '오스트리아', '스위스'], nl: ['네덜란드', '벨기에'], es: ['스페인', '아르헨티나', '우루과이', '콜롬비아', '에콰도르', '파라과이', '칠레', '페루', '멕시코', '코스타리카'], pt: ['브라질'], it: ['이탈리아', '스위스'], fr: ['프랑스', '벨기에', '스위스', '세네갈', '코트디부아르', '카메룬', '기니', '모로코', '알제리', '마다가스카르'], en: ['잉글랜드', '스코틀랜드', '웨일스', '아일랜드', '미국', '캐나다', '호주', '뉴질랜드', '자메이카'], ko: ['대한민국'] };
-  const LANG_KO = { de: '독일어', nl: '네덜란드어', es: '스페인어', pt: '포르투갈어(브라질)', it: '이탈리아어', fr: '프랑스어', en: '영어', ko: '한국어' };
+  const LANG_LG = { de: ['GER', 'GER2', 'AUT', 'SUI'], nl: ['NED', 'BEL'], es: ['ESP', 'ESP2', 'ARG'], pt: ['BRA'], it: ['ITA', 'ITA2', 'SUI'], fr: ['FRA', 'FRA2', 'BEL', 'SUI'], en: ['ENG', 'ENG2', 'SCO', 'USA'], ko: ['KOR'], uk: ['UKR'] };
+  const LANG_NAT = { de: ['독일', '오스트리아', '스위스'], nl: ['네덜란드', '벨기에'], es: ['스페인', '아르헨티나', '우루과이', '콜롬비아', '에콰도르', '파라과이', '칠레', '페루', '멕시코', '코스타리카'], pt: ['브라질'], it: ['이탈리아', '스위스'], fr: ['프랑스', '벨기에', '스위스', '세네갈', '코트디부아르', '카메룬', '기니', '모로코', '알제리', '마다가스카르'], en: ['잉글랜드', '스코틀랜드', '웨일스', '아일랜드', '미국', '캐나다', '호주', '뉴질랜드', '자메이카'], ko: ['대한민국'], uk: ['우크라이나'] };
+  const LANG_KO = { de: '독일어', nl: '네덜란드어', es: '스페인어', pt: '포르투갈어(브라질)', it: '이탈리아어', fr: '프랑스어', en: '영어', ko: '한국어', uk: '우크라이나어' };
   // 가상 인물 이름. 실존 인물과 겹치지 않게 흔한 이름끼리 조합한다. 한국어는 성+이름
   const NM_POOL = {
     de: [['Jonas', 'Tobias', 'Florian', 'Matthias', 'Lukas', 'Henrik', 'Moritz', 'Benedikt'], ['Brandt', 'Kessler', 'Vogt', 'Lindner', 'Seidel', 'Kröger', 'Albers', 'Wendland']],
@@ -3667,6 +3738,7 @@ const ENGINE = (() => {
     fr: [['Mathis', 'Théo', 'Romain', 'Bastien', 'Quentin', 'Hugo', 'Damien', 'Loïc'], ['Lefèvre', 'Garnier', 'Rousseau', 'Chevalier', 'Mercier', 'Blanchard', 'Perrin', 'Delorme']],
     en: [['Callum', 'Rhys', 'Jamie', 'Owen', 'Nathan', 'Liam', 'Ewan', 'Toby'], ['Ashworth', 'Pryce', 'Holloway', 'Kerridge', 'Thwaite', 'Mercer', 'Calloway', 'Brisco']],
     ko: [['도윤', '서진', '지훈', '태오', '민재', '하준', '건우', '시우'], ['한', '오', '민', '류', '서', '남', '표', '진']],
+    uk: [['Andrii', 'Bohdan', 'Taras', 'Dmytro', 'Yurii', 'Mykola', 'Serhii', 'Ostap'], ['Kovalenko', 'Bondarenko', 'Tkachenko', 'Melnyk', 'Savchuk', 'Hnatiuk', 'Levchenko', 'Ostapenko']],
   };
   // 가상 매체. 시대에 따라 고른다: 2000년 전에는 신문·주간지·TV·라디오, 그 뒤로 인터넷 칼럼, 2015년부터 팟캐스트까지
   const MEDIA = {
@@ -3678,6 +3750,7 @@ const ENGINE = (() => {
     fr: { tv: 'Canal Tribune', press: '주간지 «Le Cahier Tactique»', web: '«Le Cahier Tactique» 온라인 칼럼', pod: '팟캐스트 «Le Cahier Tactique»' },
     en: { tv: 'Northgate Sport', press: '주간지 «The Halfway Line»', web: '«The Halfway Line» 전술 칼럼', pod: '팟캐스트 «The Halfway Line»' },
     ko: { tv: '채널 그라운드', press: '주간 «잔디»', web: '«잔디» 전술 칼럼', pod: '팟캐스트 «하프스페이스»' },
+    uk: { tv: '«Бровка» ТБ', press: '주간지 «Штрафний»', web: '«Штрафний» 전술 칼럼', pod: '팟캐스트 «Пресинг»' },
   };
   const inL = (lang, c) => (LANG_LG[lang] || []).includes(c.lg); const inN = (lang, c) => (LANG_NAT[lang] || []).includes(c.nat);
   // 발견 이야기의 발언(v96 개정): 명명자는 언제나 그 이름의 언어를 쓰는 사람이다. 이름 하나, 그 이름을 처음 붙인 사람도 그 언어 화자.
@@ -3702,6 +3775,15 @@ const ENGINE = (() => {
       opp: ['Jedes Mal, wenn wir verschoben haben, kam der Seitenwechsel.', '우리가 한쪽으로 몰릴 때마다 방향 전환이 날아왔어요.'],
       fans: ['Unser Seitenwechsler!', '우리의 자이텐베크슬러!'],
     },
+    wpress: {
+      comm: ['Він не бігає за м\'ячем. Він жене їх у пастку.', '그는 공을 쫓지 않아요. 그들을 덫으로 몰아요.'],
+      mgr: ['Він наш пастух: показує суперникові, куди грати, а решта команди вже чекає там.', '그는 우리 파스투흐예요. 상대에게 어디로 패스할지 정해 주면, 나머지가 이미 거기서 기다리죠.'],
+      mate: ['У роздягальні ми звемо його просто Пастух.', '라커룸에선 그냥 파스투흐라고 불러요.'],
+      press: ['Пастух на фланзі', '측면의 목동'],
+      self: ['Я не відбираю м\'яч сам. Я показую, куди їм бігти.', '저는 혼자 공을 뺏지 않아요. 그들이 어디로 가야 할지 보여 줄 뿐이에요.'],
+      opp: ['Їхній пастух загнав нас у кут.', '저쪽 파스투흐가 우리를 구석으로 몰았어요.'],
+      fans: ['Наш Пастух!', '우리의 파스투흐!'],
+    },
     stblind: {
       comm: ['He lives on the edge of that line. A proper bladerunner.', '저 라인 끝에서 살아요. 제대로 된 블레이드러너죠.'],
       mate: ['We call him the Bladerunner. He’s always an inch from offside.', '우린 블레이드러너라고 불러요. 늘 오프사이드 한 뼘 앞에 있거든요.'],
@@ -3712,7 +3794,7 @@ const ENGINE = (() => {
       fans: ['Our Bladerunner!', '우리의 블레이드러너!'],
     },
   };
-  const LANG_FROM = { de: '독일', en: '잉글랜드', es: '스페인', it: '이탈리아', fr: '프랑스', nl: '네덜란드', pt: '브라질' };
+  const LANG_FROM = { uk: '우크라이나', de: '독일', en: '잉글랜드', es: '스페인', it: '이탈리아', fr: '프랑스', nl: '네덜란드', pt: '브라질' };
   // 명명자의 발언 장소·매체. 시대와 언어에 맞춘다
   function namerFrame(type, lang, y, rng, home = true) {
     const M = MEDIA[lang] || MEDIA.en;
@@ -3732,7 +3814,7 @@ const ENGINE = (() => {
       ? `${mo}, ${jo(cl, '과', '와')} ${c.oppName}의 ${c.uefaComp} 경기를 ${lk}로 중계하던 ${fr.outlet}의 해설자 ${jo(c.who, '은', '는')} ${T.scene(pl)} 장면을 보고 이렇게 외쳤어요. 그 한마디가 다시 보기로 퍼지면서, 리그 밖에서 먼저 붙은 이름이 그대로 따라다니게 됐어요.`
       : via === 'nat' ? `${mo}, 해외파 ${jo(pl, '을', '를')} 따라다니던 모국 ${fr.outlet} 중계의 해설자 ${jo(c.who, '은', '는')} ${T.scene(pl)} 장면을 보고 이렇게 외쳤어요.`
       : `${mo}, ${jo(cl, '과', '와')} ${c.oppName}의 리그 경기. ${fr.outlet} 중계의 해설자 ${jo(c.who, '은', '는')} ${T.scene(pl)} 장면을 보고 이렇게 외쳤어요. 그 한마디가 다시 보기로 퍼졌어요.`;
-    if (type === 'mgr') return `${mo}, ${cl}의 ${c.who} 감독은 기자회견에서 새 빌드업을 설명하며 이렇게 말했어요. 훈련에서 ${pl}에게 맡겨 본 움직임이 시작이었다고요.`;
+    if (type === 'mgr') return `${mo}, ${cl}의 ${c.who} 감독은 기자회견에서 ${T.topic || '새 빌드업'}을 설명하며 이렇게 말했어요. 훈련에서 ${pl}에게 맡겨 본 움직임이 시작이었다고요.`;
     if (type === 'mate') return via === 'mate'
       ? `${cl} 라커룸에서 나온 별명이에요. 팀의 ${from} 출신 동료 ${jo(c.who, '이', '가')} 모국어로 부르던 말이 ${mo} ${fr.medium}에서 알려졌고, 그 뒤로 동료들도 팬들도 그렇게 부르기 시작했어요.`
       : `${cl} 훈련장에서 먼저 나온 별명이에요. 동료 ${jo(c.who, '이', '가')} ${mo} ${fr.medium}에서 이렇게 털어놓았고, 그 뒤로 팬과 기자들도 그렇게 부르기 시작했어요.`;
@@ -3803,7 +3885,7 @@ const ENGINE = (() => {
     const mgr = managerFor(clubId, year, world, p);
     const fam = forming ? 1 : clamp(famOf(p, roleId) / FAM_MASTER, 0, 1);
     const q = Object.assign(Object.create(Object.getPrototypeOf(p)), p, { trust: clubId === p.club ? p.trust : 48 + (p.trait === 'lead' ? 5 : 0) });
-    const ts = !forming && p.tacs?.length ? tacState(p, roleId, mgr.style, p.pos, { rel: clubStr(clubId, year) - lgMeanStr(c.lg, year) }) : null;
+    const ts = !forming && p.tacs?.length ? tacState(p, roleId, mgr.style, p.pos, { rel: clubStr(clubId, year) - lgMeanStr(c.lg, year), org: pressOrg(clubId, mgr.style, mgr) }) : null;
     const share = minutesShare(q, clubId, year, mgr, { role: roleId, attitude: 'bal' }, { share: -(1 - fam) * .5 + (opt.minutes ? .6 : 0) + (clubId === p.club ? (p.nextMods?.share || 0) : 0), rsOv: ts?.on ? tacScore(p, ts.id, roleId) : undefined });
     const keep = CLUB_MODS; setClubMods(p.clubMods);
     const o = ovr(p); const rows = clubsIn(c.lg, year).filter(x => !x.mil || x.id === clubId).map(x => ({ id: x.id, s: clubStr(x.id, year) + (x.id === clubId ? (o - clubStr(clubId, year)) * share * .28 : 0) })).sort((a, b) => b.s - a.s);
@@ -3914,7 +3996,7 @@ const ENGINE = (() => {
     coachStints, parentsAlive, coachNow, recordDeath, farewellAsk, farewellAgree, farewellRefused, homecomingOffer, farewellOf, fwPact, fwClubLine, fanCer, fwSeasons, FW_CLUB,
     LG_SCHOOL, SCHOOLS, CLUB_SCHOOL, schoolOf, wiEcho, wiRewrite, goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    TACS, TAC_VER, TAC_TALK, NAMER, LANG_KO, tacStory, tacLineBreak, setTacDraft, lgMeanStr, tacOf, tacScore, tacState, tacOffText, tacExposure, tacJudge, roleProd, actAbility, normalizeRole, MERGED, STAT_FAM, ROLE_STAT, statModel, seasonStat, rsAbility, roleCareer, seasonMin, rstatLabel, rstatText, ghostProfile, RSTAT_VER, GPROF_VER, growMul, GCFG, CALIB, ASG, MCFG, effOvr, muOf, isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    TACS, TAC_VER, TAC_TALK, NAMER, LANG_KO, tacStory, tacLineBreak, tacWingPress, pressOrg, setWpOrg, setTacDraft, lgMeanStr, tacOf, tacScore, tacState, tacOffText, tacExposure, tacJudge, roleProd, actAbility, normalizeRole, MERGED, STAT_FAM, ROLE_STAT, statModel, seasonStat, rsAbility, roleCareer, seasonMin, rstatLabel, rstatText, ghostProfile, RSTAT_VER, GPROF_VER, growMul, GCFG, CALIB, ASG, MCFG, effOvr, muOf, isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, hasJong, sharedPast, splitSummer, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -7644,7 +7726,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (r.bdoRank) L.push(['', `발롱도르 ${r.bdoRank}위${r.bdoRival ? ` (수상: ${r.bdoRival})` : ''}`]);
     (r.notes || []).forEach(n => L.push(isEcho(n) ? ['echo', echoT(n)] : ['life', n]));
     r.events.forEach(e => L.push(['', e]));
-    if (r.tac && E.TACS[r.tac.id]) { if (r.tac.on) L.push(['tac', `◆ ${tacNm(r.tac.id)}${r.tacx ? ` · ${E.TACS[r.tac.id].x?.label || '노출'} ${r.tacx.exp}회, 복귀 ${r.tacx.pct}%` : ''}${r.lb ? ` · 라인 깨기 ${r.lb.att}번 시도 중 ${r.lb.suc}번 성공 · 오프사이드 ${r.lb.off}회` : ''}`]); else L.push(['', `${tacNm(r.tac.id)} 꺼짐 · ${E.tacOffText(r.tac)}`]); }
+    if (r.tac && E.TACS[r.tac.id]) { if (r.tac.on) L.push(['tac', `◆ ${tacNm(r.tac.id)}${r.tacx ? ` · ${E.TACS[r.tac.id].x?.label || '노출'} ${r.tacx.exp}회, 복귀 ${r.tacx.pct}%` : ''}${r.lb ? ` · 라인 깨기 ${r.lb.att}번 시도 중 ${r.lb.suc}번 성공 · 오프사이드 ${r.lb.off}회` : ''}${r.wp ? ` · 함정 유도 ${r.wp.trap}회, 동료와 탈취 ${r.wp.steal}회(본인 ${r.wp.self}) · 압박 탈출 허용 ${r.wp.esc}회` : ''}`]); else L.push(['', `${tacNm(r.tac.id)} 꺼짐 · ${E.tacOffText(r.tac)}`]); }
     if (r.tacNew && E.TACS[r.tacNew.id] && !(S.p && (S.p.tacs || []).some(t => t.id === r.tacNew.id && t.year === r.year && t.cut === 1))) L.push(['gold', `◆ 히든 롤 ${tacNm(r.tacNew.id)} 발현`]); // 컷씬을 보기 전에는 이름을 먼저 드러내지 않는다
     return L;
   }
@@ -7993,7 +8075,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const T = E.TACS[c.tac]; const N = T.nm; const p = S.p; const first = c.kind === 'first';
     return `<div class="mcut-card" role="dialog" aria-label="히든 롤 발현">
       <p class="mcut-eye">${first ? '새로운 히든 롤이 발현했어요' : '히든 롤 발현'}</p>
-      <h2 class="mcut-name">${esc(N.ko)}</h2><p class="mcut-orig" lang="${esc(N.lang)}">${esc(N.orig)}</p>
+      <h2 class="mcut-name">${esc(N.ko)}</h2><p class="mcut-orig"><span lang="${esc(N.lang)}">${esc(N.orig)}</span>${N.roman ? ` · ${esc(N.roman)}` : ''}</p>
       <p class="mcut-line">${esc(T.line)}</p>
       ${p ? `<p class="mcut-who">${crest(c.club || p.club, 'xs')} <b>${esc(p.name)}</b> · ${c.age}세 · ${c.season} 시즌</p>` : ''}
       <p class="mcut-foot">${first ? '히든 롤 도감에 기록됐어요' : '도감에 이미 있는 히든 롤이에요'}</p>
@@ -8002,7 +8084,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function tacRecLine(x) {
     const T = E.TACS[x.id]; if (!T) return '';
     const st = x.v != null ? ` · ${esc(E.STAT_FAM[x.f] || '')} <b>${nf(x.v)}</b>${x.spct != null ? ` <span class="muted">(성공률 ${x.spct}%)</span>` : ''}${x.p90 != null ? ` <span class="muted">· 90분당 ${x.p90}</span>` : ''}` : '';
-    const ex = x.exp ? ` <span class="muted">· ${esc(T.x?.label || '노출')} 복귀 ${x.pct}%</span>` : ''; const os = x.offs != null ? ` <span class="muted">· 오프사이드 ${nf(x.offs)}회</span>` : '';
+    const ex = x.exp ? ` <span class="muted">· ${esc(T.x?.label || '노출')} 복귀 ${x.pct}%</span>` : ''; const os = (x.offs != null ? ` <span class="muted">· 오프사이드 ${nf(x.offs)}회</span>` : '') + (x.trap != null ? ` <span class="muted">· 함정 유도 ${nf(x.trap)} · 동료와 탈취 ${nf(x.tsteal)}</span>` : '');
     return `<p class="small cc-tac"><span class="cc-rl">◆ 히든 롤 ${esc(tacNm(x.id))}</span> ${x.age}세 발현 · 켜진 시즌 ${x.seasons}${x.off ? ` <span class="muted">(꺼진 시즌 ${x.off})</span>` : ''}${st}${ex}${os}</p>`;
   }
   function viewCodex() {
@@ -8010,8 +8092,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const here = (id) => { const L = []; for (const c of S.world.careers) for (const t of c.tacs || []) if (t.id === id) L.push({ name: c.name, id: c.id, age: t.age, year: t.year, line: c.line }); if (S.p) for (const t of S.p.tacs || []) if (t.id === id && !L.some(x => x.id === S.p.id)) L.push({ name: S.p.name, id: S.p.id, age: t.age, year: t.year, live: true }); return L; };
     const card = (e) => { const T = E.TACS[e.id]; const N = T.nm; const f = e.first; const s = e.story; const H = here(e.id);
       const quote = s ? `<blockquote class="tac-q"><p lang="${esc(s.lang)}">${esc(s.quote.o)}</p>${s.quote.ko ? `<p class="muted small">${esc(s.quote.ko)}</p>` : ''}<footer class="small">${s.who ? esc(s.who) + ' · ' : ''}${esc(s.medium)}${s.outlet ? ' · ' + esc(s.outlet) : ''} · ${s.y}년 ${TAC_MON(s.m)}</footer></blockquote><p>${esc(s.story)}</p>` : '';
-      return `<article class="panel codex"><p class="eyebrow">히든 롤 · ${esc(E.POS[f.pos]?.name || T.pos.join('·'))}</p><h2 class="cx-name">${esc(N.ko)} <span class="cx-orig" lang="${esc(N.lang)}">${esc(N.orig)}</span></h2>
-        <p class="muted">${esc(N.langKo)} · '${esc(N.mean)}' · ${esc(N.kind)}</p>
+      return `<article class="panel codex"><p class="eyebrow">히든 롤 · ${esc(E.POS[f.pos]?.name || T.pos.join('·'))}</p><h2 class="cx-name">${esc(N.ko)} <span class="cx-orig" lang="${esc(N.lang)}">${esc(N.orig)}</span>${N.roman ? ` <span class="cx-orig">${esc(N.roman)}</span>` : ''}</h2>
+        <p class="muted">${esc(N.langKo)} · '${esc(N.mean)}' · ${esc(N.kind)}</p>${T.tag ? `<p>${esc(T.tag)}</p>` : ''}
         <dl class="cx-dl"><dt>전술 정의</dt><dd>${esc(T.def)}</dd><dt>일반 롤과 차이</dt><dd>${esc(T.diff)}</dd><dt>나타나는 선수</dt><dd>${esc(T.talent)}</dd><dt>나타나는 환경</dt><dd>${esc(T.env)}</dd><dt>대가</dt><dd>${esc(T.cost)}</dd></dl>
         <h3 class="h3">이름의 유래</h3><p class="small">${esc(N.etym)}</p>${N.hist ? `<p class="small cx-hist"><b>실제 축구사</b> ${esc(N.hist)}</p>` : ''}<p class="small">${esc(N.why)}</p>
         <h3 class="h3">발견 이야기 <span class="muted small">· ${esc(f.lineName || '처음 발견한 세계선')}</span></h3>${s ? `<p class="small muted">${esc(s.typeKo)} — ${esc(s.theme)}</p>${quote}` : '<p class="small muted">그 세계선에서 이 이름이 어떻게 퍼졌는지는 기록되지 않았어요.</p>'}
