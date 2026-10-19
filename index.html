@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v99'</script>
+<script>window.SK_VER='v100'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -949,7 +949,7 @@ const ENGINE = (() => {
   ];
   // 감독 신뢰를 빨리 얻는 역할
   // v91 대표 기록 사양(계산은 v92). 롤마다 시즌 대표 기록 하나. 'ga'는 골·도움으로 충분해서 추가 기록이 없다는 뜻
-  const STAT_FAM = { ti: '태클+가로채기', rec: '볼 회수', air: '공중볼 경합 승리', prs: '압박 성공', prog: '전진 패스', kp: '키 패스', cross: '크로스 성공', carry: '전진 운반', drb: '1대1 돌파 성공', work: '활동량', sweep: '스위핑', dist: '롱패스 성공', claim: '크로스 처리', sv: '선방', ga: '골·도움', lbreak: '라인 깨기 성공' };
+  const STAT_FAM = { ti: '태클+가로채기', rec: '볼 회수', air: '공중볼 경합 승리', prs: '압박 성공', prog: '전진 패스', kp: '키 패스', cross: '크로스 성공', carry: '전진 운반', drb: '1대1 돌파 성공', work: '활동량', sweep: '스위핑', dist: '롱패스 성공', claim: '크로스 처리', sv: '선방', ga: '골·도움', lbreak: '라인 깨기 성공', fpa: '먼 포스트 도착' };
   const ROLE_STAT = { sweeperk: 'sweep', shotstop: 'sv', buildgk: 'dist', commandgk: 'claim', bpd: 'prog', stopper: 'ti', covercb: 'rec', widecb: 'carry', libero: 'carry', aerialcb: 'air', leadercb: 'rec', invfb: 'prog', overlapfb: 'cross', holdfb: 'ti', underlap: 'kp', attwb: 'cross', compwb: 'work', invwb: 'carry', wbplay: 'kp', defwb: 'ti', anchor: 'ti', regista: 'prog', halfback: 'rec', destroyer: 'prs', volante: 'rec', segundo: 'work', b2b: 'rec', mezzala: 'ga', dlp: 'prog', carrier: 'carry', carrilero: 'work', ballwin: 'ti', roam: 'work', linebreaker: 'kp', boxcrash: 'ga', treq: 'ga', ap: 'kp', shadow: 'ga', raum: 'ga', enganche: 'prog', mediapunta: 'ga', insidef: 'ga', invwinger: 'kp', winger: 'cross', iso: 'drb', widetm: 'air', wide10: 'kp', farpost: 'ga', trackback: 'ti', poacher: 'ga', target: 'air', presser: 'prs', complete: 'ga', false9: 'kp', channel: 'ga', secondst: 'ga', dlf: 'kp' };
   const ROLE_TRUST = { leadercb: 2, trackback: 3, carrilero: 3, anchor: 2, holdfb: 2, defwb: 2, presser: 2 };
   // v91 통합: 지난 시즌 기록의 롤 이름은 남기고, 새로 고를 수는 없다. into: 옮겨 갈 롤(함수면 능력치로 고른다)
@@ -2099,7 +2099,7 @@ const ENGINE = (() => {
     const o0 = ovr(p);
     const role = ROLE[choice.role] || rolesFor(p.pos)[0];
     // 희귀 전술(v94): 발현 이력이 있고 이 시즌 롤·감독 전술이 맞으면 켜진다. 켜진 시즌은 그 전술의 롤 점수로 뛴다(고정 보너스 없음)
-    const tst = !p.youth && p.tacs?.length ? tacState(p, role.id, mgr.style, p.pos, { rel: clubStr(p.club, year) - lgMeanStr(lgK, year), org: pressOrg(p.club, mgr.style, mgr) }) : null; const tOn = tst?.on ? tst.id : null;
+    const tst = !p.youth && p.tacs?.length ? tacState(p, role.id, mgr.style, p.pos, { rel: clubStr(p.club, year) - lgMeanStr(lgK, year), org: pressOrg(p.club, mgr.style, mgr), sup: wideSupply(p.club, mgr.style, mgr) }) : null; const tOn = tst?.on ? tst.id : null;
     const rs = tOn ? tacScore(p, tOn, role.id) : roleScore(p, role.id);
     const xp0 = p.roleXp ? famOf(p, role.id) : FAM_MASTER; const fam = p.youth ? 1 : clamp(xp0 / FAM_MASTER, 0, 1);
     const res = { year, age, club: p.club, lg: lgK, pos: p.pos, role: role.id, focus: choice.focus, attitude: choice.attitude, number: p.number, mgr: { name: mgr.name, style: mgr.style, legend: mgr.legend, q: mgr.q, lid: mgr.legendId || null }, ovrStart: Math.round(o0), trophies: [], awards: [], finals: [], events: [], memo: choice.memo || '', memoQ: choice.memo && choice.q ? choice.q : '', notes: (mods.notes || []).slice(), captain: p.captain, loan: !!p.loanFrom, fam: famLevel(xp0), fit: +(rs - o0).toFixed(1), assigned: !!choice.assigned };
@@ -2195,6 +2195,10 @@ const ENGINE = (() => {
           const W = TACS[tOn].wp; const lamG = apps * POS[p.pos].g * rp.g * q * form, lamA = apps * POS[p.pos].a * rp.a * q * form;
           const wp = tacWingPress(p, { year, club: p.club, lg: lgK, style: mgr.style, mgr, age }, tOn, lamG, lamA, apps * clamp(55 + 35 * share, 45, 88) / 90);
           res.goals = Math.max(mods.goals || 0, poisson(lamG * (1 - W.sg)) + wp.g); res.assists = poisson(lamA * (1 - W.sa)) + wp.a; res.wp = wp;
+        } else if (tOn && TACS[tOn].fp) { // 히든 롤의 먼 포스트 사슬(v100 초안): 기대 골·도움의 일부를 반대편 공격의 마지막 수신 기회로 다시 짠다
+          const FP = TACS[tOn].fp; const lamG = apps * POS[p.pos].g * rp.g * q * form, lamA = apps * POS[p.pos].a * rp.a * q * form;
+          const fp = tacFarPost(p, { year, club: p.club, lg: lgK, style: mgr.style, mgr, age, rel: clubStr(p.club, year) - lgMeanStr(lgK, year) }, tOn, lamG, lamA, apps * clamp(55 + 35 * share, 45, 88) / 90);
+          res.goals = Math.max(mods.goals || 0, poisson(lamG * (1 - FP.sg)) + fp.g); res.assists = poisson(lamA * (1 - FP.sa) * FP.aMul) + fp.a; res.fp = fp;
         } else {
         res.goals = Math.max(mods.goals || 0, poisson(apps * POS[p.pos].g * rp.g * q * form));
         res.assists = poisson(apps * POS[p.pos].a * rp.a * q * form);
@@ -2206,6 +2210,7 @@ const ENGINE = (() => {
       if (isGK && apps > 0) rt += (res.cs / apps - .3) * .8 + .08;
       if (res.tacx) rt += res.tacx.dr;
       if (res.wp) rt += res.wp.dr;
+      if (res.fp) rt += res.fp.dr;
       if (apps < 8) rt = 6.2 + gauss() * .2;
       res.rating = +clamp(rt, 5.6, 8.9).toFixed(2);
       // 결승 평점은 그 시즌 자기 평점과 비교한다
@@ -2214,7 +2219,7 @@ const ENGINE = (() => {
       awardsFor(p, res, lg, rank, age, led, world);
     }
     const a0 = { ...p.attrs }; const fam0 = famLevel(famOf(p, role.id)); res.a0 = {}; for (const k of Object.keys(a0)) res.a0[k] = +(+a0[k]).toFixed(2); res.ceil0 = +(p.ceil || 0).toFixed(2);
-    if (!res.youthTeam) { try { const st = res.lb ? res.lb.rstat : seasonStat(p, res, 'sim'); if (st) res.rstat = st; } catch (e) { } }
+    if (!res.youthTeam) { try { const st = res.lb ? res.lb.rstat : res.fp ? res.fp.rstat : seasonStat(p, res, 'sim'); if (st) res.rstat = st; } catch (e) { } }
     if (res.wp && res.rstat) { res.wp.self = Math.min(res.wp.self, res.rstat.v); res.rstat.esc = res.wp.esc; } // 함정에서 본인이 뺏은 공은 개인 압박 성공의 일부. 압박 탈출 허용은 보조 기록
     if (!res.youthTeam) { try { const t = tacJudge(p, res); if (t) { (p.tacs = p.tacs || []).push(t); res.tacNew = { id: t.id, path: t.path }; } } catch (e) { } }
     if (!isGK && res.goals) { const gt = goalRoutes(p, res, mods.gk || {}); if (gt) res.gt = gt; }
@@ -3610,6 +3615,43 @@ const ENGINE = (() => {
       lb: { s: .4, o0: .22, c0: .55, b0: .2, v0: .35, t0: 86, sho0: 97, pac0: 88, rel0: 7, tw: { MOV: .5, VIS: .35, PAC: .15 }, tac: { counter: 1.05, direct: 1, pos: .95 }, aMul: .85 },
       off: { pos: '스트라이커가 아닌 자리에서 뛴 시즌', role: '최전방을 위협하는 롤이 아닌 시즌이라 내려와 연계했다', style: '감독 아래에서는 라인 뒤를 노리지 않았다', env: '점유형 팀이지만 패스 공급이 모자라거나 연계형 롤이라 라인 뒤를 노리지 않았다' },
     },
+    // 다섯 번째 히든 롤(v100): 반대편 공격에 맞춰 늦게 먼 포스트에 도착하는 윙백
+    //   윙백의 수비 임무를 유지하다가, 공이 반대 측면에 있을 때 침투 시점을 늦춰 상대의 시야를 벗어나 먼 포스트에서 공격의 마지막 수신자가 된다
+    //   출발 위치의 절대 높이(5백 깊이든 높은 측면이든)는 조건이 아니다. 이미 최전방에 상주하는 파 포스트 윙어와는 다르다
+    wbfar: {
+      nm: { ko: '리타르다타리오', orig: 'Ritardatario', lang: 'it', langKo: '이탈리아어', mean: '늦게 오는 사람', kind: '일상어의 재해석',
+        etym: 'Ritardatario는 이탈리아어로 \'늦게 오는 사람, 지각하는 사람\'이에요. ritardo(늦음, 지연)에서 온 말이에요. 일상에서는 약속에 늘 늦는 사람에게 핀잔처럼 쓰고, 축구 용어로는 이 게임 세계에서 새 뜻을 얻었어요.',
+        hist: '이탈리아 축구에서는 3백 양쪽 측면을 오르내리는 윙백을 퀸토(quinto, 다섯 번째)라고 불러요. 인자기의 인테르에서는 왼쪽 스토퍼가 올린 공을 오른쪽 윙백이 먼 포스트에서 노리는 장면이 반복되는 공격 루트로 분석됐어요. 이 이름은 그 시절에 쓰인 말이 아니라, 그 전통 위에서 게임 세계의 이탈리아어 화자가 붙인 이름이에요.',
+        why: '윙백은 원래 늦으면 안 되는 자리예요. 이 윙백은 일부러 늦어요. 일찍 들어가면 마크당하고, 너무 늦으면 공이 먼저 지나가요. 상대가 공을 보는 사이 마지막 순간에 먼 포스트에 닿는 타이밍, \'늘 늦는 사람\'이라는 핀잔이 그 정확함의 이름이 됐어요.' },
+      tag: '일찍 오지 않는다. 공이 닿는 순간에만 도착하는 윙백.',
+      scene: (pl) => `공이 반대편 측면에 있을 때 윙백 ${jo(pl, '이', '가')} 한참 뒤에서 출발해, 크로스가 올라가는 순간에야 먼 포스트에 닿는`, ask: '왜 그렇게 늦게 들어가느냐', topic: '새 공격 방식',
+      line: '그는 늘 늦게 왔다. 공과 같은 순간에.',
+      pos: ['LWB', 'RWB'], roles: ['attwb', 'compwb'], styles: ['wide', 'pos'], minShare: .55,
+      short: '반대편 공격에 늦게 먼 포스트로 도착하는 윙백',
+      // 역습형은 v100에서 보류(표본 부족): 공급이 충분한 역습형 팀(측면 공급 0.55 이상)에서의 조건부 활성화는 통제 실험 뒤 다시 판단한다
+      def: '공이 반대 측면에 있을 때, 자기 측면 수비 임무를 지키다가 침투 시점을 늦춰 공 없는 쪽에서 먼 포스트로 들어간다. 일찍 들어가면 마크당하고, 늦으면 공이 먼저 지나간다.',
+      diff: '공격형 윙백은 높은 폭을 지키며 직접 공격을 시작하고, 파 포스트 윙어는 이미 최전방에 머물다 마무리한다. 이 플레이는 공격이 반대편에서 시작되고, 윙백은 그 끝에 늦게 도착한다.',
+      talent: '침투 감각과 속도, 장거리를 반복해서 뛸 몸을 함께 가진 윙백',
+      env: '측면 공략형·점유형 감독 아래에서 공격형·컴플리트 윙백으로 뛸 때',
+      cost: '먼 포스트까지 간 만큼 자기 측면이 빈다. 공을 잃으면 복귀 거리가 길고, 후반으로 갈수록 늦게 도착하거나 늦게 돌아온다',
+      // 경기 중 롤 점수: 공 없는 침투(침투·속도·시야), 반복 왕복(피지컬), 측면 수비(수비 지능), 먼 포스트 마무리(결정력·공중볼)
+      w: { MOV: .25, PAC: .2, STR: .15, DEF: .15, SHO: .1, VIS: .1, AIR: .05 }, c: 14.7, // 기준점: 나타나는 윙백 평균에서 기본 롤 점수와 같게(v100 측정)
+      fam: 'fpa',
+      paths: (a, o, f, n, d) => [
+        a.MOV >= 72 + f && a.PAC >= 92 + f && a.STR >= 80 && 'talent',
+        d && a.MOV >= o - 22 + f && a.PAC >= o + 8 && 'debut',
+        a.MOV >= o - 18 + f && a.VIS >= o - 30 + f && a.PAC >= o + 8 && 'shape',
+        n >= 3 && a.MOV >= 62 + f && a.PAC >= 88 && a.STR >= 80 && a.VIS >= 50 + f && 'exp'].filter(Boolean),
+      pathKo: { talent: '타고난 조합', debut: '1군 첫 시즌의 재능', shape: '자기 수준을 넘는 침투 감각', exp: '맞는 전술에서 쌓은 시즌' },
+      // 실전 증명: 그 시즌 90분당 골(1군 첫 시즌은 3/4). 먼 포스트에서 실제로 마무리해 본 윙백
+      proofFn: (res) => { const m = seasonMin(res); return { f: 'g90', v: res.goals || 0, p90: m ? +((res.goals || 0) / m * 90).toFixed(2) : 0 }; }, proofNeed: .1, proofPath: { debut: .75 },
+      // 먼 포스트 사슬: 반대편 공격 상황 → 출발 판단(위험하면 보류) → 도착(제때 / 일찍 와서 마크당함 / 늦어서 미도착) → 실제 접촉(반대편 공급) → 마무리·재배급 → 소유권 상실 시 자기 측면 역습 노출
+      //   기대 골의 sg, 기대 도움의 sa를 이 사슬로 다시 짠다. 골 쪽은 수신자가 된 만큼(kG) 팀 득점에서 몫을 넘겨받는다(도착·접촉이 기준보다 적으면 그만큼 줄어든다)
+      fp: { n0: 3.6, tac: { wide: 1.15, pos: 1, counter: .85 }, h0: .3, tw: { MOV: .5, VIS: .3, PAC: .2 }, t0: 68, on0: .4, tp: { counter: -.08 }, pl0: .45, pac0: 92, str0: 80,
+        sup0: .55, pc0: .42, pe: .3, sg: .5, kG: 1.3, sa: .2, aMul: .9, f0: .12, late: .06,
+        xd: { early: .6, late: [.3, .8], arr: 1 }, xl: { early: .35, late: .35, arrN: .4, arrC: .3 }, rw: { PAC: .45, STR: .25, DEF: .3 }, rc0: 82, r0: .55, k: .1 },
+      off: { pos: '윙백이 아닌 자리에서 뛴 시즌', role: '공격형·컴플리트 윙백이 아닌 시즌이라 먼 포스트로 가지 않았다', style: '감독 아래에서는 측면을 지켰다' },
+    },
   };
   const tacOf = (p, id) => (p?.tacs || []).find(t => t.id === id) || null;
   let TAC_DRAFT = false; const setTacDraft = (v) => { TAC_DRAFT = !!v; }; // 측정용: 이름이 정해지지 않은 후보(draft)는 게임에서 발현하지 않는다
@@ -3688,6 +3730,57 @@ const ENGINE = (() => {
     const dr = n90 ? +clamp(-(escFail / n90 - ref90) * W.k, -.1, .1).toFixed(3) : 0;
     return { org: +org.toFixed(2), sit: N, trap, steal, self, esc, escFail, g, a: as, dr, h1: H[0], h2: H[1], late, fat: +fat.toFixed(2) };
   }
+  // 팀의 측면 공급(0~1): 반대편에서 박스로 공을 보내는 성향. 감독 전술, 감독의 지도력, 구단·감독 조합의 측면 문화(고정값). 구단 전력은 넣지 않는다
+  let FP_SUP = null; const setFpSup = (v) => { FP_SUP = v; }; // 측정용: 같은 선수를 공급력만 바꿔 비교
+  function wideSupply(club, style, mgr) {
+    if (FP_SUP != null) return FP_SUP;
+    const cult = ((hashStr('wing|' + club + '|' + (mgr?.name || '')) % 25) - 12) / 100;
+    return clamp(.45 + ({ wide: .15, pos: .05, counter: 0, gegen: -.03, block: -.08, direct: -.05 }[style] ?? 0) + ((mgr?.q ?? 70) - 75) * .002 + cult, .2, .85);
+  }
+  // 먼 포스트 사슬(v100 초안). 도착 성공과 실제 접촉은 따로 센다. 대표 기록은 도착 성공/침투 시도. 접촉·마무리는 내부 검증용
+  //   수비 위험은 공격 결과와 따로 판정한다: 보류는 노출 없음, 일찍 도착은 전진한 거리만큼, 미도착은 실제 이동 위치만큼, 도착은 공을 잃으면 노출(골이면 없음)
+  function tacFarPost(p, cx, id, lamG, lamA, n90) {
+    const F = TACS[id].fp; const a = p.attrs; const rng = seeded('tacfp|' + TAC_VER + '|' + p.id + '|' + cx.year + '|' + cx.club);
+    const rel = cx.rel ?? 0; const sup = wideSupply(cx.club, cx.style, cx.mgr);
+    const ph = clamp(F.h0 - rel * .01, .1, .55);
+    const pon = clamp(F.on0 + (wsum(a, F.tw) - F.t0) * .012 + (F.tp[cx.style] || 0), .12, .72);
+    const pl = clamp(F.pl0 - ((a.PAC || 80) - F.pac0) * .01 - ((a.STR || 70) - F.str0) * .004, .2, .7);
+    const pc = clamp(F.pc0 + (sup - F.sup0) * .9, .12, .75);
+    const fat = clamp(1 - (F.f0 + Math.max(0, F.str0 - (a.STR || 70)) * .004 + Math.max(0, (cx.age || 25) - 29) * .01), .6, .97);
+    const rr = clamp(F.r0 + (wsum(a, F.rw) - F.rc0) * .016, .25, .85);
+    const threat = clamp(1 - rel * .03, .65, 1.45);
+    const lamN = n90 * F.n0 * (F.tac[cx.style] ?? 1); const N = poisson(lamN, rng);
+    // 기준 선수(리그 평균 전력, 기준 타이밍, 기준 공급)라면 받는 접촉 수. 실제 접촉이 이보다 많으면 골·도움이 늘고, 적으면 준다
+    const refC = Math.max(1, lamN * (1 - F.h0) * (F.on0 + (1 - F.on0) * (1 - F.pl0) * F.pe) * F.pc0);
+    const pg = clamp(F.sg * F.kG * lamG / refC, 0, .6), pa = clamp(F.sa * lamA / refC, 0, .5);
+    const H = [{ n: 0, run: 0, arr: 0, x: 0, xf: 0 }, { n: 0, run: 0, arr: 0, x: 0, xf: 0 }]; const late = { n: 0, run: 0, arr: 0 };
+    const X = { hold: [0, 0, 0], early: [0, 0, 0], late: [0, 0, 0], arrN: [0, 0, 0], arrC: [0, 0, 0], goal: [0, 0, 0] }; // [건수, 노출, 복귀 실패]
+    let run = 0, arr = 0, early = 0, miss = 0, hold = 0, con = 0, g = 0, as = 0, xp = 0, xf = 0;
+    for (let i = 0; i < N; i++) {
+      const h = i % 2; const lt = i >= N * 2 / 3; H[h].n++; if (lt) late.n++;
+      let cat, d;
+      if (rng() < ph) { hold++; cat = 'hold'; d = 0; }
+      else {
+        run++; H[h].run++; if (lt) late.run++;
+        const po = pon * (h ? fat : 1) * (lt ? 1 - F.late : 1);
+        if (rng() < po) { arr++; H[h].arr++; if (lt) late.arr++;
+          if (rng() < pc) { con++; const u = rng(); if (u < pg) { g++; cat = 'goal'; } else if (u < pg + pa) { as++; cat = 'goal'; } else cat = 'arrC'; }
+          else cat = 'arrN';
+          d = F.xd.arr;
+        } else if (rng() < pl * (h ? 2 - fat : 1)) { miss++; cat = 'late'; d = F.xd.late[0] + rng() * (F.xd.late[1] - F.xd.late[0]); }
+        else { early++; cat = 'early'; d = F.xd.early; if (rng() < pc * F.pe) { con++; const u = rng(); if (u < pg) { g++; cat = 'goal'; } else if (u < pg + pa) { as++; cat = 'goal'; } } }
+      }
+      X[cat][0]++;
+      const xprob = cat === 'hold' || cat === 'goal' ? 0 : clamp((F.xl[cat] ?? .35) * (cat === 'early' || cat === 'late' ? d : 1) * threat, 0, .9);
+      if (xprob && rng() < xprob) { xp++; X[cat][1]++; H[h].x++; if (rng() >= rr * (h ? fat : 1)) { xf++; X[cat][2]++; H[h].xf++; } }
+    }
+    // 평점: 기준 선수의 복귀 실패(90분당)보다 많거나 적은 만큼(±0.1). 공격 성과는 골·도움으로 이미 평점에 들어간다
+    const ref90 = F.n0 * (F.tac[cx.style] ?? 1) * (1 - F.h0) * .3 * (1 - F.r0);
+    const dr = n90 ? +clamp(-(xf / n90 - ref90) * F.k, -.1, .1).toFixed(3) : 0;
+    const min = Math.round(n90 * 90);
+    return { sup: +sup.toFixed(2), sit: N, hold, run, arr, early, miss, con, g, a: as, xp, xf, dr, h1: H[0], h2: H[1], late, X, fat: +fat.toFixed(2), rr: +rr.toFixed(2), lamG: +lamG.toFixed(2), lamA: +lamA.toFixed(2),
+      rstat: { f: 'fpa', ver: RSTAT_VER, min, tac: id, v: arr, att: run, pct: run ? Math.round(arr / run * 100) : 0, early, p90: n90 ? +(arr / n90).toFixed(2) : 0 } };
+  }
   // 발현 판정(B): 시즌이 끝날 때 한 번. 같은 입력이면 같은 결과. 무작위 당첨이 아니다
   // 나이·OVR·경력 연수 제한은 없다. 기록 속 선수의 추정 프로필은 시뮬레이션하지 않으므로 대상이 아니다
   function tacJudge(p, res) {
@@ -3695,7 +3788,7 @@ const ENGINE = (() => {
     for (const [id, T] of Object.entries(TACS)) {
       if (tacOf(p, id) || (T.draft && !TAC_DRAFT)) continue;
       if (!T.pos.includes(res.pos) || !T.roles.includes(res.role) || !T.styles.includes(res.mgr?.style) || (res.share || 0) < T.minShare) continue;
-      if (T.envOk && !T.envOk(res.role, res.mgr?.style, { rel: clubStr(res.club, res.year) - lgMeanStr(res.lg, res.year), org: pressOrg(res.club, res.mgr?.style, res.mgr) })) continue;
+      if (T.envOk && !T.envOk(res.role, res.mgr?.style, { rel: clubStr(res.club, res.year) - lgMeanStr(res.lg, res.year), org: pressOrg(res.club, res.mgr?.style, res.mgr), sup: wideSupply(res.club, res.mgr?.style, res.mgr) })) continue;
       const a = res.a0; const o = ovrOf(a, res.pos); const f = (hashStr((p.tacKey || p.id) + '|tacaff|' + id) % 5) - 2; // 숨은 친화도: 같은 사람이면 '만약에'에서도 같다
       const n = 1 + (p.seasons || []).filter(s => s !== res && !s.youthTeam && s.pos === res.pos && T.roles.includes(s.role) && T.styles.includes(s.mgr?.style) && (s.share || 0) >= .5).length;
       const d = !(p.seasons || []).some(s => s !== res && !s.youthTeam);
@@ -3758,6 +3851,15 @@ const ENGINE = (() => {
   //   리그가 다른 언어권이면 그 화자가 선수를 만난 경로(유럽 대항전 중계, 같은 팀의 그 나라 출신 동료, 해외 축구를 다루는 칼럼, 선수 자신의 모국어)를 이야기에 붙인다
   //   명명자 유형 → [원문, 한국어]
   const TAC_TALK = {
+    wbfar: {
+      comm: ['Arriva sempre in ritardo… e sempre al momento giusto. Che ritardatario!', '늘 늦게 와요… 그런데 늘 딱 맞는 순간이에요. 대단한 리타르다타리오!'],
+      mgr: ['È il nostro ritardatario: deve arrivare tardi, mai prima del pallone.', '그는 우리 리타르다타리오예요. 늦게 도착해야 해요. 공보다 먼저 가면 안 되죠.'],
+      mate: ['Nello spogliatoio lo chiamiamo semplicemente il Ritardatario.', '라커룸에선 그냥 리타르다타리오라고 불러요.'],
+      press: ['Il ritardatario del secondo palo', '먼 포스트의 리타르다타리오'],
+      self: ['Se arrivo prima, mi marcano. Arrivo tardi apposta: sono un ritardatario.', '먼저 가면 마크당해요. 저는 일부러 늦게 가요. 리타르다타리오니까요.'],
+      opp: ['Il loro ritardatario ci ha fatto male sul secondo palo.', '저쪽 리타르다타리오가 먼 포스트에서 우리를 아프게 했어요.'],
+      fans: ['Il nostro Ritardatario!', '우리의 리타르다타리오!'],
+    },
     cbmid: {
       mgr: ['Ohne Ball ist er Innenverteidiger. Mit Ball ist er unser Mittelläufer.', '공이 없을 땐 센터백이에요. 공을 가지면 우리 미텔로이퍼죠.'],
       press: ['Die Rückkehr des Mittelläufers', '미텔로이퍼의 귀환'],
@@ -3887,7 +3989,7 @@ const ENGINE = (() => {
     const fam = forming ? 1 : clamp(famOf(p, roleId) / FAM_MASTER, 0, 1);
     const q = Object.assign(Object.create(Object.getPrototypeOf(p)), p, { trust: clubId === p.club ? p.trust : 48 + (p.trait === 'lead' ? 5 : 0) });
     // 그 선수가 이미 발현한 히든 롤만, 제안 시점의 감독·예상 롤로 켜질지 예상한다(표시용. 시즌 계산과 같은 조건, 같은 구단 보정)
-    let ts = null; if (!p.youth && p.tacs?.length) { const keep0 = CLUB_MODS; setClubMods(p.clubMods); ts = tacState(p, roleId, mgr.style, p.pos, { rel: clubStr(clubId, year) - lgMeanStr(c.lg, year), org: pressOrg(clubId, mgr.style, mgr) }); CLUB_MODS = keep0; }
+    let ts = null; if (!p.youth && p.tacs?.length) { const keep0 = CLUB_MODS; setClubMods(p.clubMods); ts = tacState(p, roleId, mgr.style, p.pos, { rel: clubStr(clubId, year) - lgMeanStr(c.lg, year), org: pressOrg(clubId, mgr.style, mgr), sup: wideSupply(clubId, mgr.style, mgr) }); CLUB_MODS = keep0; }
     const share = minutesShare(q, clubId, year, mgr, { role: roleId, attitude: 'bal' }, { share: -(1 - fam) * .5 + (opt.minutes ? .6 : 0) + (clubId === p.club ? (p.nextMods?.share || 0) : 0), rsOv: ts?.on ? tacScore(p, ts.id, roleId) : undefined });
     const keep = CLUB_MODS; setClubMods(p.clubMods);
     const o = ovr(p); const rows = clubsIn(c.lg, year).filter(x => !x.mil || x.id === clubId).map(x => ({ id: x.id, s: clubStr(x.id, year) + (x.id === clubId ? (o - clubStr(clubId, year)) * share * .28 : 0) })).sort((a, b) => b.s - a.s);
@@ -3998,7 +4100,7 @@ const ENGINE = (() => {
     coachStints, parentsAlive, coachNow, recordDeath, farewellAsk, farewellAgree, farewellRefused, homecomingOffer, farewellOf, fwPact, fwClubLine, fanCer, fwSeasons, FW_CLUB,
     LG_SCHOOL, SCHOOLS, CLUB_SCHOOL, schoolOf, wiEcho, wiRewrite, goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
-    TACS, TAC_VER, TAC_TALK, NAMER, LANG_KO, tacStory, tacLineBreak, tacWingPress, pressOrg, setWpOrg, setTacDraft, lgMeanStr, tacOf, tacScore, tacState, tacOffText, tacExposure, tacJudge, roleProd, actAbility, normalizeRole, MERGED, STAT_FAM, ROLE_STAT, statModel, seasonStat, rsAbility, roleCareer, seasonMin, rstatLabel, rstatText, ghostProfile, RSTAT_VER, GPROF_VER, growMul, GCFG, CALIB, ASG, MCFG, effOvr, muOf, isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
+    TACS, TAC_VER, TAC_TALK, NAMER, LANG_KO, tacStory, tacLineBreak, tacWingPress, pressOrg, setWpOrg, tacFarPost, wideSupply, setFpSup, setTacDraft, lgMeanStr, tacOf, tacScore, tacState, tacOffText, tacExposure, tacJudge, roleProd, actAbility, normalizeRole, MERGED, STAT_FAM, ROLE_STAT, statModel, seasonStat, rsAbility, roleCareer, seasonMin, rstatLabel, rstatText, ghostProfile, RSTAT_VER, GPROF_VER, growMul, GCFG, CALIB, ASG, MCFG, effOvr, muOf, isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
     INERTIA, hasJong, sharedPast, splitSummer, lineChain, buildLedger, lineView, useLine, ledOf, overturn, histOf, conflictOf, placeCareer, migrateLines, peopleAt, nationStar, clubChronicle, bestOf, heirContrast, offerOutlook, minutesShare, tableFor,
@@ -7509,7 +7611,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <div class="prow"><span class="plbl">감독</span><span>${tgt !== p.club ? crest(tgt, 'xs') + ' ' : ''}<b>${esc(mgr.name)}</b> <span class="muted">${E.STYLES[mgr.style]}</span>${mgr.legend ? ' <span class="pill gold">레전드</span>' : ''}${sameFam ? ' <span class="pill">가문</span>' : ''}</span></div>
       <div class="prow"><span class="plbl">역할</span><span><b>${esc(role.name)}</b> <span class="grade g${grade(E.roleScore(p, role.id), o)}">${grade(E.roleScore(p, role.id), o)}</span> ${forming ? '' : famTag(role.id)} <span class="fit ${fc} small">${fw}</span>${forming ? '' : `<span class="muted small"> · ${req?.ok ? '요청 수락' : '감독 지시'}</span>`}</span></div>
       <div class="prow"><span class="plbl">훈련</span><span>${esc(fName)} · ${esc(aName)}</span></div>
-      ${(() => { if (p.youth || !p.tacs?.length) return ''; const ts = E.tacState(p, role.id, mgr.style, p.pos, { rel: E.clubStr(p.club, p.year) - E.lgMeanStr(E.lgAt(p.club, p.year), p.year) }); if (!ts) return ''; return `<div class="prow"><span class="plbl">히든 롤</span><span>${ts.on ? `<b class="tacon">◆ ${esc(tacNm(ts.id))}</b> <span class="muted small">이번 시즌 켜져요</span>` : `<span class="muted">${esc(tacNm(ts.id))} 꺼짐 · ${esc(E.tacOffText(ts))}</span>`}</span></div>`; })()}
+      ${(() => { if (p.youth || !p.tacs?.length) return ''; const ts = E.tacState(p, role.id, mgr.style, p.pos, { rel: E.clubStr(tgt, p.year) - E.lgMeanStr(E.lgAt(tgt, p.year), p.year), org: E.pressOrg(tgt, mgr.style, mgr), sup: E.wideSupply(tgt, mgr.style, mgr) }); if (!ts) return ''; return `<div class="prow"><span class="plbl">히든 롤</span><span>${ts.on ? `<b class="tacon">◆ ${esc(tacNm(ts.id))}</b> <span class="muted small">이번 시즌 켜져요</span>` : `<span class="muted">${esc(tacNm(ts.id))} 꺼짐 · ${esc(E.tacOffText(ts))}</span>`}</span></div>`; })()}
       ${(() => { const ms = E.peopleAt(S.world, p, tgt, p.year).filter(m => m.id !== p.parentId); return ms.length ? `<div class="prow"><span class="plbl">선배</span><span>${ms.map(m => `<b>${esc(m.name)}</b> <span class="muted small">${m.age}세 ${m.pos}</span>`).join(' · ')} <span class="muted small">· 세계선의 기록에 남은 선수</span></span></div>` : ''; })()}
       ${det('roles', forming ? '역할 바꾸기' : '다른 역할 요청하기', roleList)}
       ${det('train', '훈련 · 태도 바꾸기', `<p class="flbl">훈련 초점</p><p class="ftip">고르면 아래 능력치 창에 닿는 능력치가 금색으로 표시돼요. 능력치 막대를 직접 누르면 그 하나에만 집중해요.</p><div class="chips">${fopts.map(([k, n]) => `<button class="chip ${ch.focus === k ? 'on' : ''}" data-focus="${k}"><b>${n}</b><span class="small">${esc(fdesc(k))}</span></button>`).join('')}</div><p class="flbl">시즌 태도</p><div class="chips">${att.map(([k, n, d]) => `<button class="chip ${ch.attitude === k ? 'on' : ''}" data-att="${k}"><b>${n}</b>${d ? `<span class="small">${d}</span>` : ''}</button>`).join('')}</div>`)}
@@ -7731,7 +7833,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (r.bdoRank) L.push(['', `발롱도르 ${r.bdoRank}위${r.bdoRival ? ` (수상: ${r.bdoRival})` : ''}`]);
     (r.notes || []).forEach(n => L.push(isEcho(n) ? ['echo', echoT(n)] : ['life', n]));
     r.events.forEach(e => L.push(['', e]));
-    if (r.tac && E.TACS[r.tac.id]) { if (r.tac.on) L.push(['tac', `◆ ${tacNm(r.tac.id)}${r.tacx ? ` · ${E.TACS[r.tac.id].x?.label || '노출'} ${r.tacx.exp}회, 복귀 ${r.tacx.pct}%` : ''}${r.lb ? ` · 라인 깨기 ${r.lb.att}번 시도 중 ${r.lb.suc}번 성공 · 오프사이드 ${r.lb.off}회` : ''}${r.wp ? ` · 함정 유도 ${r.wp.trap}회, 동료와 탈취 ${r.wp.steal}회(본인 ${r.wp.self}) · 압박 탈출 허용 ${r.wp.esc}회` : ''}`]); else L.push(['', `${tacNm(r.tac.id)} 꺼짐 · ${E.tacOffText(r.tac)}`]); }
+    if (r.tac && E.TACS[r.tac.id]) { if (r.tac.on) L.push(['tac', `◆ ${tacNm(r.tac.id)}${r.tacx ? ` · ${E.TACS[r.tac.id].x?.label || '노출'} ${r.tacx.exp}회, 복귀 ${r.tacx.pct}%` : ''}${r.lb ? ` · 라인 깨기 ${r.lb.att}번 시도 중 ${r.lb.suc}번 성공 · 오프사이드 ${r.lb.off}회` : ''}${r.wp ? ` · 함정 유도 ${r.wp.trap}회, 동료와 탈취 ${r.wp.steal}회(본인 ${r.wp.self}) · 압박 탈출 허용 ${r.wp.esc}회` : ''}${r.fp ? ` · 먼 포스트 침투 ${r.fp.run}번 중 제때 도착 ${r.fp.arr}번 · 측면 역습 노출 ${r.fp.xp}회, 복귀 ${r.fp.xp ? Math.round((r.fp.xp - r.fp.xf) / r.fp.xp * 100) : 100}%` : ''}`]); else L.push(['', `${tacNm(r.tac.id)} 꺼짐 · ${E.tacOffText(r.tac)}`]); }
     if (r.tacNew && E.TACS[r.tacNew.id] && !(S.p && (S.p.tacs || []).some(t => t.id === r.tacNew.id && t.year === r.year && t.cut === 1))) L.push(['gold', `◆ 히든 롤 ${tacNm(r.tacNew.id)} 발현`]); // 컷씬을 보기 전에는 이름을 먼저 드러내지 않는다
     return L;
   }
