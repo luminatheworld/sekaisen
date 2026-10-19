@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='v98'</script>
+<script>window.SK_VER='v99'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -555,6 +555,7 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .ol b { color: var(--ink); font-weight: 700; }
 .ol .race.hi { color: var(--gold); font-weight: 700; } .ol .race.lo { color: var(--red); }
 .ol .hist { color: #5b4bb5; }
+.ol .tacol { color: var(--muted); } .ol .tacol.on { color: var(--gold); font-weight: 700; }
 .linebar { display: flex; flex-direction: column; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
 .ltree { list-style: none; margin: 6px 0 0; padding: 0 0 0 14px; border-left: 2px solid rgba(91, 75, 181, .35); display: flex; flex-direction: column; gap: 12px; }
 .ltree.root { border-left: 0; padding-left: 0; }
@@ -3885,7 +3886,8 @@ const ENGINE = (() => {
     const mgr = managerFor(clubId, year, world, p);
     const fam = forming ? 1 : clamp(famOf(p, roleId) / FAM_MASTER, 0, 1);
     const q = Object.assign(Object.create(Object.getPrototypeOf(p)), p, { trust: clubId === p.club ? p.trust : 48 + (p.trait === 'lead' ? 5 : 0) });
-    const ts = !forming && p.tacs?.length ? tacState(p, roleId, mgr.style, p.pos, { rel: clubStr(clubId, year) - lgMeanStr(c.lg, year), org: pressOrg(clubId, mgr.style, mgr) }) : null;
+    // 그 선수가 이미 발현한 히든 롤만, 제안 시점의 감독·예상 롤로 켜질지 예상한다(표시용. 시즌 계산과 같은 조건, 같은 구단 보정)
+    let ts = null; if (!p.youth && p.tacs?.length) { const keep0 = CLUB_MODS; setClubMods(p.clubMods); ts = tacState(p, roleId, mgr.style, p.pos, { rel: clubStr(clubId, year) - lgMeanStr(c.lg, year), org: pressOrg(clubId, mgr.style, mgr) }); CLUB_MODS = keep0; }
     const share = minutesShare(q, clubId, year, mgr, { role: roleId, attitude: 'bal' }, { share: -(1 - fam) * .5 + (opt.minutes ? .6 : 0) + (clubId === p.club ? (p.nextMods?.share || 0) : 0), rsOv: ts?.on ? tacScore(p, ts.id, roleId) : undefined });
     const keep = CLUB_MODS; setClubMods(p.clubMods);
     const o = ovr(p); const rows = clubsIn(c.lg, year).filter(x => !x.mil || x.id === clubId).map(x => ({ id: x.id, s: clubStr(x.id, year) + (x.id === clubId ? (o - clubStr(clubId, year)) * share * .28 : 0) })).sort((a, b) => b.s - a.s);
@@ -7358,6 +7360,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const bits = [`<span>${o.forming ? '역할은 직접' : `<b>${esc(o.roleName)}</b>${fam}`}</span>`, `<span>${shareWord(o.share)}</span>`, `<span class="${o.race.startsWith('우승') ? 'race hi' : o.race === '하위권' ? 'race lo' : 'race'}">${o.race}</span>`];
     if (o.hist) bits.push(`<span class="hist" title="이 세계선의 기록">기록: ${esc(club(o.hist.club).name)} 우승 (${esc(o.hist.name)})</span>`);
     if (o.mates?.length) bits.push(`<span class="hist">선배 ${esc(o.mates.join(', '))}</span>`);
+    if (o.tac && E.TACS[o.tac.id]) { const nm = esc(tacNm(o.tac.id)); const sty = esc(E.STYLES[o.style] || ''); const why = o.tac.on ? '' : o.tac.why === 'role' ? '예상 역할이 맞지 않음' : o.tac.why === 'pos' ? '포지션이 맞지 않음' : o.tac.why === 'env' ? `감독 전술 ${sty} · 조건 미충족` : `감독 전술 ${sty}`;
+      bits.push(o.tac.on ? `<span class="tacol on" title="제안 시점의 감독·예상 배정 롤 기준이에요. 감독이나 역할이 바뀌면 달라질 수 있어요.">◆ ${nm} 활성화 예상 · 감독 전술 ${sty}</span>` : `<span class="tacol" title="제안 시점의 감독·예상 배정 롤 기준이에요. 감독이나 역할이 바뀌면 달라질 수 있어요.">${nm} 비활성화 예상 · ${why}</span>`); }
     return `<span class="ol">${bits.join('')}</span>`;
   }
   const targetClub = (p) => { const of = S.offerPick >= 0 ? (p.pendingOffers || [])[S.offerPick] : null; return of && !of.blocked ? of.club : p.club; };
@@ -7476,6 +7480,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
         ${p.released ? '' : offerRow(-1, p.club, '잔류', '', `${lgTag(p.club, p.year, p)}${p.contract <= 0 && !p.loanFrom ? ` · 2년 재계약 · 연봉 ${E.fmtWon(p.renewOffer ?? E.renewWage(p))}` : p.wage ? ` · 연봉 ${E.fmtWon(p.wage)}` : ''}`, S.offerPick === -1, false, null)}
         ${offers.map((of, i) => { const oc = club(of.club); const m2 = E.managerFor(of.club, p.year, S.world, p); const pills = `${of.homecoming ? '<span class="pill gold">귀향</span>' : ''}${of.mentor ? `<span class="pill gold">은사 ${esc(of.mentor)}</span>` : ''}${of.type === 'loan' ? '<span class="pill">임대</span>' : of.type === 'free' ? '<span class="pill gold">자유</span>' : ''}${of.blocked ? '<span class="pill red">거절됨</span>' : ''}${E.isRival(p.club, of.club) ? '<span class="pill red">라이벌</span>' : ''}${of.home ? '<span class="pill">친정</span>' : ''}${m2.legend ? '<span class="pill gold">레전드 감독</span>' : ''}${of.buyout ? '<span class="pill gold">바이아웃</span>' : ''}${of.withdrawn ? '<span class="pill red">철회</span>' : ''}${of.release ? '<span class="pill">바이아웃 조항</span>' : ''}${of.minutes ? '<span class="pill">출전 보장</span>' : ''}`; E.offerTerms(p, of); return offerRow(i, of.club, oc.name, pills, `${lgTag(of.club, p.year, p)}${of.type !== 'loan' ? ` · ${of.years}년 · <span class="fee">연봉 ${E.fmtWon(of.wage)}</span>${of.fee ? ` · <span class="fee">이적료 ${E.fmtFee(of.fee)}</span>` : ''}` : ' · 연봉은 원 소속팀 그대로'}`, S.offerPick === i, of.blocked || of.withdrawn, of); }).join('')}
         ${!offers.length && !p.released ? '<p class="muted small">들어온 제안이 없어요.</p>' : ''}
+        ${p.tacs?.length ? '<p class="muted small">◆ 히든 롤 예상은 제안 시점의 감독·예상 배정 롤 기준이에요. 실제 시즌에서 감독이나 역할이 바뀌면 결과도 달라질 수 있어요.</p>' : ''}
         ${(() => { const pl = p.flags.renewPledge; if (!pl || pl.year !== p.year || pl.club !== p.club || !offers.some(o => o.type !== 'loan' && !o.blocked)) return ''; return pl.open ? `<p class="note">이번 여름 ${esc(J(club(p.club).name, '와'))} 계약을 연장하면서, 좋은 제안이 오면 이적을 추진하기로 합의했어요.</p>` : `<p class="note">이번 여름 ${esc(J(club(p.club).name, '와'))} 장기 재계약에 서명했어요. 팬들은 잔류 선언으로 받아들였어요. 지금 떠나면 약속을 깬 이적이 돼요.</p>`; })()}
       </div></section>`;
     const numberPicker = numberTarget ? numberPanel(p, numberTarget) : '';
