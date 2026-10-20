@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='1.2.1'</script>
+<script>window.SK_VER='1.3'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2209,6 +2209,10 @@ const ENGINE = (() => {
           const FP = TACS[tOn].fp; const lamG = apps * POS[p.pos].g * rp.g * q * form, lamA = apps * POS[p.pos].a * rp.a * q * form;
           const fp = tacFarPost(p, { year, club: p.club, lg: lgK, style: mgr.style, mgr, age, rel: clubStr(p.club, year) - lgMeanStr(lgK, year) }, tOn, lamG, lamA, apps * clamp(55 + 35 * share, 45, 88) / 90);
           res.goals = Math.max(mods.goals || 0, poisson(lamG * (1 - FP.sg)) + fp.g); res.assists = poisson(lamA * (1 - FP.sa) * FP.aMul) + fp.a; res.fp = fp;
+        } else if (tOn && TACS[tOn].sb) { // 라마쇠르(1.3): 세컨드 볼 사슬. A는 기대 도움의 sa를 공격 재개로, B는 기대 골·도움 일부를 세트피스 2차 국면으로, C는 기존 프리킥 몫을 직접 프리킥으로 다시 짠다
+          const SB = TACS[tOn].sb; const lamG = apps * POS[p.pos].g * rp.g * q * form, lamA = apps * POS[p.pos].a * rp.a * q * form; const ext = SB_EXT;
+          const sb = tacSec(p, { year, club: p.club, lg: lgK, style: mgr.style, mgr, age, role: role.id, share }, tOn, lamG, lamA, apps * clamp(55 + 35 * share, 45, 88) / 90);
+          res.goals = Math.max(mods.goals || 0, poisson(Math.max(0, lamG - sb.resG)) + sb.g); res.assists = poisson(Math.max(0, lamA - sb.resA)) + sb.a; res.sb = sb; // 반응형으로도 났을 몫(resG·resA)을 원래 기대치에서 빼고, 이번 시즌 실제 사슬 결과를 더한다
         } else {
         res.goals = Math.max(mods.goals || 0, poisson(apps * POS[p.pos].g * rp.g * q * form));
         res.assists = poisson(apps * POS[p.pos].a * rp.a * q * form);
@@ -2223,6 +2227,7 @@ const ENGINE = (() => {
       if (res.fp) rt += res.fp.dr;
       if (res.lk) rt += res.lk.dr;
       if (res.bt) rt += res.bt.dr;
+      if (res.sb) rt += res.sb.dr;
       if (apps < 8) rt = 6.2 + gauss() * .2;
       res.rating = +clamp(rt, 5.6, 8.9).toFixed(2);
       // 결승 평점은 그 시즌 자기 평점과 비교한다
@@ -3107,8 +3112,8 @@ const ENGINE = (() => {
       return { role: x.role, name: ROLE[x.role]?.name || x.role, from: x.from, to: x.to, n: x.n, age: x.age, why, temps: x.temps || [] }; });
     // 희귀 전술(v94): 켜진 시즌만 따로 모은다. 기본 롤 기록과 섞지 않는다
     const tac = (p.tacs || []).map(t => { const on = S.filter(r => r.tac?.on && r.tac.id === t.id); const rs = on.map(r => r.rstat).filter(o => o && o.tac === t.id); const m = rs.reduce((a, o) => a + (o.min || 0), 0); const v = rs.reduce((a, o) => a + (o.v || 0), 0);
-      const ex = on.reduce((a, r) => a + (r.tacx?.exp || 0), 0), ok = on.reduce((a, r) => a + (r.tacx?.ok || 0), 0); const offs = on.reduce((a, r) => a + (r.lb?.off || 0), 0); const trap = on.reduce((a, r) => a + (r.wp?.trap || 0), 0), stl = on.reduce((a, r) => a + (r.wp?.steal || 0), 0); const lres = on.reduce((a, r) => a + (r.lk?.res || 0), 0); const blure = on.reduce((a, r) => a + (r.bt?.lure || 0), 0); const att = rs.reduce((a, o) => a + (o.att || 0), 0);
-      return { id: t.id, year: t.year, age: t.age, seasons: on.length, off: S.filter(r => r.tac && !r.tac.on && r.tac.id === t.id).length, f: TACS[t.id]?.fam, v: rs.length ? v : null, p90: m ? +(v / m * 90).toFixed(2) : null, spct: att ? Math.round(v / att * 100) : null, offs: on.some(r => r.lb) ? offs : null, trap: on.some(r => r.wp) ? trap : null, tsteal: on.some(r => r.wp) ? stl : null, lres: on.some(r => r.lk) ? lres : null, blure: on.some(r => r.bt) ? blure : null, exp: ex, pct: ex ? Math.round(ok / ex * 100) : null }; });
+      const ex = on.reduce((a, r) => a + (r.tacx?.exp || 0), 0), ok = on.reduce((a, r) => a + (r.tacx?.ok || 0), 0); const offs = on.reduce((a, r) => a + (r.lb?.off || 0), 0); const trap = on.reduce((a, r) => a + (r.wp?.trap || 0), 0), stl = on.reduce((a, r) => a + (r.wp?.steal || 0), 0); const lres = on.reduce((a, r) => a + (r.lk?.res || 0), 0); const blure = on.reduce((a, r) => a + (r.bt?.lure || 0), 0); const srec = on.reduce((a, r) => a + (r.sb?.rec || 0), 0), sfwd = on.reduce((a, r) => a + (r.sb?.fwd || 0), 0); const att = rs.reduce((a, o) => a + (o.att || 0), 0);
+      return { id: t.id, year: t.year, age: t.age, seasons: on.length, off: S.filter(r => r.tac && !r.tac.on && r.tac.id === t.id).length, f: TACS[t.id]?.fam, v: rs.length ? v : null, p90: m ? +(v / m * 90).toFixed(2) : null, spct: att ? Math.round(v / att * 100) : null, offs: on.some(r => r.lb) ? offs : null, trap: on.some(r => r.wp) ? trap : null, tsteal: on.some(r => r.wp) ? stl : null, lres: on.some(r => r.lk) ? lres : null, blure: on.some(r => r.bt) ? blure : null, srec: on.some(r => r.sb) ? srec : null, sfwd: on.some(r => r.sb) ? sfwd : null, exp: ex, pct: ex ? Math.round(ok / ex * 100) : null }; });
     return { v: 1, main, sec, timeline: timeline.length > 1 ? timeline : null, have: S.filter(r => r.rstat).length, total: S.length, tac: tac.length ? tac : null };
   }
   function summarize(p) {
@@ -3743,6 +3748,44 @@ const ENGINE = (() => {
         dw: { DRI: .6, STR: .4 }, dc0: 78, eD: .6, plD: .6, laneD: 1.25, tw: { PAS: .6, VIS: .4 }, tc0: 90, eT: .6, plT: .45, laneT: .85, tOrg: 1.3, tSup: .9, sig0: .12 },
       off: { pos: '수비형 미드필더가 아닌 자리에서 뛴 시즌', role: '레지스타·하프백·앵커가 아닌 시즌이라 공을 오래 쥐지 않았다', style: '감독 아래에서는 빨리 처리했다' },
     },
+    // 라마쇠르(1.3): 세컨드 볼 독해. 첫 공의 소유권이 정해지기 전에 다음 공이 떨어질 자리를 읽고 먼저 선다
+    //   A: 우리 팀 긴 전개·상대 클리어링 뒤의 중원 세컨드 볼 · B: 세트피스 2차 국면(박스 외곽에서 걷어낸 공). 직접 프리킥은 공통 기반이 없어 넣지 않았다
+    //   개인 골·도움은 팀 득실(기대 득점·기대 실점) 안에서 그가 받는 몫만. 반응형 일반 CM으로도 났을 몫은 원래 기대치에서 빼서 손익 0에서 출발한다
+    cmsec: {
+      keepRstat: true,
+      nm: { ko: '라마쇠르', orig: 'Ramasseur', lang: 'fr', langKo: '프랑스어', mean: '줍는 사람', kind: '일상어의 재해석',
+        etym: 'ramasser(줍다, 거두다)에서 온 말이에요. 축구장에서 \'ramasseur de balles\'는 터치라인 밖으로 나간 공을 주워 오는 볼보이예요. 축구 용어로는 이 게임 세계에서 새 뜻을 얻었어요.',
+        hist: '첫 공중볼 다음에 떨어지는 공을 누가 줍느냐는 오래전부터 중원 싸움의 승부처였어요. 영어권은 그것을 second balls, 프랑스어권은 les deuxièmes ballons라고 불러요. 롱볼 팀은 그 공으로 공격을 이어 가고, 강하게 압박하는 팀은 상대가 걷어낸 공을 다시 주워 공격을 계속해요. 이 이름은 누군가를 부르던 별명이 아니라, 그런 축구 위에서 게임 세계의 프랑스어 화자가 새로 붙인 이름이에요.',
+        why: '볼보이는 경기의 주인공이 아니에요. 공이 멈출 곳에 미리 서 있다가, 그 공을 다시 경기로 돌려보내요. 이 선수도 그래요. 모두가 첫 공을 다투는 동안 그는 두 번째 공이 떨어질 자리에 먼저 가 있고, 주운 공을 다시 우리 공격으로 돌려보내요. 경기 밖에 서 있던 사람이 경기 한가운데로 들어온 셈이에요.' },
+      tag: '모두가 첫 번째 공을 다툴 때, 그는 두 번째 공이 떨어질 자리에 서 있다.',
+      scene: (pl) => `공중볼 경합이 끝나기도 전에 중앙 미드필더 ${jo(pl, '이', '가')} 공이 떨어질 자리에 먼저 가 있다가, 주운 공을 곧장 다시 앞으로 보내는`, ask: '왜 늘 공보다 먼저 그 자리에 있느냐', topic: '중원 운영',
+      line: '공은 떨어지기 전부터 그의 것이었다.',
+      def: '공중 경합·긴 패스·클리어링으로 소유권이 불확실해진 공이 어디에 떨어질지 먼저 읽고, 그 자리를 상대보다 먼저 차지해 공을 되찾는다. 되찾은 공은 바로 공격으로 다시 보내거나 안전하게 돌린다. 세트피스에서 걷어낸 공이 박스 밖으로 흐르면 거기서 슈팅하거나 다시 넣어 준다.',
+      diff: '볼 위닝 미드필더는 사람에게 달려들고, 박스 크래셔는 박스 안에서 마무리한다. 이 플레이는 공이 떨어질 자리로 먼저 간다.',
+      talent: '시야와 수비 지능이 함께 높고, 먼저 도착할 발과 부딪혀 이길 몸을 갖춘 중앙 미드필더. 무엇보다 공의 다음 자리를 읽는 감각',
+      env: '감독 전술은 가리지 않는다. 박투박·딥라잉·카릴레로·볼 위닝·로밍으로 뛸 때 켜지고, 긴 전개와 클리어링이 많은 경기일수록 기회가 많다',
+      cost: '예측이 틀리면 엉뚱한 곳에 선 만큼 중앙이 빈다. 역습이 빠른 상대일수록 그 빈자리가 비싸다',
+      pos: ['CM'], roles: ['b2b', 'dlp', 'carrilero', 'ballwin', 'roam'], styles: ['pos', 'gegen', 'counter', 'wide', 'direct', 'block'], minShare: .55,
+      short: '다음 공이 떨어질 자리를 먼저 읽는 중앙 미드필더',
+      w: { VIS: .2, DEF: .2, MOV: .2, STR: .2, PAS: .2 }, c: 2.7, // 기준점: 발현자 활성 시즌 평균에서 기본 롤 점수와 같게(최종안·발현 기준 .45 측정: c 2.0에서 −0.71)
+      paths: (a, o, f, n, d, g) => { const J = (a.VIS || 0) * .45 + (a.DEF || 0) * .55, M = (a.MOV || 0) * .6 + (a.PAC || 0) * .4, S = (a.STR || 0) * .7 + (a.AIR || 0) * .3;
+        if (J < 72 || M < 60 || S < 65) return [];
+        // 조숙형: 23세 이하에 이미 읽는 선수 · 경험형: 같은 자리에서 세 시즌 이상 · 후기형: 29세 이상, 판단 기준은 낮지만 누적 노출(경험)이 많아야 한다(노출은 행동 증명에서 따로 본다)
+        return [(g || 99) <= 23 && J >= 86 + f && M >= 72 && S >= 72 && 'talent', (g || 0) >= 29 && J >= 80 + f && M >= 60 && S >= 70 && 'late', n >= 3 && J >= 84 + f && M >= 66 && S >= 70 && 'exp'].filter(Boolean); }, // 29세 이상은 후기형으로 먼저 본다(누적 노출 2,500 미만이면 경험형 조건으로 넘어간다)
+      proofPath: { late: 1 }, lateCX: 2500,
+      pathKo: { talent: '조숙형', exp: '경험형', late: '후기형' },
+      proofFn: (res, p, f) => { const r = sbAssess(p, res, f); return { f: 'sb', v: r.v, p90: r.ok && r.D >= 0 ? r.v : 0, d: r.D, x: r.X, cx: r.CX }; }, proofPathOk: (x, pr) => x !== 'late' || pr.cx >= TACS.cmsec.lateCX, proofNeed: .45, // 최종안: 활성 롤 다섯·판단 45:55에서 다시 맞춘 값(.5는 발현 1.1%·엘리트 미발현 79%로 지나치게 좁았다)
+      ax: { K: 6, lam: .8, X0: 150, CX0: 450 },
+      sb: { zone: { b2b: 1.1, ballwin: 1.05, carrilero: .95, roam: .9, mezzala: .85, carrier: .85, boxcrash: .8, linebreaker: .8, dlp: .7 },
+        l0: 5, c0: 4, terr: { pos: 1.2, gegen: 1.25, wide: 1.1, direct: .9, counter: .75, block: .65 },
+        jw: { VIS: .45, DEF: .55 }, jc0: 82, rb: { own: .55, clr: .42, sp: .5 }, rk: .01, U: .15, prior: .3, xK: 4, xC: 900,
+        mw: { MOV: .6, PAC: .4 }, mc0: 75, a0: .62, cw: { STR: .7, AIR: .3 }, cc0: 82, w0: .7, wl: .4, wr: .08,
+        ra0: .3, rw0: .5, fw: { PAS: .7, DRI: .3 }, fc0: 85, f0: .45, thr0: .5, risk: .15, sig0: .14,
+        gap: .4, lostX: .12, tv: { xr: .03, x0: .012, x1: .045, paA: .25, k: .4 }, // 팀 득실 단위(기대 득점): 좋은 위치 공격 재개 · 보통 공격 · 중앙이 빈 상대 공격(역습 성향 0.6 기준) · 재개 골에서 그가 받는 도움 몫 · 평점 환산
+        sp: { n0: 1.6, zone: { b2b: 1, ballwin: .9, carrilero: .9, roam: .9, mezzala: .9, carrier: .9, linebreaker: 1, dlp: 1, boxcrash: .45 }, sc0: 75, xg0: .045, xgq: .07, blk: .33, blkX: .3, thr: .25, sig: .12, ckw: { CRO: .6, PAS: .4 }, ck0: 78, reXg: .1, reA: 1 },
+        },
+      off: { pos: '중앙 미드필더가 아닌 자리에서 뛴 시즌', role: '박투박·딥라잉·카릴레로·볼 위닝·로밍이 아닌 시즌이라 제자리를 지켰다', style: '' },
+    },
   };
   const tacOf = (p, id) => (p?.tacs || []).find(t => t.id === id) || null;
   let TAC_DRAFT = false; const setTacDraft = (v) => { TAC_DRAFT = !!v; }; // 측정용: 이름이 정해지지 않은 후보(draft)는 게임에서 발현하지 않는다
@@ -4017,6 +4060,113 @@ const ENGINE = (() => {
     return { D, LR: +LR.toFixed(3), tShare: +TS.toFixed(2), dF: +dF.toFixed(3), dL: +dL.toFixed(3), X: +X.toFixed(1), CX: +CX.toFixed(1), ok, debut, judg: +judg.toFixed(1) };
   }
 
+  // ---------- 라마쇠르(1.3): 세컨드 볼 독해 ----------
+  // 사슬: 첫 경합(우리 긴 전개 / 상대 클리어링)으로 소유권이 불확실한 공 → 낙하지점 예측(시야·수비 지능·경험·숨은 성향, 상황 불확실성)
+  //   → 위험을 보고 먼저 갈지 결정(불완전한 판단) → 위치 선점(침투·속도) → 접촉 경쟁(피지컬·공중볼) → 공격 재개(패스·드리블) / 안전한 재순환 / 재경합
+  //   예측이 틀리면 엉뚱한 자리로 간 만큼 중앙이 빈다(상대가 공을 얻은 뒤 바로 치고 나오는 성향만큼 노출). 먼저 가지 않으면 일반 CM처럼 반응해서 다툰다
+  //   B: 세트피스 2차 국면(박스 외곽에서 걷어낸 공) → 같은 예측 → 슈팅 / 재공급 / 재순환(불완전한 선택). 막힌 슈팅은 역습 노출
+    const OPP_CLR = { block: .8, direct: .65, counter: .6, wide: .5, gegen: .45, pos: .35 }; // 상대가 공을 길게 걷어내는 성향(상대 감독 전술)
+  const OPP_TR = { counter: .85, direct: .7, gegen: .65, wide: .55, block: .5, pos: .45 }; // 공을 얻은 직후 바로 치고 나오는 성향
+  let SB_DQ = null, SB_MODE = null, SB_EXT = 'B', SB_OPP = null, SB_JADJ = 0, SB_GAPK = null; // 측정용(게임에서는 기본값): 팀 직접성 고정 / 'react'·'ctrl' 대조군 / 'A'만 / 상대 고정 / 판단 보정 / 중앙 공백 손실 배율
+  const setSbDq = (v) => { SB_DQ = v; }, setSbMode = (v) => { SB_MODE = v; }, setSbExt = (v) => { SB_EXT = v || 'B'; }, setSbOpp = (v) => { SB_OPP = v; }, setSbJadj = (v) => { SB_JADJ = v || 0; }, setSbGapK = (v) => { SB_GAPK = v; };
+  function directQ(club, style, mgr) {
+    if (SB_DQ != null) return SB_DQ;
+    const cult = ((hashStr('direct|' + club + '|' + (mgr?.name || '')) % 25) - 12) / 100;
+    return clamp(.45 + ({ direct: .25, counter: .1, block: .08, wide: .05, gegen: 0, pos: -.15 }[style] ?? 0) + cult, .15, .9);
+  }
+  const SB_CACHE = new Map();
+  function sbPool(lg, year, own) { const k = lg + '|' + year + '|' + own; if (SB_CACHE.has(k)) return SB_CACHE.get(k); const out = oppPressPool(lg, year, own).map(o => ({ ...o, clr: OPP_CLR[o.style] ?? .5, tr: OPP_TR[o.style] ?? .6 })); if (SB_CACHE.size > 4000) SB_CACHE.clear(); SB_CACHE.set(k, out); return out; }
+  function sbProbs(a, B, judg) {
+    return { pArr: clamp(B.a0 + (wsum(a, B.mw) - B.mc0) * .01, .3, .92), pWin: clamp(B.w0 + (wsum(a, B.cw) - B.cc0) * .008, .45, .9),
+      pRA: clamp(B.ra0 + (wsum(a, B.mw) - B.mc0) * .006 + (judg - B.jc0) * .002, .1, .6), pRW: clamp(B.rw0 + (wsum(a, B.cw) - B.cc0) * .008, .25, .75),
+      pF: clamp(B.f0 + (wsum(a, B.fw) - B.fc0) * .01, .15, .85), sig: clamp(B.sig0 - (judg - 80) * .003, .05, .22) };
+  }
+  const sbRead = (B, src, judg, U) => clamp(B.rb[src] + (judg - B.jc0) * B.rk + U, .05, .95);
+  const sbThr = (B, o) => B.thr0 + B.risk * (o.tr - .6) * 2;
+  const sbGapP = (B, o) => clamp(B.gap * o.tr / .6, .1, .8);
+  // 한 시즌의 세컨드 볼 기회 기대값(그 시즌 기록만으로 계산): 출전 시간 × 롤의 활동 구역 × (팀 긴 전개 + 상대 클리어링)
+  function sbExposure(r) {
+    const T = TACS.cmsec, B = T.sb; if (!r || r.youthTeam || r.pos !== 'CM' || !r.apps || !r.mgr) return 0;
+    const pool = sbPool(r.lg, r.year, r.club); const mClr = pool.length ? pool.reduce((t, o) => t + o.clr, 0) / pool.length : .5;
+    const n90 = r.apps * clamp(55 + 35 * (r.share ?? .6), 45, 88) / 90; const dq = directQ(r.club, r.mgr.style, r.mgr);
+    return n90 * (B.zone[r.role] ?? .85) * (B.l0 * dq / .5 + B.c0 * (B.terr[r.mgr.style] ?? 1) * mClr / .5);
+  }
+  const sbJudg = (p, a, f, prev, T) => wsum(a, T.sb.jw) + f * T.ax.K + T.sb.xK * clamp(prev.reduce((t, s) => t + sbExposure(s), 0) / T.sb.xC, 0, 1) + SB_JADJ;
+  // 세트피스 2차 국면에서 회수 1회당 기대값(그 선수의 슈팅·패스 판단으로): 실제 xG, 재공급 횟수. 격자 적분이라 난수를 쓰지 않는다
+  function spEV(a, P2, pF) {
+    const shotSk = clamp(1 + ((a.SHO || 60) - P2.sc0) * .01, .6, 1.4), passSk = clamp(pF / .45, .5, 1.6), xgM = clamp(Math.pow((a.SHO || 60) / 75, 1.5), .5, 1.6);
+    const Z = [[-1.5, .13], [-1, .12], [-.5, .175], [0, .15], [.5, .175], [1, .12], [1.5, .13]]; let xg = 0, re = 0, W = 0;
+    for (let i = 0; i < 10; i++) for (let j = 0; j < 10; j++) for (const [z, w] of Z) { const q = (i + .5) / 10, l = (j + .5) / 10; W += w; const sv = q * shotSk + z * P2.sig, pv = l * passSk * .9; if (sv < P2.thr && pv < P2.thr) continue; if (sv > pv) xg += w * (1 - P2.blk * (1 - .4 * q)) * (P2.xg0 + P2.xgq * q) * xgM; else re += w; }
+    return { xg: xg / W, re: re / W, shotSk, passSk, xgM };
+  }
+  // 팀 득실(1.2 이후 최종안): 세컨드 볼 하나의 결과를 팀의 기대 득점·기대 실점으로 센다. 개인 골·도움은 그중 그가 받을 몫만
+  //   공격 재개 = 좋은 위치의 우리 공격(xr) · 재순환 = 보통 공격(x0) · 상대 공 = 보통 상대 공격(x0 × 상대 역습 성향) · 중앙이 빈 상대 공 = x1 × 상대 역습 성향
+  function tacSec(p, cx, id, lamG, lamA, n90) {
+    const T = TACS[id], B = T.sb, P2 = B.sp, V = B.tv; const a = p.attrs; const rng = seeded('tacsb|' + TAC_VER + '|' + p.id + '|' + cx.year + '|' + cx.club);
+    const f = (hashStr((p.tacKey || p.id) + '|tacaff|' + id) % 5) - 2; const judg = sbJudg(p, a, f, (p.seasons || []), T);
+    const pool = SB_OPP ? [SB_OPP] : sbPool(cx.lg, cx.year, cx.club); const mClr = pool.reduce((t, o) => t + o.clr, 0) / pool.length;
+    const dq = directQ(cx.club, cx.style, cx.mgr); const zone = B.zone[cx.role] ?? .85; const terr = B.terr[cx.style] ?? 1;
+    const PR = sbProbs(a, B, judg); const mode = SB_MODE; const gapX = V.x1 * (SB_GAPK ?? 1);
+    const S = { own: 0, clr: 0, ch: 0, att: 0, read: 0, arr: 0, win: 0, rec: 0, fwd: 0, safe: 0, relost: 0, wrong: 0, gap: 0, lostC: 0, react: 0, rRec: 0, a: 0, g: 0, aA: 0,
+      sp: 0, spAtt: 0, spRead: 0, spArr: 0, spRec: 0, sh: 0, shBlk: 0, shX: 0, re: 0, cyc: 0, spG: 0, spA: 0, xg: 0, txf: 0, txa: 0, txaGap: 0 };
+    let refF = 0, refR = 0, refSp = 0, rTxf = 0, rTxa = 0;
+    const oppX = (o) => V.x0 * o.tr / .6;
+    const after = (u, sp, o) => { S.rec++; if (sp) S.spRec++; if (u < PR.pF) { S.fwd++; if (!sp) S.txf += V.xr; return 'f'; } if (u < PR.pF + (1 - PR.pF) * .9) { S.safe++; if (!sp) S.txf += V.x0; return 's'; } S.relost++; S.txa += oppX(o); return null; };
+    const lose = (o, gap) => { if (gap) { S.gap++; const x = gapX * o.tr / .6; S.txa += x; S.txaGap += x; } else S.txa += oppX(o); return null; };
+    const one = (src) => {
+      const o = pool[Math.floor(rng() * pool.length)]; const u = [rng(), rng(), rng(), rng(), rng(), rng()]; const z = gauss(rng);
+      const U = (u[0] * 2 - 1) * B.U; const pr = sbRead(B, src, judg, U); const sp = src === 'sp';
+      S.ch++; if (sp) S.sp++; const r0 = PR.pRA * PR.pRW; refR += r0;
+      if (!sp) { refF += r0 * PR.pF; rTxf += r0 * (PR.pF * V.xr + (1 - PR.pF) * .9 * V.x0); rTxa += (1 - r0 + r0 * (1 - PR.pF) * .1) * oppX(o); } else refSp += r0;
+      const commit = mode === 'react' ? false : pr + z * PR.sig > sbThr(B, o);
+      if (!commit) { S.react++; if (u[2] < PR.pRA && u[3] < PR.pRW) { S.rRec++; return after(u[5], sp, o); } return sp ? null : lose(o, false); }
+      S.att++; if (sp) S.spAtt++; const prU = mode === 'ctrl' ? clamp(B.prior + U * .5, .05, .95) : pr;
+      if (u[1] < prU) { S.read++; if (sp) S.spRead++;
+        if (u[2] < PR.pArr) { S.arr++; if (sp) S.spArr++; if (u[3] < PR.pWin) { S.win++; return after(u[5], sp, o); } S.lostC++; return sp ? null : lose(o, u[4] < B.lostX * o.tr / .6); }
+        if (u[3] < PR.pRW) return after(u[5], sp, o); return sp ? null : lose(o, false); }
+      S.wrong++; if (u[3] < B.wr) return after(u[5], sp, o); return sp ? null : lose(o, u[4] < sbGapP(B, o));
+    };
+    const N1 = poisson(n90 * B.l0 * (dq / .5) * zone, rng), N2 = poisson(n90 * B.c0 * terr * (mClr / .5) * zone, rng);
+    for (let i = 0; i < N1; i++) { S.own++; one('own'); } for (let i = 0; i < N2; i++) { S.clr++; one('clr'); }
+    // 개인 도움(A): 공격 재개로 생긴 우리 공격이 골이 되고(xr) 그가 도움을 받는 몫(paA). 반응형으로도 생겼을 몫(refF)만큼은 원래 기대 도움에서 뺀다 → 반응형이면 손익 0
+    const pA = V.xr * V.paA; for (let i = 0; i < S.fwd; i++) if (rng() < pA) S.aA++; S.a += S.aA;
+    let resG = 0, resA = refF * pA;
+    if (SB_EXT !== 'A') { // B: 세트피스 2차 국면. 실제 xG 그대로(배율 없음). 반응형으로도 났을 기대 골·도움은 원래 기대치에서 뺀다
+      const ckS = clamp((wsum(a, P2.ckw) - P2.ck0) / 20, 0, .7); const ev = spEV(a, P2, PR.pF);
+      const Nsp = poisson(n90 * P2.n0 * terr * (P2.zone[cx.role] ?? .9) * (1 - ckS), rng);
+      for (let i = 0; i < Nsp; i++) { const r = one('sp'); const q = rng(), l = rng(), z2 = gauss(rng), ub = rng(), ux = rng(), ug = rng();
+        if (!r) continue; const sv = q * ev.shotSk + z2 * P2.sig, pv = l * ev.passSk * .9; if (sv < P2.thr && pv < P2.thr) { S.cyc++; continue; }
+        if (sv > pv) { S.sh++; if (ub < P2.blk * (1 - .4 * q)) { S.shBlk++; if (ux < P2.blkX) { S.shX++; S.txa += gapX * .6 / .6; } continue; } const xg = (P2.xg0 + P2.xgq * q) * ev.xgM; S.xg += xg; S.txf += xg; if (ug < xg) S.spG++; }
+        else { S.re++; S.txf += P2.reXg; if (ug < P2.reXg * P2.reA) S.spA++; } }
+      resG = refSp * ev.xg; resA += refSp * ev.re * P2.reXg * P2.reA; rTxf += refSp * (ev.xg + ev.re * P2.reXg);
+      S.g += S.spG; S.a += S.spA; S.xg = +S.xg.toFixed(2); S.ev = { xg: +ev.xg.toFixed(4), re: +ev.re.toFixed(3) };
+    }
+    const net = (S.txf - rTxf) - (S.txa - rTxa);
+    const dr = n90 ? +clamp(net / n90 * V.k, -.06, .06).toFixed(3) : 0;
+    return { ...S, ext: SB_EXT, judg: +judg.toFixed(1), dq: +dq.toFixed(2), mClr: +mClr.toFixed(2), refF: +refF.toFixed(1), refR: +refR.toFixed(1), refSp: +refSp.toFixed(1), resG: +resG.toFixed(3), resA: +resA.toFixed(3),
+      txf: +S.txf.toFixed(3), txa: +S.txa.toFixed(3), txaGap: +S.txaGap.toFixed(3), rTxf: +rTxf.toFixed(3), rTxa: +rTxa.toFixed(3), net: +net.toFixed(3), dr, lamG: +lamG.toFixed(2), lamA: +lamA.toFixed(2), n90: +n90.toFixed(1) };
+  }
+  const nCdf = (x) => { const t = 1 / (1 + .3275911 * Math.abs(x) / Math.SQRT2); const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - .284496736) * t + .254829592) * t * Math.exp(-x * x / 2); return .5 * (1 + (x >= 0 ? y : -y)); };
+  // 비공개 모의 평가(난수 없음): 먼저 가는 선수와 반응하는 일반 CM의 기회당 기대 공격 재개 차 − λ × 기대 중앙 노출. v는 먼저 간 공 중 예측과 선점이 둘 다 맞은 비율
+  function sbAssess(p, res, f) {
+    const T = TACS.cmsec, B = T.sb, A = T.ax; const a = res.a0; const prev = (p.seasons || []).filter(s => s !== res);
+    const X = sbExposure(res); const CX = X + prev.reduce((t, s) => t + sbExposure(s), 0); const debut = !prev.some(s => !s.youthTeam);
+    const judg = sbJudg(p, a, f, prev, T); const PR = sbProbs(a, B, judg); const pool = sbPool(res.lg, res.year, res.club); const PL = pool.length ? pool : [{ clr: .5, tr: .6 }];
+    const dq = directQ(res.club, res.mgr?.style, res.mgr); const mClr = PL.reduce((t, o) => t + o.clr, 0) / PL.length; const w1 = B.l0 * dq / .5, w2 = B.c0 * (B.terr[res.mgr?.style] ?? 1) * mClr / .5;
+    // D: 기회 하나당 팀 순득실(기대 득점 − 기대 실점)의 차, 먼저 가는 선수 − 반응형 일반 CM. 공격 재개의 가치와 중앙이 빈 상대 공격의 손실을 같은 단위로 잰다
+    const V = B.tv; let dF = 0, gp = 0, vN = 0, vD = 0, W = 0, dV = 0;
+    for (const o of PL) for (const [src, w] of [['own', w1], ['clr', w2]]) for (let k = 0; k < 9; k++) {
+      const U = (k / 4 - 1) * B.U; const pr = sbRead(B, src, judg, U); const Pc = nCdf((pr - sbThr(B, o)) / PR.sig);
+      const hit = pr * (PR.pArr * PR.pWin + (1 - PR.pArr) * PR.pRW) + (1 - pr) * B.wr; const r0 = PR.pRA * PR.pRW;
+      const g = pr * PR.pArr * (1 - PR.pWin) * B.lostX * o.tr / .6 + (1 - pr) * (1 - B.wr) * sbGapP(B, o); const ox = V.x0 * o.tr / .6, gx = V.x1 * o.tr / .6;
+      const recV = PR.pF * V.xr + (1 - PR.pF) * .9 * V.x0 - (1 - PR.pF) * .1 * ox;
+      const vC = hit * recV - g * gx - (1 - hit - g) * ox, vR = r0 * recV - (1 - r0) * ox;
+      dV += w * Pc * (vC - vR); dF += w * Pc * (hit - r0) * PR.pF; gp += w * Pc * g; vN += w * Pc * pr * PR.pArr; vD += w * Pc; W += w; }
+    dF /= W; gp /= W; dV /= W; const D = +(dV * 100).toFixed(3); const v = vD ? +(vN / vD).toFixed(3) : 0; // D는 기회 100개당 팀 순득실(골)
+    const ok = X >= A.X0 && (debut || CX >= A.CX0);
+    return { D, v, dF: +dF.toFixed(3), gp: +gp.toFixed(3), att: +(vD / W).toFixed(2), X: +X.toFixed(1), CX: +CX.toFixed(1), ok, debut, judg: +judg.toFixed(1) };
+  }
+
   // 발현 판정(B): 시즌이 끝날 때 한 번. 같은 입력이면 같은 결과. 무작위 당첨이 아니다
   // 나이·OVR·경력 연수 제한은 없다. 기록 속 선수의 추정 프로필은 시뮬레이션하지 않으므로 대상이 아니다
   function tacJudge(p, res) {
@@ -4087,6 +4237,15 @@ const ENGINE = (() => {
   //   리그가 다른 언어권이면 그 화자가 선수를 만난 경로(유럽 대항전 중계, 같은 팀의 그 나라 출신 동료, 해외 축구를 다루는 칼럼, 선수 자신의 모국어)를 이야기에 붙인다
   //   명명자 유형 → [원문, 한국어]
   const TAC_TALK = {
+    cmsec: {
+      comm: ["Le ballon n'est pas encore retombé, et il est déjà dessous ! Quel ramasseur !", '공이 아직 떨어지지도 않았는데 벌써 그 밑에 있어요! 대단한 라마쇠르예요!'],
+      mgr: ["C'est notre ramasseur : pendant que les autres se battent pour le premier ballon, il est déjà là où tombe le deuxième.", '그는 우리 라마쇠르예요. 다들 첫 공을 다투는 동안, 그는 이미 두 번째 공이 떨어질 자리에 있어요.'],
+      mate: ["Au vestiaire, on l'appelle le Ramasseur.", '라커룸에선 라마쇠르라고 불러요.'],
+      press: ['Le Ramasseur', '라마쇠르'],
+      self: ["Je ne gagne pas les duels de la tête. Je ramasse ce qui en sort : je regarde où le ballon va tomber avant même qu'il parte.", '저는 머리로 경합을 이기는 선수가 아니에요. 거기서 흘러나오는 공을 줍죠. 공이 뜨기도 전에 어디로 떨어질지 봐요.'],
+      opp: ["Chaque ballon qu'on dégageait, c'est lui qui le ramassait. On n'a jamais pu respirer.", '우리가 걷어낸 공마다 그가 주워 갔어요. 숨 돌릴 틈이 없었어요.'],
+      fans: ['Ramasseur, ramasse tout !', '라마쇠르, 다 주워 담아!'],
+    },
     dmbait: {
       comm: ['¡Les enseña el capote y van todos! Y por detrás, el pase.', '망토를 보여 주니 다들 달려드네요! 그리고 그 뒤로 패스가 나가요.'],
       mgr: ['Es nuestro capote: quiere que vengan a por él, porque cuando vienen, dejan su sitio.', '그는 우리 카포테예요. 상대가 자기한테 오길 원해요. 오는 순간 자기 자리를 비우니까요.'],
@@ -4354,6 +4513,7 @@ const ENGINE = (() => {
     coachStints, parentsAlive, coachNow, recordDeath, farewellAsk, farewellAgree, farewellRefused, homecomingOffer, farewellOf, fwPact, fwClubLine, fanCer, fwSeasons, FW_CLUB,
     LG_SCHOOL, SCHOOLS, CLUB_SCHOOL, schoolOf, wiEcho, wiRewrite, goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
+    tacSec, sbAssess, sbExposure, directQ, setSbDq, setSbMode, setSbExt, setSbOpp, setSbJadj, setSbGapK, sbPool, spEV,
     TACS, TAC_VER, TAC_TALK, NAMER, LANG_KO, tacStory, tacLineBreak, tacWingPress, pressOrg, setWpOrg, tacFarPost, wideSupply, setFpSup, tacLink, buildQ, coverQ, setLkBuild, setLkSup, setLkRoam, tacBait, oppPressPool, setBtOpp, setBtMode, baitAssess, baitExposure, setDmPath, setTacDraft, lgMeanStr, tacOf, tacScore, tacState, tacOffText, tacExposure, tacJudge, roleProd, actAbility, normalizeRole, MERGED, STAT_FAM, ROLE_STAT, statModel, seasonStat, rsAbility, roleCareer, seasonMin, rstatLabel, rstatText, ghostProfile, RSTAT_VER, GPROF_VER, growMul, GCFG, CALIB, ASG, MCFG, effOvr, muOf, isMentor, mentorClub, mentorsOf, ghostOf, ghostStat, bdoScore, bdoRivalOf, summarize, rollBody, heightAt, applyDev, bodyForecast, inferBody, BUILD, hMean, legendLine, featLine, bloomNote, scarsOf, recordFold, seniorThrN, natT, nationsOf, natLocked, econOf, econAt, ECON_Y0, SEVERITY, sevOf, whatIfPoints, rewind, forkWhatIf, featOf, FEAT_T, isStar, arcOn, addArc, GROW, perfOf, retireNumbers, makeCoach, scoutEst, CURVES, tierOfP, rollPotential, FORM_AGE, FAM_MASTER, FAM_OK, FAM_NAME, famOf, famLevel, roleCap, gainRoleXp, assignRole, requestChance, conversionOptions, roleSim, tournamentsFor, tourStart, tourGroup, tourKO, tourPK, tourFinish, tourSkip, ballonLate, TOUR, ROLE_TRUST, expectRole, contCupName, leagueClubs, homeLeagues, isAbroad, isRival, rivalOf, rollInjury, bump, offers, focusEfficiency, focusSet,
     clamp, gauss, pick, wpick, R, seeded, hashStr, leagueBook, growthPreview, compsFor, marketWage, offerTerms, ensureWage, fmtWon, fmtFee, clubFinalStart, clubFinalFinish, autoClubFinal, natReturnChance, askChance, negotiate, renewWage, releaseFor, EUR_KRW, seniorThr, natContext, natMatch, initTemper, bigE, natE, nudge, shiftT, temperament, goldenGen, numberAsk, jinxCheck, bigLog, contFor, divOf, COMP_SHORT, transferValue, clubBudget, policyMul, posNeed, leftYear, recentlyLeft, clubLegacy, legacyAt, clubSize,
     slY, jo, rateBase, bigOutcome, recordBig, bigGames,
@@ -7691,7 +7851,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const kb = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + 'MB' : Math.max(1, Math.round(n / 1e3)) + 'KB';
     const ck = KV.keys().filter(k => k.startsWith('sk_career_')); const cs = ck.reduce((t, k) => t + KV.size(k), 0); const orph = orphanIds();
     const where = KV.mode === 'idb' ? '이 기기의 IndexedDB' : 'localStorage(이 브라우저는 IndexedDB를 쓸 수 없어요)';
-    return `<details class="storebox"><summary class="small">저장 상태 · ${KV.fail ? '<b class="red">마지막 저장 실패</b>' : KV.lastOk ? '정상' : '대기'}</summary>
+    return `<details class="storebox"><summary class="small">저장 상태 · ${KV.fail ? '<b class="red">마지막 저장 실패</b>' : KV.lastOk ? '정상' : '정상 · 이번 실행에서는 아직 저장 없음'}</summary>
       <p class="muted small">${where}에 저장해요${KV.persisted ? ' · 지우지 않도록 요청됨' : ''}. 마지막 저장 ${KV.lastOk ? new Date(KV.lastOk).toLocaleTimeString() : '—'}${KV.mig ? ` · 이번에 예전 저장 ${KV.mig.n}개 항목을 옮겼어요(원본은 그대로 둠)` : ''}${KV.migErr ? ` · 옮기기 실패: ${esc(KV.migErr)}` : ''}</p>
       <p class="muted small">세계 ${kb(KV.size('sk_world'))} · 커리어 ${ck.length}개 ${kb(cs)} · 엠블럼 ${kb(KV.size('sk_crests'))} · 도감 ${kb(KV.size('sk_codex'))}</p>
       ${orph.length ? `<p class="small">세계 기록과 연결이 끊긴 커리어 문서 ${orph.length}개가 남아 있어요(예전 저장 실패로 생긴 것일 수 있어요). <button class="btn sm" data-act="orphanexport">파일로 받기</button></p>` : ''}</details>`;
@@ -8156,7 +8316,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (r.bdoRank) L.push(['', `발롱도르 ${r.bdoRank}위${r.bdoRival ? ` (수상: ${r.bdoRival})` : ''}`]);
     (r.notes || []).forEach(n => L.push(isEcho(n) ? ['echo', echoT(n)] : ['life', n]));
     r.events.forEach(e => L.push(['', e]));
-    if (r.tac && E.TACS[r.tac.id]) { if (r.tac.on) L.push(['tac', `◆ ${tacNm(r.tac.id)}${r.tacx ? ` · ${E.TACS[r.tac.id].x?.label || '노출'} ${r.tacx.exp}회, 복귀 ${r.tacx.pct}%` : ''}${r.lb ? ` · 라인 깨기 ${r.lb.att}번 시도 중 ${r.lb.suc}번 성공 · 오프사이드 ${r.lb.off}회` : ''}${r.wp ? ` · 함정 유도 ${r.wp.trap}회, 동료와 탈취 ${r.wp.steal}회(본인 ${r.wp.self}) · 압박 탈출 허용 ${r.wp.esc}회` : ''}${r.bt ? ` · 압박 유인 ${r.bt.att}회 중 상대 이탈 ${r.bt.lure}회 · 전진 연결 ${r.bt.fwd}회 · 자기 진영 중앙 상실 ${r.bt.lost}회` : ''}${r.lk ? ` · 연결 복원 성공 ${r.lk.res}회 (막힌 국면 지원 ${r.lk.mv}회) · 2선 재가담 ${r.lk.join + r.lk.joinF ? Math.round(r.lk.join / (r.lk.join + r.lk.joinF) * 100) : 100}% · 수비 복귀 ${r.lk.back ? Math.round((r.lk.back - r.lk.backF) / r.lk.back * 100) : 100}%` : ''}${r.fp ? ` · 먼 포스트 침투 ${r.fp.run}번 중 제때 도착 ${r.fp.arr}번 · 측면 역습 노출 ${r.fp.xp}회, 복귀 ${r.fp.xp ? Math.round((r.fp.xp - r.fp.xf) / r.fp.xp * 100) : 100}%` : ''}`]); else L.push(['', `${tacNm(r.tac.id)} 꺼짐 · ${E.tacOffText(r.tac)}`]); }
+    if (r.tac && E.TACS[r.tac.id]) { if (r.tac.on) L.push(['tac', `◆ ${tacNm(r.tac.id)}${r.tacx ? ` · ${E.TACS[r.tac.id].x?.label || '노출'} ${r.tacx.exp}회, 복귀 ${r.tacx.pct}%` : ''}${r.lb ? ` · 라인 깨기 ${r.lb.att}번 시도 중 ${r.lb.suc}번 성공 · 오프사이드 ${r.lb.off}회` : ''}${r.wp ? ` · 함정 유도 ${r.wp.trap}회, 동료와 탈취 ${r.wp.steal}회(본인 ${r.wp.self}) · 압박 탈출 허용 ${r.wp.esc}회` : ''}${r.bt ? ` · 압박 유인 ${r.bt.att}회 중 상대 이탈 ${r.bt.lure}회 · 전진 연결 ${r.bt.fwd}회 · 자기 진영 중앙 상실 ${r.bt.lost}회` : ''}${r.sb ? ` · 세컨드 볼 회수 ${r.sb.rec}회(먼저 자리 잡고 따낸 공 ${r.sb.win}회) · 공격 재개 ${r.sb.fwd}회${r.sb.spRec ? ` · 세트피스 2차 국면 회수 ${r.sb.spRec}회(슈팅 ${r.sb.sh} · 재공급 ${r.sb.re})` : ''} · 중앙 노출 ${r.sb.gap}회` : ''}${r.lk ? ` · 연결 복원 성공 ${r.lk.res}회 (막힌 국면 지원 ${r.lk.mv}회) · 2선 재가담 ${r.lk.join + r.lk.joinF ? Math.round(r.lk.join / (r.lk.join + r.lk.joinF) * 100) : 100}% · 수비 복귀 ${r.lk.back ? Math.round((r.lk.back - r.lk.backF) / r.lk.back * 100) : 100}%` : ''}${r.fp ? ` · 먼 포스트 침투 ${r.fp.run}번 중 제때 도착 ${r.fp.arr}번 · 측면 역습 노출 ${r.fp.xp}회, 복귀 ${r.fp.xp ? Math.round((r.fp.xp - r.fp.xf) / r.fp.xp * 100) : 100}%` : ''}`]); else L.push(['', `${tacNm(r.tac.id)} 꺼짐 · ${E.tacOffText(r.tac)}`]); }
     if (r.tacNew && E.TACS[r.tacNew.id] && !(S.p && (S.p.tacs || []).some(t => t.id === r.tacNew.id && t.year === r.year && t.cut === 1))) L.push(['gold', `◆ 히든 롤 ${tacNm(r.tacNew.id)} 발현`]); // 컷씬을 보기 전에는 이름을 먼저 드러내지 않는다
     return L;
   }
@@ -8514,7 +8674,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function tacRecLine(x) {
     const T = E.TACS[x.id]; if (!T) return '';
     const st = x.v != null ? ` · ${esc(E.STAT_FAM[x.f] || '')} <b>${nf(x.v)}</b>${x.spct != null ? ` <span class="muted">(성공률 ${x.spct}%)</span>` : ''}${x.p90 != null ? ` <span class="muted">· 90분당 ${x.p90}</span>` : ''}` : '';
-    const ex = x.exp ? ` <span class="muted">· ${esc(T.x?.label || '노출')} 복귀 ${x.pct}%</span>` : ''; const os = (x.offs != null ? ` <span class="muted">· 오프사이드 ${nf(x.offs)}회</span>` : '') + (x.trap != null ? ` <span class="muted">· 함정 유도 ${nf(x.trap)} · 동료와 탈취 ${nf(x.tsteal)}</span>` : '') + (x.lres != null ? ` <span class="muted">· 연결 복원 성공 ${nf(x.lres)}</span>` : '') + (x.blure != null ? ` <span class="muted">· 압박 유인으로 상대 이탈 ${nf(x.blure)}</span>` : '');
+    const ex = x.exp ? ` <span class="muted">· ${esc(T.x?.label || '노출')} 복귀 ${x.pct}%</span>` : ''; const os = (x.offs != null ? ` <span class="muted">· 오프사이드 ${nf(x.offs)}회</span>` : '') + (x.trap != null ? ` <span class="muted">· 함정 유도 ${nf(x.trap)} · 동료와 탈취 ${nf(x.tsteal)}</span>` : '') + (x.lres != null ? ` <span class="muted">· 연결 복원 성공 ${nf(x.lres)}</span>` : '') + (x.blure != null ? ` <span class="muted">· 압박 유인으로 상대 이탈 ${nf(x.blure)}</span>` : '') + (x.srec != null ? ` <span class="muted">· 세컨드 볼 회수 ${nf(x.srec)} · 공격 재개 ${nf(x.sfwd)}</span>` : '');
     return `<p class="small cc-tac"><span class="cc-rl">◆ 히든 롤 ${esc(tacNm(x.id))}</span> ${x.age}세 발현 · 켜진 시즌 ${x.seasons}${x.off ? ` <span class="muted">(꺼진 시즌 ${x.off})</span>` : ''}${st}${ex}${os}</p>`;
   }
   function viewCodex() {
@@ -8528,7 +8688,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
         <h3 class="h3">이름의 유래</h3><p class="small">${esc(N.etym)}</p>${N.hist ? `<p class="small cx-hist"><b>실제 축구사</b> ${esc(N.hist)}</p>` : ''}<p class="small">${esc(N.why)}</p>
         <h3 class="h3">발견 이야기 <span class="muted small">· ${esc(f.lineName || '처음 발견한 세계선')}</span></h3>${s ? `<p class="small muted">${esc(s.typeKo)} — ${esc(s.theme)}</p>${quote}` : '<p class="small muted">그 세계선에서 이 이름이 어떻게 퍼졌는지는 기록되지 않았어요.</p>'}
         <h3 class="h3">최초 발현</h3><p><b>${esc(f.name)}</b> <span class="muted">· ${esc(f.nation)} · ${esc(E.POS[f.pos]?.name || '')} · ${f.age}세 · ${esc(f.clubName)} (${esc(f.lgName)}) · ${f.season} 시즌</span></p>
-        <p class="small muted">세계 '${esc(f.world)}' · ${esc(f.lineName || f.line)} · 당시 ${esc(f.roleName)}, ${esc(f.mgr)} 감독(${esc(E.STYLES[f.style] || '')})${f.proof ? ` · 그 시즌 ${esc(f.proof.f === 'g90' ? `골 90분당 ${f.proof.p90}` : f.proof.f === 'link' ? `연결·수비 증명 지수 ${f.proof.p90}(기준 1)` : f.proof.f === 'bait' ? `유인 1회당 상대 이탈 기대 ${f.proof.v}` : `${E.STAT_FAM[f.proof.f] || ''} 90분당 ${f.proof.p90}`)}` : ''}</p>
+        <p class="small muted">세계 '${esc(f.world)}' · ${esc(f.lineName || f.line)} · 당시 ${esc(f.roleName)}, ${esc(f.mgr)} 감독(${esc(E.STYLES[f.style] || '')})${f.proof ? ` · 그 시즌 ${esc(f.proof.f === 'g90' ? `골 90분당 ${f.proof.p90}` : f.proof.f === 'link' ? `연결·수비 증명 지수 ${f.proof.p90}(기준 1)` : f.proof.f === 'bait' ? `유인 1회당 상대 이탈 기대 ${f.proof.v}` : f.proof.f === 'sb' ? `먼저 간 세컨드 볼의 예측·선점 성공 기대 ${Math.round(f.proof.v * 100)}%` : `${E.STAT_FAM[f.proof.f] || ''} 90분당 ${f.proof.p90}`)}` : ''}</p>
         ${H.length ? `<h3 class="h3">지금 세계에서 이 히든 롤을 보여 준 선수</h3><ul class="cx-who">${H.map(x => `<li>${x.live ? `<button class="link" data-go="career">${esc(x.name)}</button>` : `<button class="link" data-card="${x.id}">${esc(x.name)}</button>`} <span class="muted small">${x.age}세 · ${sl(x.year)}</span></li>`).join('')}</ul>` : ''}
       </article>`; };
     return `<section class="hero"><div><p class="eyebrow">히든 롤 도감</p><h1>발견한 히든 롤 ${E0.length}개</h1><p class="muted">선수가 경기와 성장 속에서 만들어 낸 드문 축구를 모은 기록이에요. 여러 세계선을 살아 본 당신의 기록이라, 각 세계선의 역사와는 따로 남아요. 같은 선수라도 다른 세계선에서 저절로 나타나지는 않아요.</p></div></section>${E0.map(card).join('')}`;
