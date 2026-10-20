@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='1.2'</script>
+<script>window.SK_VER='1.2.1'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -174,6 +174,8 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .rec { background: var(--panel-2); border-radius: var(--r-sm); padding: 12px; display: flex; flex-direction: column; gap: 2px; }
 .rec b { font-size: 24px; font-weight: 900; color: var(--gold); }
 .confirm { background: var(--red-bg); border-radius: var(--r-sm); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.savewarn { background: var(--red-bg); border-radius: var(--r-sm); padding: 12px; margin-top: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.5; }
+.storebox { margin-top: 10px; } .storebox summary { cursor: pointer; color: var(--muted, inherit); } .storebox p { margin: 6px 0; }
 .retlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .retlist li { display: flex; align-items: center; gap: 12px; }
 .retnum { font-weight: 900; font-size: 22px; color: var(--gold); min-width: 2ch; text-align: center; }
@@ -7231,7 +7233,64 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   const scrollEv = () => window.scrollTo(0, 0);
 
   // ---------- storage ----------
-  const LS = { get(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { } } };
+  // 1.2.1(SAVE-02): 게임 데이터(세계·커리어·도감·엠블럼)는 IndexedDB에 둔다. localStorage는 한도가 작고, 1.2까지는 실패를 조용히 삼켜서 진행이 저장되지 않은 채 이어졌다.
+  //   읽기: 부팅 때 전부 메모리로 올려 두고 동기로 읽는다(예전 localStorage와 같은 쓰임).
+  //   쓰기: 같은 순간(한 동작 안)의 쓰기는 하나의 트랜잭션으로 묶는다. 은퇴(커리어+세계)·새 커리어(커리어+세계)는 함께 저장되거나 함께 실패한다. 반쪽만 남지 않는다.
+  //   실패: 숨기지 않는다. 화면 위에 경고가 남고, 메모리의 진행은 그대로라 내보내기로 지킬 수 있다. 실패한 쓰기는 다음 저장 때 다시 시도한다.
+  //   처음 실행: localStorage의 게임 데이터를 한 트랜잭션으로 옮기고, 다시 읽어 한 글자씩 같은지 확인한 뒤에만 IndexedDB를 쓴다. localStorage의 원본은 지우지 않는다(백업).
+  //   IndexedDB를 열 수 없는 환경에서는 localStorage를 쓰되, 실패는 똑같이 경고한다.
+  const KV = {
+    db: null, mode: 'mem', mem: new Map(), pend: new Map(), timer: null, chain: Promise.resolve(true), fail: null, lastOk: 0, mig: null, onFail: null, onOk: null,
+    isGame: (k) => k === 'sk_world' || k === 'sk_codex' || k === 'sk_crests' || (typeof k === 'string' && k.startsWith('sk_career_')),
+    get(k) { const v = this.mem.get(k); if (v == null) return null; try { return JSON.parse(v); } catch { return null; } },
+    raw(k) { return this.mem.get(k) ?? null; },
+    set(k, v) { const s = JSON.stringify(v); this.mem.set(k, s); this.pend.set(k, s); this.kick(); },
+    del(k) { this.mem.delete(k); this.pend.set(k, null); this.kick(); },
+    keys() { return [...this.mem.keys()]; },
+    kick() { if (!this.timer) this.timer = setTimeout(() => { this.timer = null; this.flush(); }, 0); },
+    flush() { if (this.timer) { clearTimeout(this.timer); this.timer = null; } this.chain = this.chain.then(() => this.write(), () => this.write()); return this.chain; },
+    async write() {
+      if (!this.pend.size) return !this.fail;
+      const batch = new Map(this.pend); this.pend.clear();
+      try {
+        if (this.mode === 'idb') await idbTx(this.db, batch);
+        else for (const [k, v] of batch) { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); }
+        this.lastOk = Date.now(); if (this.fail && !this.pend.size) { this.fail = null; this.onOk?.(); } return true;
+      } catch (e) {
+        for (const [k, v] of batch) if (!this.pend.has(k)) this.pend.set(k, v); // 실패한 쓰기는 다음에 다시. 그 사이 더 새 값이 들어왔으면 새 값이 이긴다
+        const quota = /quota/i.test(String(e?.name || '') + String(e?.message || ''));
+        this.fail = { at: Date.now(), quota, msg: String(e?.name || e?.message || e).slice(0, 80) }; this.onFail?.(this.fail); return false;
+      }
+    },
+    async init() {
+      try { this.db = await idbOpen(); this.mode = 'idb'; } catch { this.db = null; this.mode = 'ls'; }
+      const fromLS = () => { const m = new Map(); try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (this.isGame(k)) m.set(k, localStorage.getItem(k)); } } catch { } return m; };
+      if (this.mode === 'idb') {
+        try {
+          let all = await idbAll(this.db);
+          if (!all.has('meta:store')) {
+            const src = fromLS(); const b = new Map(src); b.set('meta:store', JSON.stringify({ v: 1, from: 'localStorage', at: Date.now(), n: src.size }));
+            await idbTx(this.db, b); all = await idbAll(this.db);
+            for (const [k, v] of src) if (all.get(k) !== v) throw new Error('verify ' + k);
+            this.mig = { n: src.size, at: Date.now() };
+          }
+          for (const [k, v] of all) if (!k.startsWith('meta:')) this.mem.set(k, v);
+        } catch (e) { // 옮기지 못하면 IndexedDB를 비우고 localStorage를 그대로 쓴다(원본은 건드리지 않았다)
+          try { await idbClear(this.db); } catch { } this.db = null; this.mode = 'ls'; this.mem.clear(); this.migErr = String(e?.message || e).slice(0, 80);
+        }
+      }
+      if (this.mode === 'ls') for (const [k, v] of fromLS()) this.mem.set(k, v);
+      try { if (navigator.storage?.persist) this.persisted = await navigator.storage.persist(); } catch { }
+      const out = () => { if (this.pend.size) this.flush(); };
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') out(); }); window.addEventListener('pagehide', out);
+    },
+    size(k) { const v = this.mem.get(k); return v ? v.length : 0; },
+  };
+  function idbOpen() { return new Promise((res, rej) => { if (!window.indexedDB) return rej(new Error('no idb')); let r; try { r = indexedDB.open('sekaisen', 1); } catch (e) { return rej(e); } r.onupgradeneeded = () => { r.result.createObjectStore('kv'); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error || new Error('idb open')); r.onblocked = () => rej(new Error('idb blocked')); }); }
+  function idbTx(db, batch) { return new Promise((res, rej) => { let t; try { t = db.transaction('kv', 'readwrite'); const st = t.objectStore('kv'); for (const [k, v] of batch) { if (v == null) st.delete(k); else st.put(v, k); } } catch (e) { return rej(e); } t.oncomplete = () => res(true); t.onerror = () => rej(t.error || new Error('idb write')); t.onabort = () => rej(t.error || new Error('idb abort')); }); }
+  function idbAll(db) { return new Promise((res, rej) => { const out = new Map(); let t; try { t = db.transaction('kv', 'readonly'); const c = t.objectStore('kv').openCursor(); c.onsuccess = () => { const cur = c.result; if (cur) { out.set(cur.key, cur.value); cur.continue(); } }; } catch (e) { return rej(e); } t.oncomplete = () => res(out); t.onerror = () => rej(t.error); }); }
+  function idbClear(db) { return new Promise((res, rej) => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').clear(); t.oncomplete = () => res(); t.onerror = () => rej(t.error); }); }
+  const LS = { get: (k) => KV.get(k), set: (k, v) => KV.set(k, v) };
   const Store = {
     db: null, uid: null, cloud: false,
     async init() { try { if (!window.claude?.use) return; const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]); const uid = user ? await user.id() : null; if (db && uid) { this.db = db; this.uid = uid; this.cloud = true; } } catch { } },
@@ -7275,7 +7334,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
 
   // ---------- state ----------
   const S = { world: null, p: null, view: 'world', rtab: 'season', worldTab: 'legends', choice: null, offerPick: -1, pendingNumber: null, lastRes: null, newForm: null, retire: null, ready: false, viewCareer: null, cardMode: 'card',
-    phase: 'prep', windowQ: [], evQ: [], evIdx: 0, evOut: null, evOutHtml: null, postQ: [], mods: null, open: new Set(), tour: null, summerDone: false, crests: (() => { try { return JSON.parse(localStorage.getItem('sk_crests') || '{}') || {}; } catch { return {}; } })(), crestLg: null, crestMsg: '' };
+    phase: 'prep', windowQ: [], evQ: [], evIdx: 0, evOut: null, evOutHtml: null, postQ: [], mods: null, open: new Set(), tour: null, summerDone: false, crests: {} /* 부팅 때 저장소에서 채운다(1.2.1) */, crestLg: null, crestMsg: '' };
   const blankWorld = () => ({ v: 3, name: '나의 세계선', careers: [], bdo: {}, retired: {}, hof: {}, lines: { L0: { id: 'L0', name: '원래 세계선', parent: null, split: null, created: 0 } }, activeId: null, updatedAt: 0 });
   function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 3400); }
 
@@ -7309,7 +7368,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     else if (S.view === 'codex' && Codex.has()) body = viewCodex();
     else if (S.view === 'whatif' && S.wi) body = viewWhatIf();
     else body = viewWorld();
-    app.innerHTML = nav + `<main class="wrap main ${['career', 'new'].includes(S.view) ? 'narrow' : ''}">${body}</main>`;
+    const sw = KV.fail ? `<div class="wrap"><div class="savewarn" role="alert"><b>${KV.fail.quota ? '저장 공간이 부족해서 저장하지 못했어요.' : '저장하지 못했어요.'}</b> 지금까지의 진행은 이 화면에만 남아 있어요. 앱을 닫기 전에 세이브 파일을 내보내 두세요.<div class="row wrapgap"><button class="btn sm primary" data-act="export">세이브 파일 내보내기</button><button class="btn sm" data-act="saveretry">다시 저장</button></div></div></div>` : '';
+    app.innerHTML = nav + sw + `<main class="wrap main ${['career', 'new'].includes(S.view) ? 'narrow' : ''}">${body}</main>`;
     bind(); showCuts();
   }
 
@@ -7623,7 +7683,18 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return `<section class="panel quiet"><h2>세이브</h2><p class="muted small">${Store.cloud ? '세이브는 Claude 계정에 저장돼요. 다른 기기에서 열어도 이어서 할 수 있어요.' : '세이브는 이 브라우저에만 저장돼요. 가끔 파일로 내보내 두세요.'}</p>
       <div class="row wrapgap"><button class="btn" data-go="crests">구단 엠블럼 넣기</button><button class="btn" data-act="export">세이브 파일 내보내기</button><label class="btn">세이브 파일 불러오기<input type="file" id="importfile" accept="application/json,.json" hidden></label><input id="worldname" class="inp grow" value="${esc(S.world.name)}" aria-label="세계선 이름"><button class="btn" data-act="rename">이름 바꾸기</button></div>
       <div class="row wrapgap" style="margin-top:10px"><button class="btn" data-act="reeltoggle">시즌 진행 연출 · ${reelOn() ? '켜짐' : '꺼짐'}</button><span class="muted small">시즌을 시작하면 5초쯤 한 해가 흘러가는 장면을 보여 줘요. 결과는 똑같고, 누르면 바로 넘어가요.</span></div>
-      <div id="importconfirm" hidden class="confirm"></div><p class="muted small" style="margin-top:10px">버전 ${esc(window.SK_VER || '')}</p></section>`;
+      <div id="importconfirm" hidden class="confirm"></div>${storePanel()}<p class="muted small" style="margin-top:10px">버전 ${esc(window.SK_VER || '')}</p></section>`;
+  }
+  // 저장 상태(1.2.1): 어디에 얼마나 저장돼 있는지, 마지막 저장이 언제였는지, 세계 기록과 연결이 끊긴 커리어 문서가 있는지
+  function orphanIds() { const w = S.world; const live = new Set([...w.careers.map(c => c.id), ...(w.paused || []).map(x => x.id), w.activeId, S.p?.id].filter(Boolean)); return KV.keys().filter(k => k.startsWith('sk_career_')).map(k => k.slice(10)).filter(id => !live.has(id)); }
+  function storePanel() {
+    const kb = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + 'MB' : Math.max(1, Math.round(n / 1e3)) + 'KB';
+    const ck = KV.keys().filter(k => k.startsWith('sk_career_')); const cs = ck.reduce((t, k) => t + KV.size(k), 0); const orph = orphanIds();
+    const where = KV.mode === 'idb' ? '이 기기의 IndexedDB' : 'localStorage(이 브라우저는 IndexedDB를 쓸 수 없어요)';
+    return `<details class="storebox"><summary class="small">저장 상태 · ${KV.fail ? '<b class="red">마지막 저장 실패</b>' : KV.lastOk ? '정상' : '대기'}</summary>
+      <p class="muted small">${where}에 저장해요${KV.persisted ? ' · 지우지 않도록 요청됨' : ''}. 마지막 저장 ${KV.lastOk ? new Date(KV.lastOk).toLocaleTimeString() : '—'}${KV.mig ? ` · 이번에 예전 저장 ${KV.mig.n}개 항목을 옮겼어요(원본은 그대로 둠)` : ''}${KV.migErr ? ` · 옮기기 실패: ${esc(KV.migErr)}` : ''}</p>
+      <p class="muted small">세계 ${kb(KV.size('sk_world'))} · 커리어 ${ck.length}개 ${kb(cs)} · 엠블럼 ${kb(KV.size('sk_crests'))} · 도감 ${kb(KV.size('sk_codex'))}</p>
+      ${orph.length ? `<p class="small">세계 기록과 연결이 끊긴 커리어 문서 ${orph.length}개가 남아 있어요(예전 저장 실패로 생긴 것일 수 있어요). <button class="btn sm" data-act="orphanexport">파일로 받기</button></p>` : ''}</details>`;
   }
 
   // ---------- NEW CAREER ----------
@@ -8727,7 +8798,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       img.src = url;
     });
   }
-  function saveCrests() { try { localStorage.setItem('sk_crests', JSON.stringify(S.crests)); } catch { toast('이 기기의 저장 공간이 부족해요. 이미지를 조금 줄여 주세요.'); } Object.keys(CREST).forEach(k => delete CREST[k]); }
+  function saveCrests() { KV.set('sk_crests', S.crests); Object.keys(CREST).forEach(k => delete CREST[k]); } // 실패하면 저장 경고가 뜬다
   async function addCrestFiles(files, forClub) {
     const done = [], miss = [];
     for (const f of files) {
@@ -8910,7 +8981,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   };
   TROPHY_SVG.tac = TAC_ICON;
   function queueCut(c) { CUTQ.push(c); }
-  try { if (location.hash.startsWith('#skdebug')) window.__sk = { S, Codex, queueCut, showCuts: () => showCuts(), featCuts: (p) => featCuts(p) }; } catch { }
+  try { if (location.hash.startsWith('#skdebug')) window.__sk = { S, Codex, KV, queueCut, showCuts: () => showCuts(), featCuts: (p) => featCuts(p) }; } catch { }
   // 결승의 대활약: 트로피보다 앞서, 한 사람만 비추는 컷
   const FEAT_ICO = {
     ball: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="#fbf8ef" stroke="#f6d688" stroke-width="2"/><path d="M20 12.5l6.6 4.8-2.5 7.8h-8.2l-2.5-7.8z" fill="#20222b"/><path d="M20 12.5V4.5M26.6 17.3l7.4-2.6M24.1 25.1l4.6 6.4M15.9 25.1l-4.6 6.4M13.4 17.3L6 14.7" stroke="#20222b" stroke-width="1.6" fill="none"/></svg>`,
@@ -9269,7 +9340,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       if (!freshCareer(p)) return; if (!confirm(p.whatIf ? `${p.name}의 이 '만약에'를 지울까요? 아직 한 시즌도 뛰지 않아서, 갈라진 세계선도 함께 사라져요. 원래 기록은 그대로예요.` : `${p.name}의 커리어를 취소할까요? 아직 한 시즌도 뛰지 않아서 기록은 남지 않아요.`)) return;
       const par = p.parentId ? S.world.careers.find(c => c.id === p.parentId) : null;
       if (par) { const i = (par.kids || []).findIndex(k => k.name === p.name && k.used); if (i >= 0) { if (par.kids[i].later) par.kids.splice(i, 1); else par.kids[i].used = false; Store.loadCareer(par.id).then(d => { if (d) { d.kids = par.kids.slice(); Store.save('career', d); } }).catch(() => { }); } }
-      try { localStorage.removeItem('sk_career_' + p.id); } catch { } if (Store.cloud) { try { Store.cref(p.id).delete().catch(() => { }); } catch { } }
+      KV.del('sk_career_' + p.id); if (Store.cloud) { try { Store.cref(p.id).delete().catch(() => { }); } catch { } }
       { const ln = S.world.lines?.[p.line]; if (ln && ln.by === p.id && ln.whatIf && !S.world.careers.some(c => c.line === p.line)) { delete S.world.lines[p.line]; S.viewLine = ln.parent || 'L0'; } }
       S.world.paused = (S.world.paused || []).filter(x => x.id !== p.id); S.world.activeId = null; S.p = null; Store.save('world', S.world);
       toast(p.whatIf ? "'만약에'를 지웠어요." : '커리어를 취소했어요.'); S.view = 'world'; render(); window.scrollTo(0, 0); return;
@@ -9360,20 +9431,25 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (a === 'cardback') { S.cardMode = 'card'; render(); return; }
     if (a === 'sample') return runSample(el.dataset.id);
     if (a === 'export') return exportSave();
+    if (a === 'saveretry') { const ok = await KV.flush(); if (!ok) toast('아직 저장하지 못했어요. 세이브 파일을 내보내 두세요.'); render(); return; }
+    if (a === 'orphanexport') { const docs = orphanIds().map(id => KV.get('sk_career_' + id)).filter(Boolean); return downloadJSON(JSON.stringify({ app: 'sekaisen-career-orphans', v: 1, at: Date.now(), careers: docs }), `세계선-연결이-끊긴-커리어-${new Date().toISOString().slice(0, 10)}.json`, `sekaisen-orphans-${new Date().toISOString().slice(0, 10)}.json`); }
     if (a === 'rename') { const v = $('#worldname').value.trim(); if (v) { S.world.name = v.slice(0, 40); Store.save('world', S.world); toast('세계선 이름을 바꿨어요.'); render(); } return; }
-    if (a === 'doimport') { const d = S._import; if (!d) return; if (d.codex && Codex.merge(d.codex)) Codex.save(); S.world = Object.assign(blankWorld(), d.world); for (const c of d.careers) { migrateCareer(c); Store.save('career', c); } Store.save('world', S.world); S.p = S.world.activeId ? d.careers.find(c => c.id === S.world.activeId) || null : null; await worldReady(); if (S.migMsg) { setTimeout(() => toast(S.migMsg), 3600); S.migMsg = ''; } if (S.p) S.choice = defaultChoice(S.p); if (d.crests && typeof d.crests === 'object') { S.crests = Object.assign({}, S.crests, d.crests); saveCrests(); } S._import = null; toast('세이브를 불러왔어요.'); S.view = 'world'; render(); return; }
+    if (a === 'doimport') { const d = S._import; if (!d) return; if (d.codex && Codex.merge(d.codex)) Codex.save(); S.world = Object.assign(blankWorld(), d.world); for (const c of d.careers) { migrateCareer(c); Store.save('career', c); } Store.save('world', S.world); S.p = S.world.activeId ? d.careers.find(c => c.id === S.world.activeId) || null : null; await worldReady(); if (S.migMsg) { setTimeout(() => toast(S.migMsg), 3600); S.migMsg = ''; } if (S.p) S.choice = defaultChoice(S.p); if (d.crests && typeof d.crests === 'object') { S.crests = Object.assign({}, S.crests, d.crests); saveCrests(); } S._import = null; const okI = await KV.flush(); toast(okI ? '세이브를 불러왔어요.' : '불러온 세이브를 이 기기에 저장하지 못했어요. 화면을 닫지 말고 다시 저장을 눌러 보세요.'); S.view = 'world'; render(); return; }
     if (a === 'crestclear') { if (!S._clearArm) { S._clearArm = true; S.crestMsg = '한 번 더 누르면 직접 넣은 엠블럼을 모두 지워요.'; render(); setTimeout(() => { S._clearArm = false; }, 4000); return; } S._clearArm = false; S.crests = {}; saveCrests(); S.crestMsg = '모두 지웠어요.'; render(); return; }
     if (a === 'cancelimport') { S._import = null; $('#importconfirm').hidden = true; return; }
     if (a === 'importcrests') { const d = S._import; if (!d?.crests) return; const n = Object.keys(d.crests).length; S.crests = Object.assign({}, S.crests, d.crests); saveCrests(); S._import = null; toast(`엠블럼 ${n}개를 가져왔어요. 세계선은 그대로예요.`); render(); return; }
   }
 
   async function exportSave() {
-    const careers = []; for (const c of S.world.careers) { const k = await Store.loadCareer(c.id); if (k) careers.push(k); } if (S.p) careers.push(S.p);
+    const careers = []; for (const c of S.world.careers) { const k = await Store.loadCareer(c.id); if (k) careers.push(k); } for (const x of S.world.paused || []) { if (S.p?.id === x.id || careers.some(c => c.id === x.id)) continue; const k = await Store.loadCareer(x.id); if (k) careers.push(k); } if (S.p) careers.push(S.p); // 1.2.1: 잠시 멈춘 커리어도 함께 내보낸다
     const data = JSON.stringify({ app: 'sekaisen-career', v: 3, world: S.world, careers, crests: S.crests, codex: Codex.has() ? Codex.d : undefined });
     const filename = `세계선-${S.world.name}-${new Date().toISOString().slice(0, 10)}.json`;
+    return downloadJSON(data, filename);
+  }
+  async function downloadJSON(data, filename, ascii) {
     let dl = null; try { dl = window.claude?.use ? await window.claude.use('downloads') : null; } catch { dl = null; }
     if (dl) { try { await dl.save({ filename, data }); toast('세이브 파일을 저장했어요.'); } catch (e) { if (e?.code !== 'declined') toast('파일을 저장하지 못했어요.'); } return; }
-    try { const url = URL.createObjectURL(new Blob([data], { type: 'application/json' })); const a = document.createElement('a'); a.href = url; a.download = `sekaisen-career-${new Date().toISOString().slice(0, 10)}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); toast('세이브 파일을 내려받았어요.'); } catch { toast('파일을 저장하지 못했어요.'); }
+    try { const url = URL.createObjectURL(new Blob([data], { type: 'application/json' })); const a = document.createElement('a'); a.href = url; a.download = ascii || `sekaisen-career-${new Date().toISOString().slice(0, 10)}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); toast('세이브 파일을 내려받았어요.'); } catch { toast('파일을 저장하지 못했어요.'); }
   }
   function importFile(file) {
     if (!file) return; const fr = new FileReader();
@@ -9419,13 +9495,25 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return p;
   }
   async function boot() {
+    await KV.init();
+    KV.onFail = (f) => { toast(f.quota ? '저장 공간이 부족해서 저장하지 못했어요. 세이브 파일을 내보내 두세요.' : '저장하지 못했어요. 세이브 파일을 내보내 두세요.'); if (S.ready) render(); };
+    KV.onOk = () => { toast('다시 저장됐어요.'); if (S.ready) render(); };
+    S.crests = KV.get('sk_crests') || {};
     Codex.load();
     S.world = Object.assign(blankWorld(), LS.get('sk_world') || {});
-    if (S.world.activeId) S.p = migrateCareer(LS.get('sk_career_' + S.world.activeId));
+    // 무결성 검사(1.2.1): 활성 커리어 문서가 없거나, 은퇴 처리된 문서인데 세계 기록에 없으면 이어서 뛰게 하지 않는다(문서는 지우지 않고 '연결이 끊긴 기록'으로 남긴다)
+    { const w = S.world; const fix = [];
+      if (w.activeId) { const doc = LS.get('sk_career_' + w.activeId);
+        if (!doc) { fix.push('활성 커리어 기록이 저장돼 있지 않아서 정리했어요.'); w.activeId = null; }
+        else if (doc.status === 'retired' && !w.careers.some(c => c.id === doc.id)) { fix.push(`${doc.name}의 은퇴가 끝까지 저장되지 않았던 기록이라 이어서 뛰지 않게 했어요. 세이브 화면에서 파일로 받을 수 있어요.`); w.activeId = null; }
+        else S.p = migrateCareer(doc); }
+      const pz = (w.paused || []).filter(x => !KV.raw('sk_career_' + x.id)); if (pz.length) { w.paused = w.paused.filter(x => KV.raw('sk_career_' + x.id)); fix.push(`저장되지 않은 잠시 멈춘 커리어 ${pz.length}개를 목록에서 정리했어요.`); }
+      if (fix.length) { Store.save('world', w); S.integ = fix; } }
     S.world.careers.forEach(c => { c.pos = { CAM: 'AM', CDM: 'DM' }[c.pos] || c.pos; c.kids = c.kids || []; });
     await worldReady(); if (S.p) afterLoad();
     S.ready = true; S.view = S.p ? 'career' : 'world'; render();
     if (S.migMsg) { toast(S.migMsg); S.migMsg = ''; }
+    if (S.integ) setTimeout(() => toast(S.integ[0]), S.migMsg ? 3600 : 400);
     await Promise.all([Store.init(), loadPack()]);
     await Codex.sync(); if (Codex.has()) render();
     if (Store.cloud) {
