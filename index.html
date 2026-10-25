@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='1.4.2'</script>
+<script>window.SK_VER='1.5'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -707,15 +707,15 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 /* 1.4.1 전체 기록: 구단별 · 시즌 성적 */
 .px-lbl { font-family: "Silkscreen", var(--f-body); } .px-num { font-family: "Jersey 10", var(--f-body); font-weight: 400; font-variant-numeric: tabular-nums; font-size-adjust: cap-height .74; letter-spacing: .02em; white-space: nowrap; } .px-lbl { font-size: 10.5px; font-weight: 700; letter-spacing: .12em; color: var(--blue); margin: 0 0 6px; }
 .cbk { margin: 4px 0 14px; } .cbk-g { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
-.cbk-c { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; background: #fff; padding: 10px 12px; box-shadow: inset 0 0 0 2px #e6ebf7, 0 3px 0 rgba(42, 68, 168, .35); }
+.cbk-c { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; background: #fff; padding: 10px 12px; box-shadow: inset 0 0 0 2px #e6ebf7, 0 3px 0 rgba(var(--royal-rgb), .35); }
 .cbk-m { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .cbk-m > b { font-size: 14px; } .cbk-m > small { font-size: 12px; color: var(--muted); } .cbk-m > small b { color: var(--ink); }
 .cbk-s { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11.5px; color: var(--muted); margin-top: 2px; } .cbk-s b { font-size: 14px; color: var(--ink); margin-right: 2px; } .cbk-s .g b { color: var(--blue); } .cbk-s .a b { color: var(--pos); } .cbk-s .t { display: inline-flex; align-items: center; gap: 2px; } .cbk-s .t b { color: var(--gold); }
 .rectbl .stk { position: sticky; left: 0; background: var(--panel-2); z-index: 1; box-shadow: 1px 0 0 var(--line); } .rectbl thead .stk { background: var(--panel); } .rectbl td.num { white-space: nowrap; } .rectbl td.num .small { display: inline; margin-left: 1px; }
 .rkcell, .crcell { white-space: nowrap; } .rk { display: inline-flex; align-items: center; gap: 3px; } .rk b { font-variant-numeric: tabular-nums; } .rk.champ b { color: var(--gold); } .rk.hi b { color: var(--blue); } .rk-lg { display: block; font-size: 10.5px; color: var(--faint); }
-.cr { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; color: var(--muted); background: var(--panel-2); padding: 1px 7px; margin: 1px 3px 1px 0; } .cr b { color: var(--ink); font-weight: 800; } .cr.won { background: #fff1c4; color: #6b4a00; } .cr.won b { color: #8a5a00; } .cr.fin { background: #eef2ff; } .cr.fin b { color: var(--blue); } .cr.lg.hi b { color: var(--blue); }
+.cr { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; color: var(--muted); background: var(--panel-2); padding: 1px 7px; margin: 1px 3px 1px 0; } .cr b { color: var(--ink); font-weight: 800; } .cr.won { background: #fff1c4; color: #6b4a00; } .cr.won b { color: #8a5a00; } .cr.fin { background: var(--royal-t); } .cr.fin b { color: var(--blue); } .cr.lg.hi b { color: var(--blue); }
 /* 1.4.1 전체 기록: 표 대신 줄(옆으로 밀지 않는다) */
 .rsub { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 5px; margin: 0 0 12px; max-width: 420px; }
-.rsub button { border: 0; font: inherit; font-size: 13.5px; font-weight: 800; padding: 8px 0; background: var(--panel-2); color: var(--muted); cursor: pointer; } .rsub button.on { background: var(--blue); color: #fff; box-shadow: 0 3px 0 #1d2c6e; }
+.rsub button { border: 0; font: inherit; font-size: 13.5px; font-weight: 800; padding: 8px 0; background: var(--panel-2); color: var(--muted); cursor: pointer; } .rsub button.on { background: var(--blue); color: #fff; box-shadow: 0 3px 0 var(--royal-d); }
 .slist, .flist, .rolist { display: flex; flex-direction: column; gap: 6px; }
 .sl-r { display: grid; grid-template-columns: max-content minmax(0, 1fr); grid-template-areas: "y c" "y s" "y k" "y x"; gap: 4px 10px; align-items: start; background: #fff; padding: 10px 12px; box-shadow: inset 0 0 0 2px #e6ebf7; }
 .sl-r.yt { background: var(--panel-2); box-shadow: none; }
@@ -728,7 +728,7 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .sl-x { grid-area: x; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12.5px; color: var(--muted); } .sl-x b { color: var(--ink); } .sl-x i { font-style: normal; } .sl-x .rolecell, .sl-x span { white-space: nowrap; }
 @media (min-width: 760px) { .sl-r { grid-template-columns: 70px minmax(230px, 1.1fr) minmax(0, 1.4fr) 200px; grid-template-areas: "y c k s" "y x x s"; } .sl-s { justify-content: flex-end; text-align: right; } .sl-s small { flex-basis: 100%; } }
 /* 결승 · 대표팀 */
-.fl-r { display: grid; grid-template-columns: max-content minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; background: #fff; padding: 10px 12px; box-shadow: inset 0 0 0 2px #e6ebf7; } .fl-r.w { box-shadow: inset 0 0 0 2px #ffe7a3; background: #fffbef; }
+.fl-r { display: grid; grid-template-columns: max-content minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; background: #fff; padding: 10px 12px; box-shadow: inset 0 0 0 2px #e6ebf7; } .fl-r.w { box-shadow: inset 0 0 0 2px #ffe7a3; background: #fff1c4; }
 .fl-y { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; white-space: nowrap; min-width: 46px; } .fl-y b { font-size: 15px; color: var(--blue); }
 .fl-m { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .fl-m > b { font-size: 15px; } .fl-vs { font-size: 13.5px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; } .fl-vs i { font-style: normal; color: var(--faint); font-size: 12px; } .fl-m small { font-size: 12.5px; color: var(--muted); }
 .fl-s { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; } .fl-s > b { font-size: 22px; color: var(--ink); } .fl-s small { font-size: 12px; color: var(--muted); }
@@ -742,28 +742,28 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .ro-n { text-align: right; font-size: 12px; color: var(--muted); } .ro-n b { font-size: 20px; color: var(--blue); margin-right: 2px; } .ro-n small { display: block; }
 .ro-c { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 3px 12px; font-size: 12.5px; color: var(--muted); } .ro-c b { color: var(--ink); }
 /* ---------- 1.4.1 커리어 카드: 밝은 로열 · 아케이드 진열장 ---------- */
-.careercard.cc14 { --ink: #1b2240; --muted: #5d6685; --faint: #8f97ad; --line: rgba(35, 52, 122, .14); --soft: rgba(35, 52, 122, .06); --panel-2: #ffffff; --panel-3: #e9eefc; --gold: #a86f00; --gold-hi: #d99a0b; --gold-bg: rgba(242, 184, 40, .18); --gold-ink: #2b1d00; --pos: #12875a; --red: #c93a30; --blue: #2a44a8; --royal: #2a44a8; --royal-d: #1d2c6e; --royal-t: #eef2ff; --cream: #fffaf0;
-  background: var(--cream); background-image: radial-gradient(rgba(42, 68, 168, .07) 1px, transparent 1.2px); background-size: 12px 12px; color: var(--ink);
-  border-radius: 0; padding: 0 18px 20px; box-shadow: 0 0 0 3px var(--royal-d), 0 0 0 6px #ffd45c, 0 0 0 8px var(--royal-d), 0 12px 26px rgba(29, 44, 110, .16); margin: 14px auto; overflow: hidden; }
+.careercard.cc14 { --ink: #1b2240; --muted: #5d6685; --faint: #8f97ad; --line: rgba(var(--royal-d-rgb), .14); --soft: rgba(var(--royal-d-rgb), .06); --panel-2: #ffffff; --panel-3: var(--royal-t); --gold: #a86f00; --gold-hi: #d99a0b; --gold-bg: rgba(242, 184, 40, .18); --gold-ink: #2b1d00; --pos: #12875a; --red: #c93a30; --blue: var(--royal); --cream: #ffffff;
+  background: var(--cream); background-image: radial-gradient(rgba(var(--royal-rgb), .07) 1px, transparent 1.2px); background-size: 12px 12px; color: var(--ink);
+  border-radius: 0; padding: 0 18px 20px; box-shadow: 0 0 0 3px var(--royal-d), 0 0 0 6px var(--hl), 0 0 0 8px var(--royal-d), 0 12px 26px rgba(var(--royal-d-rgb), .16); margin: 14px auto; overflow: hidden; }
 .cc14 .px-lbl { font-family: "Silkscreen", var(--f-body); } .cc14 .px-num, .cc14 .px-ovr, .cc14 .tr-n { font-family: "Jersey 10", var(--f-body); font-weight: 400; font-size-adjust: cap-height .74; letter-spacing: .02em; }
 .cc14 .px-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cc14 .px-lbl { font-size: 10px; font-weight: 700; letter-spacing: .06em; color: var(--royal); white-space: nowrap; }
 .cc14 .cc-top { margin: 0 -18px 4px; padding: 9px 18px; background: var(--royal); color: #fff; align-items: center; box-shadow: inset 0 -3px 0 var(--royal-d); }
-.cc14 .cc-top .eyebrow { color: #ffe08a; } .cc14 .cc-top .px-num { color: #fff; font-size: 13px; }
+.cc14 .cc-top .eyebrow { color: var(--hl-t); } .cc14 .cc-top .px-num { color: #fff; font-size: 13px; }
 .cc14 .cc-sev { color: #fff; }
 .cc14 .cc-hero { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 6px; padding-top: 6px; }
 .cc14 .cc-ovrbox, .cc14 .cc-bdo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .cc14 .cc-bdo { align-items: flex-end; text-align: right; }
-.cc14 .px-ovr { font-size: 52px; font-weight: 700; line-height: .9; color: #ffc93c; text-shadow: 3px 0 0 var(--royal-d), -3px 0 0 var(--royal-d), 0 3px 0 var(--royal-d), 0 -3px 0 var(--royal-d), 3px 3px 0 var(--royal-d), -3px 3px 0 var(--royal-d), 3px -3px 0 var(--royal-d), -3px -3px 0 var(--royal-d), 0 6px 0 rgba(29, 44, 110, .25); margin: 4px 0 6px 3px; }
+.cc14 .px-ovr { font-size: 52px; font-weight: 700; line-height: .9; color: var(--ovr, var(--hl)); text-shadow: 3px 0 0 var(--royal-d), -3px 0 0 var(--royal-d), 0 3px 0 var(--royal-d), 0 -3px 0 var(--royal-d), 3px 3px 0 var(--royal-d), -3px 3px 0 var(--royal-d), 3px -3px 0 var(--royal-d), -3px -3px 0 var(--royal-d), 0 6px 0 rgba(var(--royal-d-rgb), .25); margin: 4px 0 6px 3px; }
 .cc14 .px-ovr.sm { font-size: 30px; text-shadow: 2px 0 0 var(--royal-d), -2px 0 0 var(--royal-d), 0 2px 0 var(--royal-d), 0 -2px 0 var(--royal-d), 2px 2px 0 var(--royal-d), -2px 2px 0 var(--royal-d), 2px -2px 0 var(--royal-d), -2px -2px 0 var(--royal-d); margin: 2px 2px 4px 0; }
 .cc14 .cc-posb { align-self: flex-start; font-family: "Jersey 10", var(--f-body); font-weight: 400; font-size: 21px; line-height: 1.1; letter-spacing: .06em; color: #fff; background: var(--royal); padding: 2px 8px 1px; box-shadow: 0 3px 0 var(--royal-d); margin-top: 4px; }
 .cc14 .cc-roles { font-size: 12px; font-weight: 800; color: var(--royal); margin: 6px 0 0; line-height: 1.35; }
 .cc14 .cc-stage { position: relative; padding: 0 6px 10px; }
-.cc14 .cc-stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 10px; background: repeating-linear-gradient(90deg, #ffd45c 0 8px, #f2b828 8px 16px); box-shadow: 0 3px 0 var(--royal-d); }
+.cc14 .cc-stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 10px; background: repeating-linear-gradient(90deg, var(--hl) 0 8px, var(--hl-d) 8px 16px); box-shadow: 0 3px 0 var(--royal-d); }
 .cc14 .cc-stage .px.lg { background: var(--royal-t); border: 3px solid var(--royal-d); border-radius: 0; box-shadow: none; }
 .cc14 .bdo-balls { display: flex; gap: 1px; justify-content: flex-end; }
 .cc14 .cc-name { margin: 8px 0 0; font-size: clamp(24px, 6vw, 30px); color: var(--royal-d); }
-.cc14 .cc-nick { margin: 2px 0 0; } .cc14 .cc-nick span { display: inline-block; font-size: 13px; font-weight: 800; color: var(--gold-ink); background: #ffd45c; padding: 2px 12px; box-shadow: 0 2px 0 #c98d12; }
+.cc14 .cc-nick { margin: 2px 0 0; } .cc14 .cc-nick span { display: inline-block; font-size: 13px; font-weight: 800; color: var(--hl-ink); background: var(--hl); padding: 2px 12px; box-shadow: 0 2px 0 var(--hl-dd); }
 .cc14 .cc-chips { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; }
 .cc14 .lchip { font-size: 12.5px; font-weight: 700; color: var(--royal-d); background: #fff; padding: 3px 9px; box-shadow: inset 0 0 0 2px var(--royal-t), 0 2px 0 var(--line); }
 .cc14 .lchip b { font-size: 14px; margin-right: 2px; color: var(--royal); }
@@ -774,7 +774,7 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .cc14 .sb-t b { font-size: 19px; line-height: 1; color: var(--royal-d); } .cc14 .sb-t span { font-size: 11px; font-weight: 800; color: var(--muted); white-space: nowrap; }
 /* 득점 게이지 */
 .cc14 .aroute { background: #fff; padding: 10px 12px 8px; box-shadow: inset 0 0 0 2px var(--royal-t); }
-.cc14 .ar-h { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; } .cc14 .ar-style { font-size: 11.5px; font-weight: 800; color: var(--gold-ink); background: #ffe7a3; padding: 1px 8px; }
+.cc14 .ar-h { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; } .cc14 .ar-style { font-size: 11.5px; font-weight: 800; color: var(--gold-ink); background: var(--hl-t); padding: 1px 8px; }
 .cc14 .ar-row { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 2px 8px; align-items: center; margin-top: 6px; }
 .cc14 .ar-lab { font-size: 11px; font-weight: 800; color: var(--faint); }
 .cc14 .ar-bar { display: grid; grid-template-columns: repeat(20, 1fr); gap: 2px; padding: 3px; background: var(--royal-d); }
@@ -783,35 +783,35 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 .cc14 .ar-leg span::before { content: ''; display: inline-block; width: 7px; height: 7px; background: var(--c); margin-right: 4px; vertical-align: 1px; } .cc14 .ar-leg b { color: var(--ink); font-size: 12px; } .cc14 .ar-leg small { color: var(--faint); margin-left: 2px; }
 .cc14 .ar-shift { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
 /* 트로피 진열장 */
-.cc14 .troom { background: var(--royal-t); padding: 10px 12px 12px; box-shadow: inset 0 0 0 2px #dfe6ff; display: flex; flex-direction: column; gap: 8px; }
+.cc14 .troom { background: var(--royal-t); padding: 10px 12px 12px; box-shadow: inset 0 0 0 2px var(--royal-t); display: flex; flex-direction: column; gap: 8px; }
 .cc14 .tr-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; } .cc14 .tr-tot { font-size: 12px; color: var(--muted); font-weight: 700; } .cc14 .tr-tot b { font-size: 15px; color: var(--royal-d); }
 .cc14 .tr-shelf { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 0; padding: 4px 0 0; }
 .cc14 .tr-it, .cc14 .tr-empty { display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; align-items: end; column-gap: 2px; padding: 0 9px 6px; min-height: 84px; border-bottom: 6px solid #c48644; box-shadow: 0 2px 0 #8a5a2a; }
-.cc14 .tr-it .pix { grid-row: 1; grid-column: 1; filter: drop-shadow(0 2px 0 rgba(29, 44, 110, .2)); }
+.cc14 .tr-it .pix { grid-row: 1; grid-column: 1; filter: drop-shadow(0 2px 0 rgba(var(--royal-d-rgb), .2)); }
 .cc14 .tr-n { grid-row: 1; grid-column: 2; font-size: 14px; color: var(--royal-d); line-height: 1; margin-bottom: 2px; }
-.cc14 .tr-it small, .cc14 .tr-empty small { grid-row: 2; grid-column: 1 / 3; font-size: 10.5px; font-weight: 800; color: #fff; background: rgba(29, 44, 110, .78); text-align: center; padding: 0 4px; margin-top: 4px; white-space: nowrap; max-width: 92px; overflow: hidden; text-overflow: ellipsis; }
+.cc14 .tr-it small, .cc14 .tr-empty small { grid-row: 2; grid-column: 1 / 3; font-size: 10.5px; font-weight: 800; color: #fff; background: rgba(var(--royal-d-rgb), .78); text-align: center; padding: 0 4px; margin-top: 4px; white-space: nowrap; max-width: 92px; overflow: hidden; text-overflow: ellipsis; }
 .cc14 .tr-empty { opacity: .8; }
 .cc14 .tr-fin { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
 .cc14 .tr-fl { display: flex; flex-wrap: wrap; gap: 2px; } .cc14 .tr-fl i { display: inline-flex; } .cc14 .tr-fl em { font-style: normal; font-size: 11px; color: var(--muted); align-self: center; }
 .cc14 .tr-fin > b { font-size: 13px; color: var(--royal-d); white-space: nowrap; } .cc14 .tr-fin > b small { font-size: 10px; color: var(--muted); margin-left: 1px; }
 .cc14 .tr-aw { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
-.cc14 .aw-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 800; color: var(--ink); background: #fff; padding: 2px 8px 2px 4px; box-shadow: 0 2px 0 rgba(29, 44, 110, .18); } .cc14 .aw-chip b { font-family: "Jersey 10", var(--f-body); font-size: 15px; font-weight: 400; color: var(--gold); margin-left: 1px; } .cc14 .aw-chip.more { color: var(--muted); padding-left: 8px; }
+.cc14 .aw-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 800; color: var(--ink); background: #fff; padding: 2px 8px 2px 4px; box-shadow: 0 2px 0 rgba(var(--royal-d-rgb), .18); } .cc14 .aw-chip b { font-family: "Jersey 10", var(--f-body); font-size: 15px; font-weight: 400; color: var(--gold); margin-left: 1px; } .cc14 .aw-chip.more { color: var(--muted); padding-left: 8px; }
 .cc14 .tr-pills { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
-.cc14 .pill { border-radius: 0; } .cc14 .pill.gold { background: #ffd45c; color: var(--gold-ink); }
+.cc14 .pill { border-radius: 0; } .cc14 .pill.gold { background: #ffd45c; color: #2b1d00; }
 /* 구단 */
 .cc14 .cc-clubs small { color: var(--muted); } .cc14 .cc-clubs small b { font-size: 12px; color: var(--royal-d); margin-right: 1px; }
-.cc14 .cc-clubs img, .cc14 .cc-clubs svg:not(.pix) { filter: drop-shadow(0 2px 0 rgba(29, 44, 110, .18)); }
+.cc14 .cc-clubs img, .cc14 .cc-clubs svg:not(.pix) { filter: drop-shadow(0 2px 0 rgba(var(--royal-d-rgb), .18)); }
 /* 베스트 */
 .cc14 .cc-best > div { background: #fff; border-radius: 0; box-shadow: inset 0 0 0 2px var(--royal-t), 0 3px 0 var(--line); padding: 8px 10px; }
 .cc14 .cc-best > div > .pix { margin-bottom: 2px; } .cc14 .cc-best span { color: var(--royal); } .cc14 .cc-best b { font-size: 14px; color: var(--royal-d); }
 /* 장면 · 이야기 */
-.cc14 .cc-legend { border: 0; border-radius: 0; background: #fff8e2; box-shadow: inset 0 0 0 2px #ffe7a3; } .cc14 .cc-legend .px-lbl { color: var(--gold); } .cc14 .cc-feat { color: var(--gold); }
+.cc14 .cc-legend { border: 0; border-radius: 0; background: var(--hl-tt); box-shadow: inset 0 0 0 2px var(--hl-t); } .cc14 .cc-legend .px-lbl { color: var(--gold); } .cc14 .cc-feat { color: var(--gold); }
 .cc14 .cc-story { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
 .cc14 .cc-story li { display: grid; grid-template-columns: 8px 76px minmax(0, 1fr); gap: 0 8px; align-items: start; font-size: 12.5px; line-height: 1.5; text-align: left; }
-.cc14 .cc-story li::before { content: ''; width: 8px; height: 8px; background: var(--c, var(--royal)); align-self: start; margin-top: 6px; box-shadow: 1px 1px 0 rgba(29, 44, 110, .3); }
+.cc14 .cc-story li::before { content: ''; width: 8px; height: 8px; background: var(--c, var(--royal)); align-self: start; margin-top: 6px; box-shadow: 1px 1px 0 rgba(var(--royal-d-rgb), .3); }
 .cc14 .st-k { font-weight: 800; color: var(--muted); font-size: 11.5px; } .cc14 .st-v { color: var(--ink); min-width: 0; } .cc14 .st-v small { color: var(--faint); } .cc14 .st-note { display: block; font-size: 11.5px; color: var(--muted); font-style: italic; }
-.cc14 .st-red { --c: #e0574c; } .cc14 .st-gold { --c: #f2b828; } .cc14 .st-blue { --c: var(--royal); } .cc14 .st-violet { --c: #8a6ee0; } .cc14 .st-money { --c: #2fb37a; } .cc14 .st-life { --c: #9aa6c4; }
-.cc14 .tmp { border-top-color: var(--line); } .cc14 .tmp-t b { background: #fff; color: var(--royal-d); box-shadow: inset 0 0 0 2px #ffd45c, 0 3px 0 #f2b828; border-radius: 0; }
+.cc14 .st-red { --c: #e0574c; } .cc14 .st-gold { --c: var(--hl-d); } .cc14 .st-blue { --c: var(--royal); } .cc14 .st-violet { --c: #8a6ee0; } .cc14 .st-money { --c: #2fb37a; } .cc14 .st-life { --c: #9aa6c4; }
+.cc14 .tmp { border-top-color: var(--line); } .cc14 .tmp-t b { background: #fff; color: var(--royal-d); box-shadow: inset 0 0 0 2px var(--hl), 0 3px 0 var(--hl-d); border-radius: 0; }
 .cc14 .cc-rolerec { border-top: 2px dotted var(--line); }
 .cc14.mourn { filter: saturate(.6); }
 @media (max-width: 520px) { .cc14 .cc-best > div { display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 8px; align-items: center; } .cc14 .cc-best > div > .pix { grid-row: 1 / 4; justify-self: center; margin: 0; } .cc14 .cc-best > div > :not(.pix) { grid-column: 2; } }
@@ -824,13 +824,13 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
 @media (max-width: 640px) {
   .cc14:not(.force-wide) .cc-pnav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin: 2px 0 2px; }
   .cc14 .cc-pnav button { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 0 7px; border: 0; background: #fff; color: var(--muted); font: inherit; font-size: 13px; font-weight: 800; box-shadow: inset 0 0 0 2px var(--royal-t), 0 2px 0 var(--line); cursor: pointer; }
-  .cc14 .cc-pnav button b { font-size: 11px; color: var(--faint); } .cc14 .cc-pnav button.on { background: var(--royal); color: #fff; box-shadow: 0 3px 0 var(--royal-d); } .cc14 .cc-pnav button.on b { color: #ffe08a; }
+  .cc14 .cc-pnav button b { font-size: 11px; color: var(--faint); } .cc14 .cc-pnav button.on { background: var(--royal); color: #fff; box-shadow: 0 3px 0 var(--royal-d); } .cc14 .cc-pnav button.on b { color: var(--hl-t); }
   .cc14:not(.force-wide) .cc-cols { display: flex; flex-direction: row; gap: 0; align-items: flex-start; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin: 0 -18px; transition: height .22s ease; }
   .cc14:not(.force-wide) .cc-cols::-webkit-scrollbar { display: none; }
   .cc14:not(.force-wide) .cc-l, .cc14:not(.force-wide) .cc-r { display: contents; }
   .cc14:not(.force-wide) .cc-pg { flex: 0 0 100%; box-sizing: border-box; padding: 6px 18px 8px; scroll-snap-align: start; scroll-snap-stop: always; }
   .cc14:not(.force-wide) .cc-pg[data-pg="1"] { order: 1; } .cc14:not(.force-wide) .cc-pg[data-pg="2"] { order: 2; } .cc14:not(.force-wide) .cc-pg[data-pg="3"] { order: 3; } .cc14:not(.force-wide) .cc-pg[data-pg="4"] { order: 4; }
-  .cc14:not(.force-wide) .cc-dots { display: flex; justify-content: center; gap: 7px; margin-top: 2px; } .cc14 .cc-dots i { width: 8px; height: 8px; background: var(--royal-t); box-shadow: inset 0 0 0 1px #cdd6f5; } .cc14 .cc-dots i.on { background: var(--royal); box-shadow: 0 2px 0 var(--royal-d); }
+  .cc14:not(.force-wide) .cc-dots { display: flex; justify-content: center; gap: 7px; margin-top: 2px; } .cc14 .cc-dots i { width: 8px; height: 8px; background: var(--royal-t); box-shadow: inset 0 0 0 1px var(--line); } .cc14 .cc-dots i.on { background: var(--royal); box-shadow: 0 2px 0 var(--royal-d); }
   /* 쪽마다 여유가 생긴 만큼 글자를 키운다 */
   .cc14:not(.force-wide) .px-ovr { font-size: 60px; } .cc14:not(.force-wide) .cc-name { font-size: 30px; }
   .cc14:not(.force-wide) .sboard { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .cc14:not(.force-wide) .sboard.n5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cc14:not(.force-wide) .sboard.n5 .sb-t:last-child { grid-column: 1 / -1; }
@@ -842,6 +842,84 @@ button.attr { border: 0; background: none; width: calc(100% + 12px); text-align:
   .cc14:not(.force-wide) .cc-story li { font-size: 14px; grid-template-columns: 8px 82px minmax(0, 1fr); } .cc14:not(.force-wide) .st-k { font-size: 12.5px; } .cc14:not(.force-wide) .cc-legend p { font-size: 14.5px; }
   .cc14:not(.force-wide) .cc-clubs small { font-size: 12.5px; } .cc14:not(.force-wide) .cc-rolerec p { font-size: 13.5px; }
 }
+/* ========== 1.5 전체 톤: 커리어 카드와 같은 밝은 로열 · 아이보리 · 도트 ========== */
+:root { --ovr: #e9c46a; --hl-ink: #1a1f2b; --hl: #e9c46a; --hl-d: #d4a940; --hl-dd: #a8822a; --hl-t: #f5e3b5; --hl-tt: #fbf3df; --hl-rgb: 233, 196, 106; --royal-rgb: 43, 52, 70; --royal-d-rgb: 26, 31, 43; --bg: #ffffff; --panel: #ffffff; --panel-2: #f1f3fb; --panel-3: #e4e9f8; --line: rgba(var(--royal-d-rgb), .13); --soft: rgba(var(--royal-d-rgb), .06); --ink: #1b2240; --muted: #5d6685; --faint: #8f97ad; --gold: #a86f00; --gold-hi: #c98d12; --gold-bg: rgba(242, 184, 40, .18); --blue: #2a44a8; --royal: #2b3446; --royal-d: #1a1f2b; --royal-t: #f0f2f6; --ava: #f0f2f6; --ava-line: #1a1f2b; --r: 6px; --r-sm: 4px; --shadow: inset 0 0 0 2px #e9edf8, 0 3px 0 rgba(var(--royal-d-rgb), .1); }
+html, body { background-color: var(--bg); }
+body { background-image: radial-gradient(rgba(var(--royal-rgb), .07) 1px, transparent 1.3px); background-size: 14px 14px; }
+:focus-visible { outline: 2px solid var(--royal); }
+.top { background: var(--royal); box-shadow: inset 0 -3px 0 var(--royal-d); backdrop-filter: none; -webkit-backdrop-filter: none; color: #fff; }
+.brand { color: #fff; } .logo { border-color: #fff; } .logo::before { background: #fff; } .logo::after { background: var(--hl); }
+.nav button { color: rgba(255, 255, 255, .72); border-radius: 0; } .nav button.on { color: var(--hl-ink); background: var(--hl); box-shadow: 0 3px 0 var(--hl-dd); }
+.panel { box-shadow: var(--shadow); }
+h2 { color: var(--royal-d); } .h1 { color: var(--royal-d); } .eyebrow { color: var(--royal); }
+.btn { background: var(--panel-2); box-shadow: inset 0 0 0 2px #e4e9f8, 0 2px 0 rgba(var(--royal-d-rgb), .15); color: var(--ink); }
+.btn:hover { background: var(--panel-3); } .btn:active:not([disabled]) { transform: translateY(2px); box-shadow: inset 0 0 0 2px #e4e9f8; }
+.btn.primary { background: var(--royal); color: #fff; box-shadow: 0 3px 0 var(--royal-d); } .btn.primary:hover { background: var(--royal); }
+.btn.sm { border-radius: var(--r-sm); }
+.seg button, .subtabs button { border-radius: var(--r-sm); background: var(--panel-2); box-shadow: inset 0 0 0 1px #e4e9f8; }
+.seg button.on, .subtabs button.on { background: var(--royal); color: #fff; box-shadow: 0 3px 0 var(--royal-d); }
+.chip { box-shadow: inset 0 0 0 1px #e4e9f8; } .chip.on { background: var(--royal-t); box-shadow: inset 0 0 0 2px var(--royal), 0 2px 0 var(--royal-d); }
+.pill { border-radius: 3px; } .pill.gold { background: var(--hl-tt); color: #6b4a00; box-shadow: inset 0 0 0 1px var(--hl-d); }
+.note { box-shadow: inset 0 0 0 1px #e4e9f8; }
+.inp { border: 0; box-shadow: inset 0 0 0 2px #e4e9f8; } .inp:focus { box-shadow: inset 0 0 0 2px var(--royal); outline: none; }
+.lcard, .legrow { box-shadow: inset 0 0 0 1px #e4e9f8; } .lcard:hover, .legrow:hover { background: var(--royal-t); }
+.ph-ovr .big, .lr-ovr, .lc-ovr { font-family: "Jersey 10", var(--f-body); font-weight: 400; font-size-adjust: cap-height .74; color: var(--royal); }
+.event .evt { color: var(--royal-d); } .event > .eyebrow::before { border-radius: 0; }
+.event.tone-legacy { box-shadow: inset 0 0 0 2px var(--hl-t), 0 3px 0 var(--hl-d); }
+.phead .px, .px.md, .px.lg { border-radius: 0; }
+/* 시즌 연출: 로열 네이비 · 도트 */
+.reel { background: var(--royal-d); background-image: radial-gradient(rgba(255, 255, 255, .06) 1px, transparent 1.3px); background-size: 14px 14px; }
+.reel.warp { background-color: #2c2152; }
+.reel-bar { height: 10px; border-radius: 0; background: rgba(255, 255, 255, .12); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .1); } .reel-bar i { border-radius: 0; background: repeating-linear-gradient(90deg, var(--hl) 0 10px, var(--hl-d) 10px 12px); }
+.reel-eye { color: var(--hl-t); font-family: "Jersey 10", var(--f-body); font-size: 18px; letter-spacing: .06em; }
+.reel-goal { background: rgba(255, 255, 255, .07); box-shadow: inset 0 0 0 2px rgba(var(--hl-rgb), .35); }
+/* 1.5 포지션 요청 */
+.postabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin: 4px 0 8px; }
+.postabs .pt { border: 0; font: inherit; padding: 6px 0 5px; background: var(--panel-2); color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 1px; cursor: pointer; }
+.postabs .pt b { font-family: "Jersey 10", var(--f-body); font-weight: 400; font-size: 19px; line-height: 1; color: var(--ink); letter-spacing: .04em; } .postabs .pt small { font-size: 10px; }
+.postabs .pt.d0 { box-shadow: inset 0 -3px 0 var(--royal); } .postabs .pt.d1 b { color: var(--royal); } .postabs .pt.d3 { opacity: .7; }
+.postabs .pt.on { background: var(--royal); color: #fff; } .postabs .pt.on b { color: #fff; } .postabs .pt.cur:not(.on) { box-shadow: inset 0 0 0 2px var(--hl-d); }
+.posinfo { font-size: 13px; margin: 0 0 6px; } .sl-tag.tp { background: var(--hl-tt); color: #6b4a00; }
+/* 1.5 시즌 목표 */
+.achi.gok { background: #fff1c4; color: #6b4a00; } .achi.gno { background: #fdecea; color: #a8322a; }
+.goalpick { margin: 6px 0 4px; display: flex; flex-direction: column; gap: 6px; } .gp-exp { margin: 0; font-size: 14px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.gp-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.gp-o { border: 0; font: inherit; text-align: left; display: flex; flex-direction: column; gap: 3px; padding: 9px 10px; background: var(--panel-2); cursor: pointer; box-shadow: inset 0 0 0 2px transparent; min-width: 0; }
+.gp-o b { font-size: 13.5px; line-height: 1.35; } .gp-o small { font-size: 11px; color: var(--muted); line-height: 1.45; } .gp-t { font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+.gp-o.ts .gp-t { color: #12875a; } .gp-o.tc .gp-t { color: var(--royal); } .gp-o.tl .gp-t { color: #a86f00; }
+.gp-o.on { background: #fff; box-shadow: inset 0 0 0 2px var(--royal), 0 3px 0 var(--royal-d); } .gp-o.tl.on { box-shadow: inset 0 0 0 2px var(--hl-d), 0 3px 0 var(--hl-dd); }
+@media (max-width: 520px) { .gp-opts { grid-template-columns: 1fr; } }
+.goalres { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; } .gl-r { display: grid; grid-template-columns: 22px auto 1fr; gap: 2px 8px; align-items: baseline; padding: 7px 10px; background: var(--panel-2); font-size: 13.5px; }
+.gl-r small { grid-column: 3; font-size: 12px; color: var(--muted); } .gl-ic { font-weight: 900; } .gl-r.ok { background: #e9f7ef; } .gl-r.ok .gl-ic { color: #12875a; } .gl-r.no { background: #fdecea; } .gl-r.no .gl-ic { color: #c93a30; } .gl-l { font-size: 11.5px; font-weight: 800; color: var(--muted); }
+.reel-goal { display: grid; grid-template-columns: 1fr auto auto; grid-template-areas: "l v m" "b b b"; gap: 4px 10px; align-items: baseline; margin-top: 14px; padding: 10px 12px; background: rgba(255, 255, 255, .08); }
+.rg-l { grid-area: l; font-size: 13px; opacity: .85; } .rg-v { grid-area: v; font-size: 26px; } .rg-m { grid-area: m; font-size: 13px; font-weight: 800; } .rg-m.ok { color: var(--hl); } .rg-m.no { color: #ff8a7a; }
+.rg-bar { grid-area: b; height: 8px; background: rgba(255, 255, 255, .15); } .rg-bar i { display: block; height: 100%; width: 0; background: var(--hl); transition: width .35s; }
+/* 1.5 업적 */
+.achhead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin: 4px 0 10px; } .achhead .px-num { font-size: 28px; color: var(--royal-d); } .achhead .px-lbl { margin: 0; }
+.ach-t { margin: 14px 0 6px; } .ach-t.t3 { color: #a86f00; } .ach-t.t2 { color: #5e6a80; } .ach-t.t1 { color: #a8622f; }
+.achgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px; }
+.achc { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; padding: 10px 12px; background: var(--panel-2); opacity: .75; }
+.achc.on { background: #fff; opacity: 1; box-shadow: inset 0 0 0 2px #e6ebf7, 0 3px 0 rgba(var(--royal-rgb), .3); } .achc.on.t3 { box-shadow: inset 0 0 0 2px #ffe7a3, 0 3px 0 #f2b828; }
+.achm { display: flex; flex-direction: column; gap: 1px; min-width: 0; } .achm b { font-size: 14.5px; } .achm small { font-size: 12px; color: var(--muted); } .achw { font-size: 12px; margin-top: 2px; }
+.cc14 .tr-ach { background: #fff; padding: 10px 12px; box-shadow: inset 0 0 0 2px var(--royal-t); } .cc14 .tr-ach > div { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.ach-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 700; padding: 2px 8px 2px 4px; background: #f6f7fb; } .ach-chip.t3 { background: #fff1c4; } .ach-chip.t1 { background: #fbefe4; }
+/* 1.5 실시간 보드판 */
+.board { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(13, 20, 48, .82); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); animation: bdIn .2s ease; cursor: pointer; }
+.board.out { opacity: 0; transition: opacity .2s; } @keyframes bdIn { from { opacity: 0; } }
+.bd-in { width: min(440px, 100%); background: #ffffff; color: #1b2240; padding: 0 0 12px; box-shadow: 0 0 0 3px var(--royal-d), 0 0 0 6px var(--hl), 0 0 0 8px var(--royal-d), 0 20px 40px rgba(0, 0, 0, .35); }
+.bd-eye { margin: 0; padding: 8px 14px; background: var(--royal); color: var(--hl-t); font-size: 12.5px; font-weight: 800; box-shadow: inset 0 -3px 0 var(--royal-d); }
+.bd-score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 16px 12px 8px; }
+.bd-team { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; min-width: 0; } .bd-team b { font-size: 13.5px; line-height: 1.3; } .bd-team img, .bd-team svg { width: 44px; height: 44px; object-fit: contain; }
+.bd-num { display: flex; align-items: center; gap: 6px; background: var(--royal-d); padding: 6px 12px; box-shadow: inset 0 0 0 2px var(--hl); } .bd-num b { font-size: 46px; line-height: 1; color: var(--hl); min-width: 26px; text-align: center; } .bd-num i { font-style: normal; color: #fff; font-size: 26px; }
+.board.flash .bd-num { animation: bdFlash .5s steps(2) 2; } @keyframes bdFlash { 50% { background: var(--hl); } 50% { } }
+.bd-clock { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; padding: 4px 14px 8px; } .bd-clock b { font-size: 22px; color: var(--royal); min-width: 48px; } .bd-bar { height: 8px; background: var(--royal-t); } .bd-bar i { display: block; height: 100%; width: 0; background: var(--royal); }
+.board.ended .bd-clock b { color: #c93a30; }
+.bd-feed { list-style: none; margin: 0 14px; padding: 0; min-height: 112px; display: flex; flex-direction: column; gap: 4px; }
+.bd-feed li { display: grid; grid-template-columns: 40px 1fr; gap: 8px; align-items: baseline; font-size: 13.5px; padding: 4px 8px; background: #fff; box-shadow: inset 0 0 0 1px #e6ebf7; animation: bdIn .25s; } .bd-feed li b { font-size: 16px; color: #5d6685; }
+.bd-feed li.ga { border-left: 4px solid var(--royal); } .bd-feed li.gb { border-left: 4px solid #c93a30; } .bd-feed li.me { background: var(--hl-tt); font-weight: 800; } .bd-feed li.sv { border-left: 4px solid #2fb37a; } .bd-feed li.rd { border-left: 4px solid #c93a30; background: #fdecea; }
+.bd-ft { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px 0; font-size: 12px; color: #5d6685; } .bd-off { border: 0; background: none; font: inherit; font-size: 12px; color: #5d6685; text-decoration: underline; cursor: pointer; }
+.bd-pitch { margin: 0 14px 8px; padding: 3px; background: var(--royal-d); } .bd-pitch canvas { display: block; width: 100%; height: auto; aspect-ratio: 120 / 76; image-rendering: pixelated; image-rendering: crisp-edges; }
+.bd-feed { min-height: 0; } .bd-feed li:nth-child(n+3) { display: none; }
 </style>
 <div id="app"></div>
 <div id="toast" role="status" hidden></div>
@@ -2270,7 +2348,23 @@ const ENGINE = (() => {
   }
   const arcOn = (p, id, year = p.year) => (p.arcs || []).find(a => a.id === id && year >= a.from && year <= a.to) || null;
   function addArc(p, arc) { p.arcs = (p.arcs || []).filter(a => a.id !== arc.id || a.to < arc.from); p.arcs.push(arc); return arc; }
+  // ---------- 1.5 포지션 요청: 시즌 단위로 다른 포지션에서 뛴다 (등록 포지션은 그대로) ----------
+  function posDist(a, b) { if (a === b) return 0; if (a === 'GK' || b === 'GK') return 9; const seen = { [a]: 0 }; const q = [a]; while (q.length) { const x = q.shift(); for (const y of POS[x].adj) if (seen[y] == null) { seen[y] = seen[x] + 1; if (y === b) return seen[y]; q.push(y); } } return 9; }
+  // 수락 확률: 롤 요청 공식 × 거리 + 그 자리에서의 실력 차. 21세 이하는 옆 포지션까지 요청 없이 자유
+  function posRequestChance(p, pos, roleId, clubId, year, world) {
+    const d = posDist(p.pos, pos); if (d === 0) return requestChance(p, roleId, clubId, year, world); if (d >= 9) return 0;
+    if ((p.youth || p.age <= FORM_AGE) && d === 1) return 1;
+    const base = requestChance(p, roleId, clubId, year, world); const gap = ovrOf(p.attrs, pos) - ovr(p);
+    return clamp(base * (({ 1: .9, 2: .55 })[d] ?? .22) + clamp(gap / 8, -.35, .15) * (d === 1 ? 1 : .6), .02, .85);
+  }
+  const posRefusePenalty = (d) => d <= 1 ? 3 : d === 2 ? 5 : 8;
+  function withPos(p, pos, fn) { if (!p || !pos || pos === p.pos || pos === 'GK' || p.pos === 'GK' || !POS[pos]) return fn(); const h = p.pos; p.pos = pos; try { return fn(); } finally { p.pos = h; } }
   function simulateSeason(p, choice, world, mods = {}) {
+    const tp = choice && choice.tempPos && choice.tempPos !== p.pos && POS[choice.tempPos] && p.pos !== 'GK' && choice.tempPos !== 'GK' ? choice.tempPos : null;
+    if (!tp) return simulateSeason0(p, choice, world, mods);
+    const home = p.pos; const r = withPos(p, tp, () => simulateSeason0(p, choice, world, mods)); r.tempPos = tp; r.homePos = home; return r;
+  }
+  function simulateSeason0(p, choice, world, mods = {}) {
     if (normalizeRole(p) && ROLE[choice.role]?.retired) choice = { ...choice, role: p.role };
     setClubMods(p.clubMods); setActive(p);
     const year = p.year, age = p.age;
@@ -2862,13 +2956,15 @@ const ENGINE = (() => {
     return { opp: opp.name, oppId: opp.id || null, a, b, ht: [a1, b1], g, as, tk, it, sv, played, rating, exp, xg: +xg.toFixed(3), pw: +logistic((EA - EB) * 1.1).toFixed(2), gp: +gs0.toFixed(3), ap, cx: cx.side, ...(gkfm ? { gkf: gkfm } : {}) };
   }
   // ---------- 대륙 대회 결승 (직접 플레이) ----------
-  function clubFinalStart(p, res, world) {
+  function clubFinalStart(p, res, world) { const t = withPos(p, res.tempPos, () => clubFinalStart0(p, res, world)); if (res.tempPos) t.pos = res.tempPos; return t; }
+  function clubFinalStart0(p, res, world) {
     const pf = res.pendingFinal; const sh = pf.share; const oc = CLUB[pf.opp];
     const t = { kind: 'club', comp: pf.comp, year: res.year, club: p.club, nation: CLUB[p.club].name, ko: ['결승'], bronze: false, pow: pf.pow, base: clubStr(p.club, res.year), clubFinal: true, used: [], group: [], mode: 'ko', ri: 0, cur: { name: oc?.name || pf.opp, str: pf.oppPow, id: pf.opp }, games: 0, g: 0, as: 0, rsum: 0, rn: 0, cs: 0, xg: 0, log: [], pk: null, finish: null, done: false, starter: sh >= .5, playP: sh >= .5 ? .97 : sh >= .25 ? .6 : sh > .1 ? .3 : 0, rbase: res.rbase ?? null, sr: res.rating, fate: pf.fate || null, fateMine: !!pf.fateMine, fateBy: pf.fateBy || null, inertia: INERTIA.cont, oppStar: peopleAt(world, p, pf.opp, res.year)[0]?.name || null };
     Object.defineProperty(t, 'world', { value: world || CUR?.world || null, enumerable: false, writable: true });
     return t;
   }
-  function clubFinalFinish(p, res, t) {
+  function clubFinalFinish(p, res, t) { return withPos(p, res.tempPos, () => clubFinalFinish0(p, res, t)); }
+  function clubFinalFinish0(p, res, t) {
     const pf = res.pendingFinal; if (!pf) return null; const fin = t.log[t.log.length - 1] || {}; const won = t.finish === '우승';
     const f = { comp: pf.comp, year: res.year, opp: pf.opp, won, a: fin.a, b: fin.b, pens: !!fin.pens, pa: fin.pa, pb: fin.pb, et: !!fin.et, played: !!fin.played, g: fin.g || 0, as: fin.as || 0, tk: fin.tk || 0, it: fin.it || 0, sv: fin.sv || 0, rating: fin.rating, exp: fin.exp ?? null, sr: res.rating, club: p.club, motm: !!fin.played && fin.rating >= 8.2, pkMiss: !!fin.pkMiss, pk: fin.myPK ? fin.myPK.ok : null, gkSave: !!fin.myGK?.saved, pw: fin.pw ?? null, gp: fin.gp ?? null, number: p.number, live: true };
     if (fin.gkf) f.gkf = { ...fin.gkf, win: gkfWin(f, fin.gkf) };
@@ -2883,7 +2979,8 @@ const ENGINE = (() => {
     return f;
   }
   // 저장 뒤 다시 열었을 때처럼 결승이 남아 있으면 평소대로 자동 처리
-  function autoClubFinal(p, res, world) {
+  function autoClubFinal(p, res, world) { return withPos(p, res.tempPos, () => autoClubFinal0(p, res, world)); }
+  function autoClubFinal0(p, res, world) {
     if (!res?.pendingFinal) return null; const t = clubFinalStart(p, res, world);
     tourKO(p, t, 'bal'); if (t.pk) tourPK(p, t, pick(['L', 'R'])); return clubFinalFinish(p, res, t);
   }
@@ -2959,7 +3056,8 @@ const ENGINE = (() => {
     if (e.k === 'perfect') return `${h} 평점 ${e.r}. 흠잡을 데 없는 결승이었다. ${sc}.`;
     return '';
   }
-  function tourKO(p, t, ap) {
+  function tourKO(p, t, ap) { return withPos(p, t && t.clubFinal ? t.pos : null, () => tourKO0(p, t, ap)); }
+  function tourKO0(p, t, ap) {
     const st = stageName(t); const m = natMatch(p, t, t.cur, ap, st); m.stage = st;
     if (m.a === m.b && R() < .38) { m.et = true; if (R() < logistic((t.pow - t.cur.str) / 6)) { m.a++; if (m.played && p.pos !== 'GK' && R() < .3) m.g++; } else m.b++; }
     // 영웅의 몰락(드묾): 스타가 결승 연장전에서 퇴장. 기분파·쇼맨이 더 위험하다
@@ -2968,7 +3066,8 @@ const ENGINE = (() => {
     koResolve(p, t, m, m.a > m.b); if (m.red && !m.won) addLegend(p, t, 'red', m); return m;
   }
   // 승부차기. 필드 플레이어: 'L'|'C'|'R'|'skip' (차는 방향). 골키퍼: 'L'|'C'|'R' (첫 키커를 상대로 어느 쪽에 걸지)
-  function tourPK(p, t, pick_) {
+  function tourPK(p, t, pick_) { return withPos(p, t && t.clubFinal ? t.pos : null, () => tourPK0(p, t, pick_)); }
+  function tourPK0(p, t, pick_) {
     const m = t.pk; const isGK = p.pos === 'GK'; const grp = POS[p.pos].grp;
     let slot = isGK || pick_ === 'skip' || !m.played || m.red ? -1 : grp === 'FW' ? 0 : grp === 'MF' ? 2 : 4;
     // 대회를 혼자 끌고 온 스타는 결승 승부차기에서 마지막 키커를 자청하기도 한다
@@ -4733,6 +4832,59 @@ const ENGINE = (() => {
     if (st) { st.src = 'model'; st.lg = true; }
     return { ver: GPROF_VER, src: 'model', role: role.id, style, apps, attrs, ovr: Math.round(ovrOf(attrs, g.pos)), rstat: st };
   }
+
+  // ---------- 1.5 업적: 저장된 기록만으로 판정한다(지어내지 않는다). 그래서 지난 커리어에도 그대로 소급된다 ----------
+  // t: 1 동 · 2 은 · 3 금. f(p, w) → 참이면 달성. 기록에 판정에 필요한 칸이 없으면 false(모름은 미달성으로)
+  const pro_ = (p) => (p.seasons || []).filter(s => !s.youthTeam);
+  const troT = (p, ...ts) => (p.trophies || []).filter(t => ts.includes(t.type));
+  const awN = (p, nm) => (p.awards || []).filter(a => a.name === nm).length;
+  const ACH = [
+    ['firsttitle', 1, '첫 우승', '프로 무대에서 처음으로 트로피를 들었다', (p) => troT(p, 'league', 'cup', 'ucl', 'cont', 'euro2', 'wc', 'contcup', 'oly', 'ag').length >= 1],
+    ['debut18', 1, '열여덟의 주전', '18세 시즌에 1군 25경기 이상', (p) => pro_(p).some(s => s.age <= 18 && (s.apps || 0) >= 25)],
+    ['apps300', 1, '300경기', '프로 통산 300경기 출전', (p) => pro_(p).reduce((a, s) => a + (s.apps || 0), 0) >= 300],
+    ['goals100', 1, '100골', '통산 100골', (p) => pro_(p).reduce((a, s) => a + (s.goals || 0), 0) >= 100],
+    ['assists100', 1, '100도움', '통산 100도움', (p) => pro_(p).reduce((a, s) => a + (s.assists || 0), 0) >= 100],
+    ['nomad', 1, '세 나라의 공기', '세 나라 이상의 리그에서 뛰었다', (p) => new Set(pro_(p).map(s => LEAGUES[s.lg]?.country).filter(Boolean)).size >= 3],
+    ['motm', 1, '결승의 주인공', '결승에서 경기 최우수 선수', (p) => (p.finals || []).some(f => f.motm)],
+    ['iron38', 1, '서른여덟의 현역', '38세 시즌까지 1군에서 뛰었다', (p) => pro_(p).some(s => s.age >= 38 && s.apps > 0)],
+    ['hidden', 1, '이름 붙은 축구', '히든 롤이 발현했다', (p) => (p.tacs || []).length > 0],
+    ['apps600', 2, '600경기', '프로 통산 600경기 출전', (p) => pro_(p).reduce((a, s) => a + (s.apps || 0), 0) >= 600],
+    ['goals250', 2, '250골', '통산 250골', (p) => pro_(p).reduce((a, s) => a + (s.goals || 0), 0) >= 250],
+    ['assists200', 2, '200도움', '통산 200도움', (p) => pro_(p).reduce((a, s) => a + (s.assists || 0), 0) >= 200],
+    ['league3', 2, '세 리그의 왕', '서로 다른 세 리그에서 우승', (p) => new Set(troT(p, 'league').map(t => t.comp)).size >= 3],
+    ['double', 2, '더블', '한 시즌에 리그와 컵을 함께 들었다', (p) => pro_(p).some(s => (s.trophies || []).some(t => t.type === 'league') && (s.trophies || []).some(t => t.type === 'cup'))],
+    ['topscorer3', 2, '골든 부트 수집가', '득점왕 3회', (p) => awN(p, '득점왕') >= 3],
+    ['playmaker3', 2, '도움의 장인', '도움왕 3회', (p) => awN(p, '도움왕') >= 3],
+    ['finalhat', 2, '결승 해트트릭', '결승에서 혼자 세 골', (p) => (p.finals || []).some(f => (f.g || 0) >= 3)],
+    ['centurion', 2, '센추리 클럽', 'A매치 100경기', (p) => (p.caps || 0) >= 100],
+    ['homecoming', 2, '돌아온 아들', '처음 공을 찬 구단을 떠났다가 돌아와 우승했다', (p) => { const h = p.homeClub; if (!h) return false; const S = pro_(p); const left = S.findIndex((s, i) => i > 0 && S[i - 1].club === h && s.club !== h); return left > 0 && S.slice(left).some(s => s.club === h && (s.trophies || []).length); }],
+    ['gkgoal', 2, '골 넣는 골키퍼', '골키퍼로 골을 넣었다', (p) => p.pos === 'GK' && pro_(p).some(s => (s.goals || 0) > 0)],
+    ['hof', 2, '명예의 전당', '구단 명예의 전당에 올랐다', (p, w) => Object.values(w?.hof || {}).some(L => L.some(x => x.careerId === p.id))],
+    ['ballon', 3, '발롱도르', '세계 최고의 선수로 뽑혔다', (p) => (p.bdoYears || []).length >= 1],
+    ['ballon3', 3, '황금의 시대', '발롱도르 3회', (p) => (p.bdoYears || []).length >= 3],
+    ['treble', 3, '트레블', '한 시즌에 리그·컵·대륙 대회를 모두 들었다', (p) => pro_(p).some(s => { const T = (s.trophies || []).map(t => t.type); return T.includes('league') && T.includes('cup') && (T.includes('ucl') || T.includes('cont')); })],
+    ['worldcup', 3, '세계 정상', '월드컵 우승', (p) => troT(p, 'wc').length >= 1],
+    ['continent3', 3, '대륙의 지배자', '대륙 클럽 대회 3회 우승', (p) => troT(p, 'ucl', 'cont').length >= 3],
+    ['goals500', 3, '500골', '통산 500골', (p) => pro_(p).reduce((a, s) => a + (s.goals || 0), 0) >= 500],
+    ['oneclub', 3, '원클럽맨', '한 구단에서만 15시즌 이상', (p) => { const S = pro_(p); return S.length >= 15 && new Set(S.map(s => s.club)).size === 1; }],
+    ['retirednum', 3, '영구결번', '등번호가 영구결번됐다', (p, w) => Object.values(w?.retired || {}).some(L => L.some(x => x.careerId === p.id))],
+  ].map(([id, t, name, desc, f]) => ({ id, t, name, desc, f }));
+  const ACH_VER = 1;
+  function achOf(p, w) { const out = []; if (!p || !p.seasons) return out; for (const a of ACH) { try { if (a.f(p, w)) out.push(a.id); } catch { } } return out; }
+  // 커리어의 꿈(퀘스트): 23세 무렵 하나를 고르고, 은퇴할 때 판정한다
+  const DREAMS = {
+    bigcap: { name: '빅클럽의 주장', desc: '전력 84 이상 구단에서 주장 완장을 찬다', ok: (p) => pro_(p).some(s => s.captain && clubStr(s.club, s.year) >= 84) },
+    hometown: { name: '고향 팀의 우승', desc: '처음 공을 찬 구단에서 트로피를 든다', ok: (p) => pro_(p).some(s => s.club === p.homeClub && (s.trophies || []).length) },
+    three: { name: '세 나라 정복', desc: '세 나라의 리그에서 우승한다', ok: (p) => new Set(troT(p, 'league').map(t => Object.values(LEAGUES).find(L => L.name === t.comp)?.country || t.comp)).size >= 3 },
+    ballon: { name: '발롱도르', desc: '세계 최고의 선수가 된다', ok: (p) => (p.bdoYears || []).length >= 1 },
+    loyal: { name: '한 팀의 전설', desc: '지금 구단에서 커리어를 마친다(10시즌 이상)', ok: (p, d) => { const S = pro_(p); const L = S[S.length - 1]; return !!L && L.club === d.club && S.filter(s => s.club === d.club).length >= 10; } },
+    nation: { name: '조국의 별', desc: '대표팀으로 메이저 대회에서 우승한다', ok: (p) => troT(p, 'wc', 'contcup').length >= 1 },
+    goals300: { name: '300골', desc: '통산 300골을 넣는다', ok: (p) => pro_(p).reduce((a, s) => a + (s.goals || 0), 0) >= 300 },
+    cs200: { name: '200번의 무실점', desc: '통산 클린시트 200경기', ok: (p) => pro_(p).reduce((a, s) => a + (s.cs || 0), 0) >= 200 },
+  };
+  function dreamOptions(p) { const isGK = p.pos === 'GK'; const o = ovr(p); const L = ['hometown', 'loyal', 'bigcap', 'three', 'nation', isGK ? 'cs200' : 'goals300', ...(o >= 84 ? ['ballon'] : [])].filter(k => !(k === 'hometown' && !p.homeClub));
+    const r = seeded('dream|' + p.id); return L.sort(() => r() - .5).slice(0, 3); }
+  function dreamJudge(p) { const d = p.flags?.dream; if (!d || !DREAMS[d.id]) return null; let ok = false; try { ok = !!DREAMS[d.id].ok(p, d); } catch { } return { id: d.id, name: DREAMS[d.id].name, ok, year: d.year }; }
   // ---------- 커리어 갈림길 ----------
   // 이적 제안 카드: 그 구단 감독이 맡길 역할, 예상 출전, 리그 판도, 그리고 세계선이 기억하는 그 해의 우승팀
   function offerOutlook(p, clubId, world, opt = {}) {
@@ -4882,7 +5034,7 @@ const ENGINE = (() => {
 
   return {
     lgAt, clubsIn, movesAt, setActive, PAIRS, LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
-    rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
+    ACH, ACH_VER, achOf, DREAMS, dreamOptions, dreamJudge, posDist, posRequestChance, posRefusePenalty, withPos, rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
     coachStints, parentsAlive, coachNow, recordDeath, farewellAsk, farewellAgree, farewellRefused, homecomingOffer, farewellOf, fwPact, fwClubLine, fanCer, fwSeasons, FW_CLUB,
     LG_SCHOOL, SCHOOLS, CLUB_SCHOOL, schoolOf, wiEcho, wiRewrite, goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
     FOOT_NAME, footLabel, AMBI_P, roleFoot, footAdj, weakChance, rollWeak, mergeAttrs, ATTR_MERGE, WEAK_COST,
@@ -6069,7 +6221,7 @@ const EVENTS = (() => {
   const def = (o) => D.push(Object.assign({ cd: 3 }, o));
 
   // ================= WINDOW (이적 시장) =================
-  def({ id: 'blocked', phase: 'window', cd: 0, w: (c) => c.p.pendingOffers.some(o => o.blocked) ? 100 : 0, make(c) {
+  def({ id: 'blocked', phase: 'window', live: (p) => p.flags.lastSeason == null, cd: 0, w: (c) => c.p.flags.lastSeason == null && c.p.pendingOffers.some(o => o.blocked) ? 100 : 0, make(c) {
     const p = c.p; const of = p.pendingOffers.find(o => o.blocked);
     return { title: '구단이 이적을 막았다', tone: 'bad', text: `${club(of.club)}에서 정식 제안이 왔지만 ${J(club(p.club), '는')} "핵심 선수는 팔지 않는다"며 거절했다. 계약은 ${p.contract}년 남았다.`, options: [
       { label: '받아들인다', hint: '사기 −6 · 감독 신뢰 +4 · 팬심 +4', run(x) { const h = H(x); return [h.b('morale', -6), h.b('trust', 4), h.b('fans', 4)].join(' · ') + '. 제안은 없던 일이 됐다.'; } },
@@ -7659,6 +7811,14 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   }
 
   // ---------- DRAW ----------
+  // ---------- 1.5 커리어의 꿈: 23~26세 사이 한 번 고른다. 은퇴할 때 판정해 카드에 남긴다 ----------
+  def({ id: 'dream', phase: 'window', cd: 1, live: (p) => !p.flags.dream, w: (c) => { const p = c.p; return !p.youth && !p.released && !p.flags.dream && p.age >= 23 && p.age <= 26 && p.flags.lastSeason == null ? 45 : 0; }, make(c) {
+    const p = c.p; const ks = E.dreamOptions(p);
+    return { title: '커리어의 꿈', tone: 'legacy', text: `${p.age}세. 숙소 천장을 보다가 문득 생각했다. 축구화를 벗는 날, 무엇을 이뤘다고 말하고 싶은가.`, options: [
+      ...ks.map(k => ({ label: E.DREAMS[k].name, hint: E.DREAMS[k].desc, run(x) { x.p.flags.dream = { id: k, year: x.p.year, club: x.p.club }; return `수첩 첫 장에 적었다. "${E.DREAMS[k].name}". ` + H(x).b('morale', 3); } })),
+      { label: '아직 모르겠다', hint: '내년에 다시 생각한다', run(x) { return '답은 아직 경기장 어딘가에 있다.'; } },
+    ] };
+  } });
   // ---------- 1.4 호그와트(flair) 구단: 공을 오래 갖고 노는 선수를 마법사라 부르는 곳 ----------
   const isFlair = (p) => (E.CLUB_SCHOOL?.[p.club] || []).includes('flair');
   const SPELLS = ['달그림자 턴', '세 번 접는 바람', '거꾸로 내리는 비', '문 닫는 발뒤꿈치', '고양이 걸음', '두 번 사라지는 공', '잠든 척하는 발목', '늦게 오는 그림자'];
@@ -7943,9 +8103,50 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   const ctxFor = (p, extra = {}) => Object.assign({ p, world: S.world, mods: S.mods || {}, attitude: S.choice?.attitude || 'bal', setRole: (r) => { if (S.choice) S.choice.role = r; }, reset: () => { S.choice = defaultChoice(p); } }, extra);
 
   // ---------- render root ----------
+  // ---------- 1.5 클럽 색: 대표 구단의 두 색에서 포인트 색(진하게)과 하이라이트(밝게)를 뽑는다. 흰 바탕 위에서 글자가 읽히도록 밝기를 맞춘다 ----------
+  const hex2rgb = (h) => { h = String(h || '').replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return isNaN(n) ? [43, 52, 70] : [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const rgb2hex = (c) => '#' + c.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+  const lum = (c) => { const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(c[0]) + .7152 * f(c[1]) + .0722 * f(c[2]); };
+  const sat = (c) => { const mx = Math.max(...c), mn = Math.min(...c); return mx ? (mx - mn) / mx : 0; };
+  const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+  const toL = (c, L, dir) => { let x = c.slice(); for (let i = 0; i < 40 && (dir < 0 ? lum(x) > L : lum(x) < L); i++) x = mix(x, dir < 0 ? [0, 0, 0] : [255, 255, 255], .06); return x; };
+  const PALC = {};
+  // 구단 상징색: p = 포인트(띠·글자), h = 하이라이트(별명 띠·OVR·줄무늬). 유니폼 두 색만으로 정체성이 안 드러나는 구단은 손으로 정한다
+  const CLUB_THEME = {
+    rma: ['#3D195B', '#FEBE10'], tot: ['#132257', '#132257'], juv: ['#111111', '#111111'], new: ['#111111', '#111111'], ful: ['#111111', '#CC0000'], der: ['#111111', '#111111'],
+    cel: ['#2E6DA4', '#8AC3EE'], mci: ['#1C5D99', '#6CABDD'], laz: ['#1E6FA8', '#87D8F7'], rac: ['#2C6FAE', '#6CACE4'], mff: ['#2C6FAE', '#6CACE4'], om: ['#1B7DB3', '#2FAEE0'],
+    bmg: ['#111111', '#00A650'], bjk: ['#111111', '#111111'], san: ['#111111', '#111111'], cor: ['#111111', '#111111'], vsc: ['#111111', '#111111'], sha: ['#111111', '#00843D'], ros: ['#111111', '#111111'], agf: ['#111111', '#111111'], ofi: ['#111111', '#111111'],
+    pal: ['#111111', '#F5A9C0'], mia: ['#231F20', '#F7B5CD'], lafc: ['#111111', '#C39E6D'], phi: ['#071B2C', '#B19B69'],
+    rbl: ['#0C2043', '#DD0741'], sal: ['#0C2043', '#E2001A'], nyr: ['#0C2043', '#E2001A'], lag: ['#00245D', '#FFD200'], dyn: ['#0057B7', '#0057B7'],
+    bar: ['#004D98', '#A50044'], lev: ['#004D98', '#B4053F'], psg: ['#004170', '#DA291C'], aja: ['#111111', '#D2122E'], riv: ['#111111', '#E2001A'], spfc: ['#111111', '#E3001B'],
+    bvb: ['#111111', '#FDE100'], wol: ['#231F20', '#FDB913'], aek: ['#111111', '#FFD700'], itt: ['#111111', '#FFD700'], yb: ['#111111', '#FFD200'], hac: ['#111111', '#FFD200'], bod: ['#111111', '#FFD200'], ari: ['#111111', '#FFD200'], aik: ['#111111', '#FFD200'], clb: ['#111111', '#FEDD00'], cuk: ['#111111', '#FFD200'], ole: ['#111111', '#FFD200'],
+    nor: ['#00A650', '#FFF200'], fcn2: ['#00A94F', '#FCD405'], wat: ['#ED2127', '#FBEE23'], rcl: ['#E2001A', '#FFD200'], nas: ['#004B87', '#FCD116'], vil: ['#005187', '#FFE667'], usg: ['#1C3F94', '#FFD200'], pus: ['#0A3D91', '#FFD200'], bro: ['#0A3D91', '#FFD200'], taa: ['#1C3F94', '#FFD200'], pol: ['#00843D', '#FFD200'], gwj: ['#E2001A', '#F7C600'], jbh: ['#00843D', '#FFD100'],
+    fla: ['#C52613', '#111111'], mil: ['#C8102E', '#111111'], ogcn: ['#C8102E', '#111111'], fcs: ['#B6121B', '#111111'], poh: ['#E2001A', '#111111'], atl: ['#80000A', '#111111'], sge: ['#111111', '#E1000F'], lpl: ['#111111', '#E2001A'], mjy: ['#111111', '#E2001A'], cha: ['#111111', '#111111'], paok: ['#111111', '#111111'], bot: ['#111111', '#111111'], cam: ['#111111', '#111111'], prt: ['#111111', '#111111'], stu: ['#111111', '#111111'], lask: ['#111111', '#111111'], lug: ['#111111', '#111111'], zor: ['#111111', '#111111'],
+    shk: ['#E8711B', '#111111'], dun: ['#F47920', '#111111'], wac: ['#111111', '#FF6A13'], ist: ['#1C2C5B', '#F26522'], gwo: ['#00594C', '#F47920'], mhsc: ['#1A2E5A', '#F47920'],
+  };
+  function clubPal(id) {
+    if (!id || !E.CLUB[id]) return null; if (PALC[id]) return PALC[id]; const c = E.CLUB[id];
+    let P, H; const ov = CLUB_THEME[id];
+    if (ov) { P = hex2rgb(ov[0]); H = hex2rgb(ov[1]); }
+    else {
+      const A = [hex2rgb(c.c1), hex2rgb(c.c2)]; const isW = (x) => lum(x) > .82 && sat(x) < .15, isK = (x) => lum(x) < .02;
+      const chrom = A.filter(x => !isW(x) && !isK(x));
+      if (chrom.length === 2) { const [a, b] = chrom; if (lum(a) > .4 && lum(b) < .25) { P = b; H = a; } else { P = a; H = b; } }
+      else if (chrom.length === 1) { const k = chrom[0]; const other = A.find(x => x !== k); if (isK(other)) { if (lum(k) > .35) { P = [17, 17, 17]; H = k; } else { P = k; H = [17, 17, 17]; } } else { P = k; H = k; } }
+      else { P = [17, 17, 17]; H = [17, 17, 17]; }
+    }
+    if (lum(P) > .2) P = toL(P, .2, -1); /* 흰 바탕 위 글자로 읽히게만 */
+    const D = lum(P) < .03 ? mix(P, [0, 0, 0], .4) : toL(P, Math.max(.02, lum(P) * .4), -1); const T = mix(P, [255, 255, 255], .9);
+    const Hd = lum(H) > .3 ? toL(H, lum(H) * .6, -1) : mix(H, [0, 0, 0], .3), Hdd = lum(H) > .3 ? toL(H, lum(H) * .32, -1) : mix(H, [0, 0, 0], .5), Ht = mix(H, [255, 255, 255], .62), Htt = mix(H, [255, 255, 255], .86);
+    const ink = lum(H) > .42 ? '#1a1f2b' : '#ffffff';
+    return (PALC[id] = { '--royal': rgb2hex(P), '--royal-d': rgb2hex(D), '--royal-t': rgb2hex(T), '--royal-rgb': P.map(Math.round).join(', '), '--royal-d-rgb': D.map(Math.round).join(', '), '--hl': rgb2hex(H), '--hl-d': rgb2hex(Hd), '--hl-dd': rgb2hex(Hdd), '--hl-t': rgb2hex(Ht), '--hl-tt': rgb2hex(Htt), '--hl-rgb': H.map(Math.round).join(', '), '--hl-ink': ink, '--ovr': lum(H) > .3 ? rgb2hex(H) : '#ffffff', '--ava': rgb2hex(T), '--ava-line': rgb2hex(D) });
+  }
+  const palStyle = (id) => { const P = clubPal(id); return P ? Object.entries(P).map(([k, v]) => `${k}: ${v}`).join('; ') : ''; };
+  function applyThemeClub(id) { const P = clubPal(id); const r = document.documentElement.style; const keys = ['--royal', '--royal-d', '--royal-t', '--royal-rgb', '--royal-d-rgb', '--hl', '--hl-d', '--hl-dd', '--hl-t', '--hl-tt', '--hl-rgb', '--hl-ink', '--ovr', '--ava', '--ava-line']; keys.forEach(k => P ? r.setProperty(k, P[k]) : r.removeProperty(k)); }
   function render() {
     try { const rm = S.p?.flags?.roleMerged; if (rm && !rm.shown) { rm.shown = true; setTimeout(() => { const a = E.ROLE[rm.from]?.name || rm.from, b = E.ROLE[rm.to]?.name || rm.to; toast(`${a}${E.hasJong(a) ? '은' : '는'} 다른 역할로 통합돼서, 이제 ${b}${E.hasJong(b) ? '으로' : '로'} 뛰어요. 지난 시즌 기록은 그대로예요.`); }, 300); Store.save('career', S.p); } } catch { }
     const app = $('#app'); try { E.setActive(S.p && S.p.status !== 'retired' ? S.p : null); } catch { }
+    try { applyThemeClub(S.p && S.p.status !== 'retired' ? S.p.club : null); } catch { }
     if (!S.ready) { app.innerHTML = `<div class="wrap main"><p class="muted">세계선을 불러오는 중…</p></div>`; return; }
     const nav = `<header class="top"><div class="wrap topin">
       <button class="brand" data-go="world"><span class="logo" aria-hidden="true"></span><span>세계선 커리어</span></button>
@@ -7986,7 +8187,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <p class="muted">${years ? `${years[0]}년부터 ${years[1]}년까지 이어진 세계선이에요. 은퇴한 선수는 감독이 되고, 자식은 가문을 잇고, 등번호는 결번으로 남아요.` : '첫 선수를 만들면 이 세계선의 역사가 시작돼요. 은퇴한 선수는 다음 커리어에서 감독으로 나타나고, 커리어 중 태어난 아이는 후손 커리어로 이어져요.'}</p></div>
       <div class="herobtn">${S.p ? `<button class="btn primary" data-go="career">${esc(S.p.name)} 이어하기</button>` : ''}${(w.paused || []).filter(x => !S.p || x.id !== S.p.id).map(x => `<button class="btn" data-act="resume" data-id="${x.id}">${esc(x.name)}${x.wi ? ' (만약에)' : ''} 이어하기</button>`).join('')}<button class="btn ${S.p ? '' : 'primary'}" data-act="new">새 커리어</button></div></section>`;
     if (!cs.length) return hero + `<section class="panel"><h2>이렇게 이어져요</h2><ol class="flow"><li><b>선수 만들기</b> 이름, 국적, 유스 구단, 외모를 정해요. 재능은 숨겨져 있어서 될 놈인지는 뛰어 봐야 알아요.</li><li><b>시즌마다 사건</b> 이적 시장, 부상, 감독 교체, 더비, 연애와 결혼 같은 사건이 시즌마다 한두 개씩 터지고, 고르는 대로 커리어가 갈라져요.</li><li><b>여름엔 대표팀</b> 월드컵, 유로, 아시안컵, 올림픽 같은 대회를 경기 단위로 직접 치러요. 승부차기 방향도 직접 골라요.</li><li><b>은퇴와 계승</b> 영구결번, 감독 데뷔, 자식의 커리어까지 세계선에 남아요.</li></ol></section>` + dataPanel();
-    const tabs = [['legends', '명예의 전당'], ['families', '가문'], ['coaches', '감독'], ['retired', '결번·헌액'], ['bdo', '발롱도르'], ['chron', '구단 연대기'], ['records', '역대 기록'], ['alm', '시즌 연감'], ['hist', '축구사'], ['lines', '세계선 계보']];
+    const tabs = [['legends', '명예의 전당'], ['families', '가문'], ['coaches', '감독'], ['retired', '결번·헌액'], ['bdo', '발롱도르'], ['ach', '업적'], ['chron', '구단 연대기'], ['records', '역대 기록'], ['alm', '시즌 연감'], ['hist', '축구사'], ['lines', '세계선 계보']];
     // 지금 보고 있는 세계선: 그 세계선의 역사에 남은 사람들만
     const VL = (w.lines || {})[S.viewLine] ? S.viewLine : 'L0'; const led = E.lineView(w, VL) || { people: cs, coaches: cs.filter(c => c.coach), retired: w.retired || {}, hof: w.hof || {}, bdo: {}, cut: {} };
     const csAll = cs; { const cs = led.people;
@@ -8010,7 +8211,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     } else if (S.worldTab === 'bdo') {
       const ys = Object.keys(led.bdo || {}).sort();
       inner = ys.length ? `<ul class="yearlist">${ys.map(y => `<li><span class="num">${y}</span> ${esc(led.bdo[y].name)}</li>`).join('')}</ul><p class="muted small">한 해의 발롱도르는 세계선에 한 명뿐이에요. 기록된 수상자를 넘어서면 세계선이 갈라져요.</p>` : `<p class="muted">아직 이 세계선에서 발롱도르를 받은 선수가 없어요.</p>`;
-    } else if (S.worldTab === 'chron') inner = viewChron(w, VL, led);
+    } else if (S.worldTab === 'ach') inner = viewAch(w);
+    else if (S.worldTab === 'chron') inner = viewChron(w, VL, led);
     else if (S.worldTab === 'alm') inner = viewAlmanac(w, VL, led);
     else if (S.worldTab === 'hist') inner = viewHistory(w, VL, led);
     else if (S.worldTab === 'lines') inner = viewLines(w);
@@ -8286,6 +8488,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function dataPanel() {
     return `<section class="panel quiet"><h2>세이브</h2><p class="muted small">${Store.cloud ? '세이브는 Claude 계정에 저장돼요. 다른 기기에서 열어도 이어서 할 수 있어요.' : '세이브는 이 브라우저에만 저장돼요. 가끔 파일로 내보내 두세요.'}</p>
       <div class="row wrapgap"><button class="btn" data-go="crests">구단 엠블럼 넣기</button><button class="btn" data-act="export">세이브 파일 내보내기</button><label class="btn">세이브 파일 불러오기<input type="file" id="importfile" accept="application/json,.json" hidden></label><input id="worldname" class="inp grow" value="${esc(S.world.name)}" aria-label="세계선 이름"><button class="btn" data-act="rename">이름 바꾸기</button></div>
+      <div class="row wrapgap" style="margin-top:10px"><button class="btn" data-act="boardtoggle">경기 보드판 · ${boardOn() ? '켜짐' : '꺼짐'}</button><span class="muted small">대표팀·결승을 직접 치를 때 경기가 흘러가는 점수판을 보여 줘요. 결과는 똑같고, 누르면 넘어가요.</span></div>
       <div class="row wrapgap" style="margin-top:10px"><button class="btn" data-act="reeltoggle">시즌 진행 연출 · ${reelOn() ? '켜짐' : '꺼짐'}</button><span class="muted small">시즌을 시작하면 5초쯤 한 해가 흘러가는 장면을 보여 줘요. 결과는 똑같고, 누르면 바로 넘어가요.</span></div>
       <div id="importconfirm" hidden class="confirm"></div>${storePanel()}<p class="muted small" style="margin-top:10px">버전 ${esc(window.SK_VER || '')}</p></section>`;
   }
@@ -8397,15 +8600,16 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   // 22세부터는 감독이 역할을 정한다. 요청이 받아들여졌으면 그 역할.
   function syncRole(p) {
     const ch = S.choice; if (!ch) return;
-    if (p.youth || p.age <= E.FORM_AGE) { ch.assigned = false; return; }
     const tgt = targetClub(p); const req = ch.req && ch.req.club === tgt ? ch.req : null;
-    ch.role = req && req.ok ? req.role : E.assignRole(p, tgt, p.year, S.world); ch.assigned = true;
+    if (req && req.ok) { ch.role = req.role; ch.tempPos = req.pos && req.pos !== p.pos ? req.pos : null; ch.assigned = !(p.youth || p.age <= E.FORM_AGE); return; }
+    if (p.youth || p.age <= E.FORM_AGE) { ch.assigned = false; if (ch.tempPos && E.posDist(p.pos, ch.tempPos) > 1) ch.tempPos = null; if (!E.rolesFor(ch.tempPos || p.pos).some(r => r.id === ch.role)) ch.role = E.rolesFor(ch.tempPos || p.pos)[0].id; return; }
+    ch.tempPos = null; ch.role = E.assignRole(p, tgt, p.year, S.world); ch.assigned = true;
   }
-  function requestRole(roleId) {
-    const p = S.p; const ch = S.choice; const tgt = targetClub(p); if (ch.req && ch.req.club === tgt) return;
-    const mgr = E.managerFor(tgt, p.year, S.world, p); const pr = E.requestChance(p, roleId, tgt, p.year, S.world); const ok = Math.random() < pr; const nm = E.ROLE[roleId].name;
-    if (!ok) E.bump(p, 'trust', -3);
-    ch.req = { club: tgt, role: roleId, ok, msg: ok ? `${mgr.name} 감독: "좋아, ${J(nm, '로')} 써 보지."` : `${mgr.name} 감독: "지금은 아니다." 감독 신뢰 ▼` };
+  function requestRole(roleId, pos) {
+    const p = S.p; const ch = S.choice; const tgt = targetClub(p); if (ch.req && ch.req.club === tgt) return; pos = pos && E.POS[pos] ? pos : p.pos; const d = E.posDist(p.pos, pos);
+    const mgr = E.managerFor(tgt, p.year, S.world, p); const pr = d ? E.posRequestChance(p, pos, roleId, tgt, p.year, S.world) : E.requestChance(p, roleId, tgt, p.year, S.world); const ok = Math.random() < pr; const nm = (d ? E.POS[pos].name + ' ' : '') + E.ROLE[roleId].name;
+    if (!ok) E.bump(p, 'trust', -(d ? E.posRefusePenalty(d) : 3));
+    ch.req = { club: tgt, role: roleId, pos, ok, msg: ok ? `${mgr.name} 감독: "좋아, ${J(nm, '로')} 써 보지."` : `${mgr.name} 감독: "지금은 아니다." 감독 신뢰 ▼` };
     keepMemo(); render();
   }
   const arrow = (v) => v >= 2 ? '▲▲' : v > 0 ? '▲' : v <= -2 ? '▼▼' : '▼';
@@ -8521,9 +8725,18 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const famTag = (id) => { const lv = E.famLevel(E.famOf(p, id)); return `<span class="famtag f${lv}">${E.FAM_NAME[lv]}</span>`; };
     const req = ch.req && ch.req.club === tgt ? ch.req : null;
     const roleRow = (r, input) => { const [w2, c2] = fitWord(E.roleFit(r.id, mgr.style)); const gr = grade(E.roleScore(p, r.id), o); return `<label class="rolec ${ch.role === r.id ? 'on' : ''} ${input ? '' : 'noin'}">${input}<span class="rt"><b>${esc(r.name)}</b><span class="grade g${gr}">${gr}</span>${famTag(r.id)}<span class="fit ${c2} small">${w2}</span></span><span class="rd small">${esc(r.desc)}</span></label>`; };
-    const roleList = forming
-      ? `<div class="roles">${roles.map(r => roleRow(r, `<input type="radio" name="role" value="${r.id}" ${ch.role === r.id ? 'checked' : ''}>`)).join('')}</div><p class="muted small">아직은 이것저것 해볼 수 있는 나이예요. 많이 뛴 역할이 몸에 붙어요.</p>`
-      : `${req ? `<p class="note">${esc(req.msg)}</p>` : ''}<div class="roles">${roles.filter(r => r.id !== ch.role).map(r => roleRow(r, req ? '' : `<button class="btn sm reqb" data-req="${r.id}">요청</button>`)).join('')}</div><p class="muted small">${req ? '이번 시즌 요청은 끝났어요.' : '역할은 감독이 정해요. 시즌마다 한 번 다른 역할을 요청할 수 있어요. 감독 궁합은 이 감독의 전술 스타일과 그 역할이 맞는 정도예요. 칸이 많을수록 요청이 잘 받아들여지고, 출전 기회와 평점도 조금 올라요.'}</p>`;
+    // 1.5 포지션 요청: 위에서 포지션을 고르고, 그 포지션의 롤을 고르거나 요청한다(시즌 단위, 등록 포지션은 그대로)
+    const vpos = (ch.viewPos && E.POS[ch.viewPos] && (p.pos !== 'GK') === (ch.viewPos !== 'GK')) ? ch.viewPos : (ch.tempPos || p.pos);
+    const PORD = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'DM', 'CM', 'AM', 'LW', 'RW', 'ST'];
+    const posTabs = p.pos === 'GK' ? '' : `<div class="postabs">${PORD.filter(x => x !== 'GK').map(x => { const d = E.posDist(p.pos, x); const on = x === vpos; const cur = x === (ch.tempPos || p.pos); return `<button class="pt d${Math.min(d, 3)}${on ? ' on' : ''}${cur ? ' cur' : ''}" data-vpos="${x}" title="${esc(E.POS[x].name)}"><b>${x}</b><small>${d === 0 ? '등록' : d === 1 ? '인접' : d === 2 ? '두 칸' : '먼 자리'}</small></button>`; }).join('')}</div>`;
+    const vroles = E.rolesFor(vpos); const vo = E.ovrOf ? E.ovrOf(p.attrs, vpos) : o; const vd = E.posDist(p.pos, vpos);
+    const chanceWord = (pr) => pr >= .99 ? '바로 가능' : pr >= .6 ? '수락 가능성 높음' : pr >= .35 ? '반반' : pr >= .15 ? '낮음' : '거의 없음';
+    const roleRowP = (r, input) => { const [w2, c2] = fitWord(E.roleFit(r.id, mgr.style)); const gr = grade(E.roleScore(p, r.id), vpos === p.pos ? o : vo); return `<label class="rolec ${ch.role === r.id ? 'on' : ''} ${input ? '' : 'noin'}">${input}<span class="rt"><b>${esc(r.name)}</b><span class="grade g${gr}">${gr}</span>${famTag(r.id)}<span class="fit ${c2} small">${w2}</span></span><span class="rd small">${esc(r.desc)}</span></label>`; };
+    const freeHere = forming && vd <= 1;
+    const posHead = vpos !== p.pos ? `<p class="posinfo"><b>${esc(E.POS[vpos].name)}</b> · 이 자리 OVR <b class="px-num">${Math.round(vo)}</b> <span class="muted">(지금 ${Math.round(o)})</span>${freeHere ? ' · 21세 이하는 자유롭게 바꿀 수 있어요' : ` · 감독 ${esc(mgr.name)}에게 요청 · ${chanceWord(E.posRequestChance(p, vpos, vroles[0].id, tgt, p.year, S.world))}`}</p>` : '';
+    const roleList = posTabs + posHead + (freeHere
+      ? `<div class="roles">${vroles.map(r => roleRowP(r, `<input type="radio" name="role" value="${r.id}" data-rpos="${vpos}" ${ch.role === r.id ? 'checked' : ''}>`)).join('')}</div><p class="muted small">${vpos === p.pos ? '아직은 이것저것 해볼 수 있는 나이예요. 많이 뛴 역할이 몸에 붙어요.' : '이번 시즌만 이 자리에서 뛰어요. 등록 포지션은 그대로예요.'}</p>`
+      : `${req ? `<p class="note">${esc(req.msg)}</p>` : ''}<div class="roles">${vroles.filter(r => !(vpos === (ch.tempPos || p.pos) && r.id === ch.role)).map(r => roleRowP(r, req ? '' : `<button class="btn sm reqb" data-req="${r.id}" data-rpos="${vpos}">${vpos === p.pos ? '요청' : '이 자리 요청'}</button>`)).join('')}</div><p class="muted small">${req ? '이번 시즌 요청은 끝났어요.' : vpos === p.pos ? '역할은 감독이 정해요. 시즌마다 한 번, 다른 역할이나 다른 포지션을 요청할 수 있어요.' : '받아들여지면 이번 시즌만 이 자리에서 뛰어요. 먼 자리일수록 받아들이기 어렵고, 거절당하면 감독 신뢰가 더 깎여요.'}</p>`);
     const groups = E.groupsFor(p.pos);
     const canWeak = p.pos !== 'GK' && (p.weak || 3) < 5;
     if (ch.focus === 'weak' && !canWeak) ch.focus = 'pos';
@@ -8536,11 +8749,13 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const fName = fopts.find(f => f[0] === ch.focus)?.[1] || '균형'; const aName = att.find(a => a[0] === ch.attitude)?.[1];
     const plan = `<section class="panel plan"><h2>이번 시즌</h2>
       <div class="prow"><span class="plbl">감독</span><span>${tgt !== p.club ? crest(tgt, 'xs') + ' ' : ''}<b>${esc(mgr.name)}</b> <span class="muted">${E.STYLES[mgr.style]}</span>${mgr.legend ? ' <span class="pill gold">레전드</span>' : ''}${sameFam ? ' <span class="pill">가문</span>' : ''}</span></div>
-      <div class="prow"><span class="plbl">역할</span><span><b>${esc(role.name)}</b> <span class="grade g${grade(E.roleScore(p, role.id), o)}">${grade(E.roleScore(p, role.id), o)}</span> ${forming ? '' : famTag(role.id)} <span class="fit ${fc} small">${fw}</span>${forming ? '' : `<span class="muted small"> · ${req?.ok ? '요청 수락' : '감독 지시'}</span>`}</span></div>
+      <div class="prow"><span class="plbl">역할</span><span>${ch.tempPos ? `<span class="sl-tag tp">${esc(ch.tempPos)} 시험 기용</span> ` : ''}<b>${esc(role.name)}</b> <span class="grade g${grade(E.roleScore(p, role.id), o)}">${grade(E.roleScore(p, role.id), o)}</span> ${forming ? '' : famTag(role.id)} <span class="fit ${fc} small">${fw}</span>${forming ? '' : `<span class="muted small"> · ${req?.ok ? '요청 수락' : '감독 지시'}</span>`}</span></div>
       <div class="prow"><span class="plbl">훈련</span><span>${esc(fName)} · ${esc(aName)}</span></div>
       ${(() => { if (p.youth || !p.tacs?.length) return ''; const ts = E.tacState(p, role.id, mgr.style, p.pos, { rel: E.clubStr(tgt, p.year) - E.lgMeanStr(E.lgAt(tgt, p.year), p.year), org: E.pressOrg(tgt, mgr.style, mgr), sup: E.wideSupply(tgt, mgr.style, mgr) }); if (!ts) return ''; return `<div class="prow"><span class="plbl">히든 롤</span><span>${ts.on ? `<b class="tacon">◆ ${esc(tacNm(ts.id))}</b> <span class="muted small">이번 시즌 켜져요</span>` : `<span class="muted">${esc(tacNm(ts.id))} 꺼짐 · ${esc(E.tacOffText(ts))}</span>`}</span></div>`; })()}
       ${(() => { const ms = E.peopleAt(S.world, p, tgt, p.year).filter(m => m.id !== p.parentId); return ms.length ? `<div class="prow"><span class="plbl">선배</span><span>${ms.map(m => `<b>${esc(m.name)}</b> <span class="muted small">${m.age}세 ${m.pos}</span>`).join(' · ')} <span class="muted small">· 세계선의 기록에 남은 선수</span></span></div>` : ''; })()}
-      ${det('roles', forming ? '역할 바꾸기' : '다른 역할 요청하기', roleList)}
+      ${p.flags.dream && E.DREAMS[p.flags.dream.id] ? (() => { const dj = E.dreamJudge(p); return `<div class="prow"><span class="plbl">꿈</span><span><b>${esc(dj.name)}</b> <span class="muted small">${esc(E.DREAMS[dj.id].desc)}</span>${dj.ok ? ' <span class="sl-tag tp">이미 이뤘다</span>' : ''}</span></div>`; })() : ''}
+      ${goalPicker(p, tgt)}
+      ${det('roles', forming ? '역할·포지션 바꾸기' : '다른 역할·포지션 요청하기', roleList)}
       ${det('train', '훈련 · 태도 바꾸기', `<p class="flbl">훈련 초점</p><p class="ftip">고르면 아래 능력치 창에 닿는 능력치가 금색으로 표시돼요. 능력치 막대를 직접 누르면 그 하나에만 집중해요.</p><div class="chips">${fopts.map(([k, n]) => `<button class="chip ${ch.focus === k ? 'on' : ''}" data-focus="${k}"><b>${n}</b><span class="small">${esc(fdesc(k))}</span></button>`).join('')}</div><p class="flbl">시즌 태도</p><div class="chips">${att.map(([k, n, d]) => `<button class="chip ${ch.attitude === k ? 'on' : ''}" data-att="${k}"><b>${n}</b>${d ? `<span class="small">${d}</span>` : ''}</button>`).join('')}</div>`)}
       ${det('memo', '일기' + (ch.memo ? ' ✎' : ''), diaryBox(p, ch))}
     </section>`;
@@ -8836,6 +9051,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const isGK = p.pos === 'GK';
     return `<section class="${compact ? '' : 'panel '}result"><div class="ptitle"><h2>${sl(r.year)} 시즌</h2><span class="muted small">${crest(r.club, 'xs')} ${esc(club(r.club).name)} · ${esc(E.ROLE[r.role]?.name || '')}${r.number ? ` · ${r.number}번` : ''}</span></div>
       <div class="sgrid"><div><b>${r.apps}${r.youthTeam ? `<small>+${r.youthApps}</small>` : ''}</b><span>출전</span></div>${isGK ? `<div><b>${r.cs}${r.youthTeam && r.youthCs != null ? `<small>+${r.youthCs}</small>` : ''}</b><span>클린시트</span></div>${r.goals ? `<div><b>${r.goals}</b><span>골</span></div>` : ''}` : `<div><b>${r.goals}${r.youthTeam && r.youthGoals != null ? `<small>+${r.youthGoals}</small>` : ''}</b><span>골</span></div><div><b>${r.assists}${r.youthTeam && r.youthAssists != null ? `<small>+${r.youthAssists}</small>` : ''}</b><span>도움</span></div>`}${rstatTile(r, p)}<div><b>${r.rating.toFixed(2)}</b><span>평점</span></div><div><b>${r.ovrEnd}<small class="${r.growth >= 0 ? 'pos' : 'neg'}">${r.growth >= .5 ? '▲' : r.growth <= -.5 ? '▼' : ''}</small></b><span>OVR</span></div></div>
+      ${goalResultBlock(r)}
       ${!r.youthTeam ? `<p class="small muted">${shareWord(r.share ?? 0)}${r.assigned ? ` · ${esc(E.ROLE[r.role]?.name || '')} (${E.FAM_NAME[r.fam ?? 2]})` : ''}${r.injuryWeeks ? ` · 부상 ${r.injuryWeeks}주` : ''}</p>` : ''}
       ${r.goals ? routeBlock(E.routesOf(p, r), p.foot, { title: isGK ? '세트피스 골' : '득점 루트', cls: 'gr-season' }) : ''}
       ${pressBlock(r.press)}
@@ -8870,9 +9086,9 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const sy = (y) => `${String(y).slice(2)}/${String(y + 1).slice(2)}`;
     return `<div class="slist">${p.seasons.map(r => { const y = r.youthTeam; const v = (k, yk) => (r[k] || 0) + (y ? (r[yk] || 0) : 0); const rs = rstatCell(r);
       const stats = isGK ? `<span><b class="px-num">${v('cs', 'youthCs')}</b>CS</span><span><b class="px-num">${v('saves', 'youthSaves')}</b>선방</span>${gkG && r.goals ? `<span class="g"><b class="px-num">${r.goals}</b>골</span>` : ''}` : `<span class="g"><b class="px-num">${v('goals', 'youthGoals')}</b>골</span><span class="a"><b class="px-num">${v('assists', 'youthAssists')}</b>도움</span>`;
-      const ach = `${r.trophies.filter(x => x.type === 'youth').map(x => `<span class="achi tr">${esc(x.comp)}</span>`).join('')}${r.awards.map(x => `<span class="achi">${esc(x)}</span>`).join('')}${r.move ? `<span class="achi ${r.move === 'up' ? 'up' : ''}">${r.move === 'up' ? '승격' : '강등'}</span>` : ''}${r.weakUp ? `<span class="achi up">약발 ★${r.weakUp}</span>` : ''}`;
+      const ach = `${r.trophies.filter(x => x.type === 'youth').map(x => `<span class="achi tr">${esc(x.comp)}</span>`).join('')}${r.awards.map(x => `<span class="achi">${esc(x)}</span>`).join('')}${r.move ? `<span class="achi ${r.move === 'up' ? 'up' : ''}">${r.move === 'up' ? '승격' : '강등'}</span>` : ''}${r.weakUp ? `<span class="achi up">약발 ★${r.weakUp}</span>` : ''}${r.goal?.mine ? `<span class="achi ${r.goal.mine.ok ? 'gok' : 'gno'}" title="${esc(goalLabel(r.goal.mine))}">${r.goal.mine.ok ? '목표 달성' : '목표 실패'} · ${GOAL_TIER[r.goal.mine.tier][0]}</span>` : ''}`;
       return `<div class="sl-r${y ? ' yt' : ''}"><div class="sl-y"><b class="px-num">${sy(r.year)}</b><small>${r.age}세</small></div>
-        <div class="sl-c">${crest(r.club, 'xs')}<b>${esc(club(r.club).name)}</b>${y ? '<span class="sl-tag">유스</span>' : r.loan ? '<span class="sl-tag">임대</span>' : ''}</div>
+        <div class="sl-c">${crest(r.club, 'xs')}<b>${esc(club(r.club).name)}</b>${y ? '<span class="sl-tag">유스</span>' : r.loan ? '<span class="sl-tag">임대</span>' : ''}${r.tempPos ? `<span class="sl-tag tp">${esc(r.tempPos)} 시험 기용</span>` : ''}</div>
         <div class="sl-s">${stats}<small>${v('apps', 'youthApps')}경기${y ? '' : ` · <b>${r.rating.toFixed(2)}</b>`}</small></div>
         ${(() => { const lgc = r.rank && !y ? `<span class="cr lg${r.rank === 1 ? ' won' : r.rank <= 4 ? ' hi' : ''}">${r.rank === 1 ? pix('league', .75) : ''}${esc(E.LEAGUES[r.lg]?.name || '리그')} <b>${r.rank}위</b></span>` : ''; return lgc || compCell(r) || ach ? `<div class="sl-k">${lgc}${compCell(r)}${ach}</div>` : ''; })()}
         <div class="sl-x"><span>${r.number ? `#${r.number} · ` : ''}${esc(r.pos || p.pos)} · ${roleCell(r)}</span><span>OVR <b>${r.ovrEnd}</b> <i class="${r.growth >= 0 ? 'pos' : 'neg'}">${r.growth >= 0 ? '+' : ''}${r.growth}</i></span>${rs ? `<span>${rs}</span>` : ''}${r.wage ? `<span>연봉 ${E.fmtWon(r.wage)}</span>` : ''}</div></div>`; }).join('')}</div>`;
@@ -9045,13 +9261,14 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       (sum.heirLines || []).length ? storyRow('gold', '아버지와 다른 길', sum.heirLines.map(esc).join(' · ')) : '',
       (sum.branches || []).length ? storyRow('violet', '세계선 분기', sum.branches.map(b => esc(b.what)).join(' / ')) : '',
       sum.coach && cst.length ? storyRow('blue', cCut ? '감독 경력' : '감독 예정', `${cst.slice(0, 4).map(s => `${esc(club(s.club).name)} ${s.from}–${String(s.to).slice(2)}`).join(' → ')}${!cCut && cst.length > 4 ? ' …' : ''}`) : '',
+      (() => { const dj = p?.flags ? E.dreamJudge(p) : null; return dj ? storyRow(dj.ok ? 'gold' : 'life', '커리어의 꿈', `${esc(dj.name)} · ${dj.ok ? '<b>이뤘다</b>' : '이루지 못했다'}`) : ''; })(),
       sum.earned ? storyRow('money', '총수입', `${E.fmtWon(sum.earned)}${sum.peakWage ? ` <small>최고 연봉 ${E.fmtWon(sum.peakWage)}</small>` : ''}`) : '',
     ].filter(Boolean).join('');
     const bestT = bs ? `<div class="cc-best">${bs.season ? `<div>${pix('medal', 1.1)}<span>최고의 시즌</span><b class="px-num">${sl(bs.season.year)}</b><small>${esc(club(bs.season.club).name)} · ${isGK ? `CS ${bs.season.cs}` : `${bs.season.g}골 ${bs.season.a}도움`} · ${(+bs.season.rating).toFixed(2)}${bs.season.aw.length ? ' · ' + esc(bs.season.aw[0]) : bs.season.tro.length ? ' · ' + esc(bs.season.tro[0]) : ''}</small></div>` : ''}${bs.form ? `<div>${pix('i_star', 1.6)}<span>최고의 폼</span><b class="px-num cc-range"><time>${String(bs.form.from).slice(2)}/${String(bs.form.from + 1).slice(2)}</time>–<wbr><time>${String(bs.form.to).slice(2)}/${String(bs.form.to + 1).slice(2)}</time></b><small>3시즌 평점 ${bs.form.avg.toFixed(2)} · ${isGK ? `CS ${bs.form.cs}` : `${bs.form.g}골 ${bs.form.a}도움`}</small></div>` : ''}${bs.peak ? `<div>${pix('cont', 1.1)}<span>커리어 정점</span><b class="px-num">OVR ${bs.peak.ovr}</b><small>${sl(bs.peak.year)} · ${bs.peak.age}세 · ${esc(club(bs.peak.club).name)}</small></div>` : ''}</div>` : '';
     const bdoN = sum.bdo || 0;
     const hero = `<div class="cc-hero"><div class="cc-ovrbox"><span class="px-ovr">${sum.peakOvr}</span><span class="px-lbl">PEAK OVR</span><span class="cc-posb">${sum.pos}</span>${(sum.roles || []).length ? `<span class="cc-roles">${sum.roles.map(r => esc(r.name)).join(' · ')}</span>` : ''}</div><div class="cc-stage">${ava(sum.look, sum.topClubs[0]?.club, { gk: isGK, age: 28, cls: 'lg' })}</div><div class="cc-bdo">${bdoN ? `<span class="bdo-balls">${Array.from({ length: Math.min(bdoN, 3) }, () => pix('ball', 1.4)).join('')}</span><span class="px-ovr sm">${bdoN}</span><span class="px-lbl">BALLON D'OR</span>` : ''}</div></div>`;
     const routeB = !isGK && (sum.gt || p?.seasons) ? arcRoute(p?.seasons ? E.routeSum(p) : sum.gt, sum.foot ?? p?.foot, { title: 'GOAL ROUTE', style: true, line: p?.seasons ? E.routeShiftLine(p) : null }) : isGK && (sum.gt || p?.seasons) ? arcRoute(p?.seasons ? E.routeSum(p) : sum.gt, sum.foot ?? p?.foot, { title: 'SET PIECE', line: gkfCardLine(sum, p) }) : '';
-    return `<section class="careercard cc14${sum.deceased ? ' mourn' : ''}">
+    return `<section class="careercard cc14${sum.deceased ? ' mourn' : ''}" style="${palStyle(sum.topClubs[0]?.club)}">
       <div class="cc-top"><span class="eyebrow">${sum.severity && sum.severity !== 'normal' ? `<span class="cc-sev ${sum.severity}">${esc(E.SEVERITY[sum.severity]?.name || '')}</span> ` : ''}세계선 커리어${Object.keys(S.world.lines || {}).length > 1 && S.world.lines[sum.line] ? ' · ' + esc(S.world.lines[sum.line].name) : ''}</span><span class="px-num">${sum.startYear}–${String(sum.endYear + 1).slice(2)}</span></div>
       <div class="cc-pnav" role="tablist">${[['1', '프로필'], ['2', '트로피'], ['3', '커리어'], ['4', '이야기']].map(([k, v], n) => `<button class="${n ? '' : 'on'}" data-ccpg="${k}" role="tab"><b class="px-num">${k}</b>${v}</button>`).join('')}</div>
       <div class="cc-cols"><div class="cc-l">
@@ -9070,6 +9287,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       </div><div class="cc-r">
       <div class="cc-pg" data-pg="2">
       ${trophyRoom(sum, p, pills)}
+      ${achChips(p)}
       <div class="cc-clubs ${sum.topClubs.length > 5 ? 'many' : ''}">${sum.topClubs.map(t => `<span>${crest(t.club, 'md')}<small><b class="px-num">${t.n}</b>시즌</small></span>`).join('')}</div>
       </div>
       <div class="cc-pg" data-pg="4">
@@ -9460,8 +9678,10 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     if (S.view === 'crests') bindCrests();
     if (S.p) fillMom(S.p);
     if (S.view === 'career' && S.phase === 'prep') {
-      $$('input[name=role]').forEach(i => i.onchange = () => { S.choice.role = i.value; keepMemo(); render(); });
-      $$('[data-req]').forEach(b => b.onclick = (e) => { e.preventDefault(); requestRole(b.dataset.req); });
+      $$('input[name=role]').forEach(i => i.onchange = () => { S.choice.role = i.value; const rp = i.dataset.rpos; S.choice.tempPos = rp && rp !== S.p.pos ? rp : null; keepMemo(); render(); });
+      $$('[data-req]').forEach(b => b.onclick = (e) => { e.preventDefault(); requestRole(b.dataset.req, b.dataset.rpos); });
+      $$('[data-goal]').forEach(b => b.onclick = (e) => { e.preventDefault(); S.choice.goalTier = b.dataset.goal; keepMemo(); render(); });
+      $$('[data-vpos]').forEach(b => b.onclick = (e) => { e.preventDefault(); S.choice.viewPos = b.dataset.vpos; keepMemo(); render(); });
       $$('[data-focus]').forEach(b => b.onclick = () => { S.choice.focus = b.dataset.focus; S.open.add('attrs'); keepMemo(); render(); });
       $$('[data-fattr]').forEach(b => b.onclick = () => { const k = b.dataset.fattr; S.choice.focus = S.choice.focus === k ? 'pos' : k; keepMemo(); render(); });
       $$('[data-ask]').forEach(b => b.onclick = () => askNumber(b.dataset.club, +b.dataset.ask));
@@ -9648,20 +9868,96 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const gold = E.goldenGen(E.natT(p), pl.year) > 0 && pl.senior ? ' 황금세대라는 말이 따라붙는다.' : '';
     const fateTxt = t.fateMine ? ` 세계선의 기록에 이 대회는 ${E.natT(p)}의 우승으로 남아 있다 (${t.fateBy}).` : t.fate ? ` 세계선의 기록에 이 대회 우승국은 ${E.jo(t.fate, '이다', '다')} (${t.fateBy}).` : t.fateNot ? ` 세계선의 기록에 이 대회의 ${E.jo(E.natT(p), '은', '는')} 정상에 서지 못했다 (${t.fateBy}).` : '';
     return { label: NAT, title: `${pl.year} ${pl.comp}${pl.host ? ' · 개최국' : ''}`, tone: 'good', text: `${extra}최종 명단에 이름이 올랐다${t.starter ? '' : '. 주전 경쟁은 쉽지 않다'}.${mil}${gold}${fateTxt}`, html: `<div class="grp"><span class="muted small">조별리그</span>${[E.natT(p), ...t.group.map(g => g.name)].map(n => `<span class="ntag">${natTag(n)}</span>`).join('')}</div><p class="muted small" style="margin-top:6px">조 최강 ${esc(strong.name)} 기준</p>${ctxChips(p, t, strong)}`, options: apOpts(p, (ap) => {
-      const r = E.tourGroup(p, t, ap);
+      const r = E.tourGroup(p, t, ap); setTimeout(() => matchBoard(r.ms.map((m, i) => ({ m, key: `${p.id}|${t.year}|${t.comp}|g${i}`, label: `${t.comp} · 조별리그 ${i + 1}차전`, home: E.natT(p), homeBadge: flag(E.natT(p), 'lg'), away: t.group[i].name, awayBadge: flag(t.group[i].name, 'lg'), colA: '#f6f6f6', colB: '#d6453a' }))), 30);
       const lines = r.ms.map((m, i) => `<li class="${m.a > m.b ? 'gold' : m.a < m.b ? 'red' : ''}">vs ${natTag(t.group[i].name)} ${m.a}-${m.b} <span class="muted">· ${esc(meLine(m, p))}</span></li>`).join('');
       S.evOutHtml = `<ul class="lines">${lines}</ul><p><b>${r.pos}위 · ${r.pts}점</b> → ${r.adv ? `${esc(t.ko[0])} 진출` : '조별리그 탈락'}</p>`;
       S.postQ.push(t.done ? endCard(t) : koCard(t));
       return '';
     }) };
   }
+  // ---------- 1.5 실시간 보드판: 이미 끝난 경기 결과(m)를 시계에 맞춰 풀어 보여 준다. 결과는 바꾸지 않고, 분(分)은 경기마다 고정 시드로 정한다. 누르면 건너뛴다 ----------
+  const BOARD_KEY = 'sk_board';
+  const boardOn = () => { try { return localStorage.getItem(BOARD_KEY) !== '0'; } catch { return true; } };
+  const boardSet = (v) => { try { localStorage.setItem(BOARD_KEY, v ? '1' : '0'); } catch { } };
+  let BOARD = null;
+  function boardScript(m, key, isGK) {
+    const rng = E.seeded('board|' + key); const ev = [];
+    const reg = m.et && !m.pens ? (m.a > m.b ? [m.a - 1, m.b] : [m.a, m.b - 1]) : [m.a, m.b];
+    const ht = m.ht || [Math.round(reg[0] / 2), Math.round(reg[1] / 2)];
+    const mins = (n, lo, hi) => Array.from({ length: n }, () => lo + Math.floor(rng() * (hi - lo + 1))).sort((x, y) => x - y);
+    mins(ht[0], 3, 45).forEach(t => ev.push({ t, side: 'a' })); mins(reg[0] - ht[0], 47, 90).forEach(t => ev.push({ t, side: 'a' }));
+    mins(ht[1], 3, 45).forEach(t => ev.push({ t, side: 'b' })); mins(reg[1] - ht[1], 47, 90).forEach(t => ev.push({ t, side: 'b' }));
+    if (m.et && !m.pens) ev.push({ t: 91 + Math.floor(rng() * 28), side: m.a > m.b ? 'a' : 'b' });
+    ev.sort((x, y) => x.t - y.t);
+    // 내 골·도움은 우리 골 가운데 고정 시드로 고른다
+    const ours = ev.filter(e => e.side === 'a'); const pickN = (n) => { const idx = ours.map((_, i) => i).sort(() => rng() - .5); return idx.slice(0, n); };
+    if (m.played) { const gi = pickN(Math.min(m.g || 0, ours.length)); gi.forEach(i => ours[i].me = 'g'); const rest = ours.filter(e => !e.me); rest.sort(() => rng() - .5).slice(0, Math.min(m.as || 0, rest.length)).forEach(e => e.me = 'a'); }
+    if (m.played && isGK) mins(Math.min(m.sv || 0, 9), 4, m.et ? 118 : 89).forEach(t => ev.push({ t, save: true }));
+    if (m.red) ev.push({ t: 100 + Math.floor(rng() * 18), red: true });
+    ev.sort((x, y) => x.t - y.t);
+    return { ev, end: m.et ? 120 : 90, ht };
+  }
+  // 바둑알 경기장: 11 대 11 점이 공을 따라 움직이고, 골 이벤트 몇 분 전부터 그쪽 골문으로 몰아간다(결과는 이미 정해져 있다)
+  const F433 = [[.05, .5], [.2, .15], [.18, .38], [.18, .62], [.2, .85], [.36, .3], [.34, .5], [.36, .7], [.5, .18], [.54, .5], [.5, .82]];
+  function pitchSim(cv, sc, colA, colB, rng) {
+    const W = 120, H = 76; cv.width = W; cv.height = H; const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+    const offGrass = (c) => { const x = hex2rgb(c); const d = Math.abs(x[0] - 70) + Math.abs(x[1] - 153) + Math.abs(x[2] - 63); return d < 170 ? (lum(x) < .2 ? '#f6f6f6' : '#1a1f2b') : c; }; colA = offGrass(colA); colB = offGrass(colB); { const x = hex2rgb(colA), y = hex2rgb(colB); if (Math.abs(x[0] - y[0]) + Math.abs(x[1] - y[1]) + Math.abs(x[2] - y[2]) < 150) colB = lum(x) > .45 ? '#d6453a' : '#f6f6f6'; }
+    const st = { bx: .5, by: .5, tx: .5, ty: .5, pos: 'a', goalAt: null, kick: 0 };
+    const goalsAhead = (t) => sc.ev.find(e => (e.side === 'a' || e.side === 'b') && e.t > t && e.t - t <= 5);
+    const choose = (t) => { const ge = goalsAhead(t); if (ge) { st.pos = ge.side; const k = 1 - (ge.t - t) / 6; const gx = ge.side === 'a' ? .97 : .03; st.tx = .5 + (gx - .5) * Math.min(1, .45 + k * .6); st.ty = .5 + (rng() - .5) * .45 * (1 - k); return; }
+      if (rng() < .32) st.pos = st.pos === 'a' ? 'b' : 'a'; const dir = st.pos === 'a' ? 1 : -1; st.tx = Math.min(.88, Math.max(.12, st.bx + dir * (rng() * .28 - .06))); st.ty = .12 + rng() * .76; };
+    const draw = (now) => {
+      st.bx += (st.tx - st.bx) * .06; st.by += (st.ty - st.by) * .06;
+      for (let x = 0; x < W; x += 10) { g.fillStyle = (x / 10) % 2 ? '#3f8f3a' : '#46993f'; g.fillRect(x, 0, 10, H); }
+      g.fillStyle = 'rgba(255,255,255,.75)'; g.fillRect(2, 2, W - 4, 1); g.fillRect(2, H - 3, W - 4, 1); g.fillRect(2, 2, 1, H - 4); g.fillRect(W - 3, 2, 1, H - 4); g.fillRect(W / 2, 2, 1, H - 4);
+      g.fillRect(2, 22, 16, 1); g.fillRect(2, H - 23, 16, 1); g.fillRect(18, 22, 1, H - 44); g.fillRect(W - 18, 22, 16, 1); g.fillRect(W - 18, H - 23, 16, 1); g.fillRect(W - 19, 22, 1, H - 44);
+      for (let a = 0; a < 24; a++) { const r = 9, x = W / 2 + Math.round(Math.cos(a / 24 * 6.283) * r), y = H / 2 + Math.round(Math.sin(a / 24 * 6.283) * r); g.fillRect(x, y, 1, 1); }
+      g.fillStyle = '#fff'; g.fillRect(0, 30, 2, 16); g.fillRect(W - 2, 30, 2, 16);
+      const sh = (side) => { const dx = (st.bx - .5) * .32, dy = (st.by - .5) * .18; return F433.map(([x, y], i) => { const X = side === 'a' ? x : 1 - x; const att = (side === st.pos ? .06 : -.04) * (side === 'a' ? 1 : -1); const j = Math.sin(now / 700 + i * 1.7 + (side === 'a' ? 0 : 3)) * .012; return [i === 0 ? X : Math.min(.96, Math.max(.04, X + dx + att + j)), i === 0 ? y + dy * .3 : Math.min(.94, Math.max(.06, y + dy + j))]; }); };
+      const dot = (x, y, c) => { const px = Math.round(x * (W - 4)) + 2, py = Math.round(y * (H - 4)) + 2; g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(px - 2, py - 1, 5, 4); g.fillRect(px - 1, py - 2, 3, 5); g.fillStyle = c; g.fillRect(px - 1, py - 1, 3, 3); };
+      const pa = sh('a'), pb = sh('b'); const near = (L) => L.slice(1).reduce((b, p, i) => { const d = (p[0] - st.bx) ** 2 + (p[1] - st.by) ** 2; return d < b.d ? { d, i: i + 1 } : b; }, { d: 9, i: 1 }).i;
+      const ca = near(pa), cb = near(pb); pa[ca] = [pa[ca][0] + (st.bx - pa[ca][0]) * .7, pa[ca][1] + (st.by - pa[ca][1]) * .7]; pb[cb] = [pb[cb][0] + (st.bx - pb[cb][0]) * .55, pb[cb][1] + (st.by - pb[cb][1]) * .55];
+      pb.forEach(([x, y]) => dot(x, y, colB)); pa.forEach(([x, y]) => dot(x, y, colA));
+      const bx = Math.round(st.bx * (W - 4)) + 2, by = Math.round(st.by * (H - 4)) + 2; g.fillStyle = '#000'; g.fillRect(bx - 1, by - 1, 3, 3); g.fillStyle = '#fff'; g.fillRect(bx, by, 1, 1);
+    };
+    return { st, choose, draw, goal(side) { st.bx = side === 'a' ? .99 : .01; st.by = .5; st.tx = .5; st.ty = .5; st.kick = 1; }, kick() { st.bx = .5; st.by = .5; st.tx = .5; st.ty = .5; } };
+  }
+  function matchBoard(list, done) {
+    if (!boardOn() || document.hidden || !list.length || BOARD) { done && done(); return; }
+    const p = S.p; const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const el = document.createElement('div'); el.className = 'board'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '경기 진행');
+    document.body.appendChild(el); BOARD = el; let k = 0, timer = null, fin = false;
+    const close = () => { if (fin) return; fin = true; clearTimeout(timer); el.classList.add('out'); setTimeout(() => el.remove(), 220); BOARD = null; done && done(); };
+    const play = () => {
+      if (k >= list.length) { timer = setTimeout(close, 900); return; }
+      const it = list[k]; const m = it.m; const isGK = p.pos === 'GK'; const sc = boardScript(m, it.key, isGK);
+      el.innerHTML = `<div class="bd-in"><p class="bd-eye">${esc(it.label || '')}${list.length > 1 ? ` · ${k + 1}/${list.length}` : ''}</p>
+        <div class="bd-score"><div class="bd-team">${it.homeBadge}<b>${esc(it.home)}</b></div><div class="bd-num"><b class="px-num sa">0</b><i>:</i><b class="px-num sb">0</b></div><div class="bd-team">${it.awayBadge}<b>${esc(it.away)}</b></div></div>
+        <div class="bd-clock"><b class="px-num">0'</b><span class="bd-bar"><i></i></span></div><div class="bd-pitch"><canvas></canvas></div><ul class="bd-feed"></ul>
+        <div class="bd-ft"><button class="bd-off" type="button">다음부터 끄기</button><span>누르면 건너뛰어요</span></div></div>`;
+      const sa = el.querySelector('.sa'), sb = el.querySelector('.sb'), clk = el.querySelector('.bd-clock b'), bar = el.querySelector('.bd-bar i'), feed = el.querySelector('.bd-feed');
+      const cs = getComputedStyle(el); const pit = pitchSim(el.querySelector('.bd-pitch canvas'), sc, it.colA || cs.getPropertyValue('--royal').trim() || '#2b3446', it.colB || '#f4f4f4', E.seeded('pitch|' + it.key)); let raf = 0; const loop = (now) => { if (fin || !el.isConnected) return; pit.draw(now); raf = requestAnimationFrame(loop); }; raf = requestAnimationFrame(loop);
+      const T = reduce ? 1800 : (list.length > 1 ? 3200 : 6200); const step = T / sc.end; let t = 0, A = 0, B = 0, ei = 0;
+      const line = (e) => { const who = e.side === 'a' ? it.home : it.away; const txt = e.save ? `${p.name} 선방` : e.red ? `${p.name} 퇴장` : e.me === 'g' ? `골! ${p.name}` : e.me === 'a' ? `골! ${who} · ${p.name} 도움` : `골 · ${who}`; const li = document.createElement('li'); li.className = (e.save ? 'sv' : e.red ? 'rd' : e.side === 'a' ? 'ga' : 'gb') + (e.me ? ' me' : ''); li.innerHTML = `<b class="px-num">${e.t}'</b><span>${esc(txt)}</span>`; feed.prepend(li); while (feed.children.length > 4) feed.lastChild.remove(); if (!e.save && !e.red) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); } };
+      const tick = () => { if (fin) return; t++; if (t % 2 === 0 || pit.st.kick) { pit.st.kick = 0; pit.choose(t); } if (t === 46 || t === 91) pit.kick(); while (ei < sc.ev.length && sc.ev[ei].t <= t) { const e = sc.ev[ei++]; if (e.side === 'a') A++; else if (e.side === 'b') B++; if (e.side) pit.goal(e.side); sa.textContent = A; sb.textContent = B; line(e); }
+        clk.textContent = t === 45 ? "HT" : `${t}'`; bar.style.width = (t / sc.end * 100).toFixed(1) + '%';
+        if (t >= sc.end) { clk.textContent = m.pens ? 'PK' : 'FT'; el.classList.add('ended'); k++; timer = setTimeout(() => { cancelAnimationFrame(raf); play(); }, reduce ? 500 : 1300); return; }
+        timer = setTimeout(tick, t === 45 ? step * 10 : step); };
+      timer = setTimeout(tick, 250);
+    };
+    el.addEventListener('click', (e) => { if (e.target.closest('.bd-off')) { boardSet(false); toast('경기 보드판을 껐어요. 세계선 탭 아래 세이브 칸에서 다시 켤 수 있어요.'); } close(); });
+    document.addEventListener('keydown', function kd(e) { if (fin) { document.removeEventListener('keydown', kd); return; } if (['Escape', 'Enter', ' '].includes(e.key)) { e.preventDefault(); close(); document.removeEventListener('keydown', kd); } });
+    play();
+  }
+  const awayCol = (homeId, awayId) => { const h = clubPal(homeId)?.['--royal'] || '#2b3446'; const c = E.CLUB[awayId]; if (!c) return '#f4f4f4'; const cand = [c.c1, c.c2].map(hex2rgb).sort((a, b) => sat(b) - sat(a)); const d = (x) => { const y = hex2rgb(h); return Math.abs(x[0] - y[0]) + Math.abs(x[1] - y[1]) + Math.abs(x[2] - y[2]); }; return rgb2hex(d(cand[0]) > 120 ? cand[0] : cand[1]); };
+  const sideOf = (t) => { const p = S.p; return t.clubFinal || t.kind === 'club' ? { home: club(t.club || p.club).name, homeBadge: crest(t.club || p.club, 'md'), away: t.cur.name, awayBadge: t.cur.id ? crest(t.cur.id, 'md') : '', colA: clubPal(t.club || p.club)?.['--royal'], colB: awayCol(t.club || p.club, t.cur.id) } : { home: E.natT(p), homeBadge: flag(E.natT(p), 'lg'), away: t.cur.name, awayBadge: flag(t.cur.name, 'lg'), colA: '#f6f6f6', colB: '#d6453a' }; };
   const STAGE_TXT = { '결승': '모든 것이 걸린 90분. 관중석이 끓어오른다.', '4강': '결승까지 한 경기.', '동메달 결정전': '빈손으로 돌아갈 수는 없다.', '8강': '여기서부터는 강팀만 남았다.' };
   function koCard(t) {
     const p = S.p; const st = t.mode === 'bronze' ? '동메달 결정전' : t.ko[t.ri];
     const jinx = st === '결승' && p.flags.jinx ? `결승 ${p.flags.jinxMax || 3}연패. 기자회견장에서 또 그 질문이 나왔다. 이번엔 다를까.` : '';
     const ns = E.nationStar(S.world, p, t.cur.name, t.year); const fateTxt = t.fate === t.cur.name ? ` 세계선의 기록에 이 대회 우승국은 ${E.jo(t.cur.name, '이다', '다')} (${t.fateBy}).` : '';
     return { label: NAT, title: `${st} · vs ${t.cur.name}`, tone: st === '결승' ? 'legacy' : 'neutral', text: (jinx || STAGE_TXT[st] || '지면 끝이다.') + fateTxt + (ns ? ` 상대엔 ${t.year - ns.birthYear}세의 세계선 선배 ${E.jo(ns.name, '이', '가')} 있다.` : ''), html: `<div class="vs">${flag(E.natT(p), 'lg')}<b>${esc(E.natT(p))}</b><span class="muted">vs</span><b>${esc(t.cur.name)}</b>${flag(t.cur.name, 'lg')}</div>${ctxChips(p, t, t.cur)}`, options: apOpts(p, (ap) => {
-      const m = E.tourKO(p, t, ap);
+      const sd0 = sideOf(t); const stg0 = t.mode === 'bronze' ? '동메달 결정전' : t.ko[t.ri]; const m = E.tourKO(p, t, ap); setTimeout(() => matchBoard([{ m, key: `${p.id}|${t.year}|${t.comp}|${stg0}|${sd0.away}`, label: `${t.comp} · ${stg0}`, ...sd0 }]), 30);
       if (t.pk) { S.postQ.push(pkCard(t)); S.evOutHtml = `<p><b>${m.a}-${m.b}</b> · 연장까지 승부가 나지 않았다. 승부차기.</p><p class="muted small">${esc(meLine(m, p))}</p>`; return ''; }
       const ht = m.ht && (m.ht[0] !== m.a || m.ht[1] !== m.b) ? `<p class="muted small">전반 ${m.ht[0]}-${m.ht[1]}${m.ht[0] < m.ht[1] && m.won ? ' · 뒤집었다' : m.ht[0] > m.ht[1] && !m.won ? ' · 뒤집혔다' : ''}</p>` : '';
       S.evOutHtml = `<p><b class="${m.won ? 'pos' : 'neg'}">${m.won ? '승리' : '패배'} ${scoreTxt(m)}</b></p>${ht}<p class="muted small">${esc(meLine(m, p))}</p>`;
@@ -9718,7 +10014,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   };
   TROPHY_SVG.tac = TAC_ICON;
   function queueCut(c) { CUTQ.push(c); }
-  try { if (location.hash.startsWith('#skdebug')) window.__sk = { S, Codex, KV, queueCut, showCuts: () => showCuts(), featCuts: (p) => featCuts(p) }; } catch { }
+  try { if (location.hash.startsWith('#skdebug')) window.__sk = { S, Codex, KV, queueCut, showCuts: () => showCuts(), featCuts: (p) => featCuts(p), clubPal: (id) => clubPal(id), crestOf: (id) => crest(id, 'md'), matchBoard: (l, d) => matchBoard(l, d), seasonReel: (p, r) => seasonReel(p, r) }; } catch { }
   // 결승의 대활약: 트로피보다 앞서, 한 사람만 비추는 컷
   const FEAT_ICO = {
     ball: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="#fbf8ef" stroke="#f6d688" stroke-width="2"/><path d="M20 12.5l6.6 4.8-2.5 7.8h-8.2l-2.5-7.8z" fill="#20222b"/><path d="M20 12.5V4.5M26.6 17.3l7.4-2.6M24.1 25.1l4.6 6.4M15.9 25.1l-4.6 6.4M13.4 17.3L6 14.7" stroke="#20222b" stroke-width="1.6" fill="none"/></svg>`,
@@ -9866,7 +10162,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     else if (!p.youth && p.contract <= 0 && !p.loanFrom) { p.contract = 2; p.wage = p.renewOffer ?? E.renewWage(p); p.wageHist = (p.wageHist || []).concat({ year: p.year, club: p.club, wage: p.wage, years: 2, renew: true }); p.pendingEvents = (p.pendingEvents || []).concat(`2년 재계약 · 연봉 ${E.fmtWon(p.wage)}`); }
     if (S.pendingNumber && (p.needNumber || of || !p.number)) E.setNumber(p, S.pendingNumber);
     if (S.numAsk && of && of.club === S.numAsk.club && S.numAsk.pr) { try { const q = S.numAsk.pr; PRESS.queue(p, q.k ? PRESS.make(q.k, p, q.v) : q); } catch { } } /* 새 구단에 온 뒤 그 동네 신문이 쓴다 */ S.numAsk = null;
-    syncRole(p); p.role = S.choice.role; p.lastFocus = S.choice.focus;
+    syncRole(p); try { const op = goalOptions(p).find(x => x.tier === S.choice.goalTier); const ex = op || !p.youth ? clubExpect(p, p.club) : null; p.goal = p.youth || p.forcedRetire ? null : { year: p.year, club: p.club, exp: ex ? { t: ex.t, rk: ex.rk } : null, mine: op || null }; } catch (e) { console.warn('goal', e); } if (!S.choice.tempPos) p.role = S.choice.role; p.lastFocus = S.choice.focus; /* 1.5: 다른 자리 시험 기용 시즌엔 등록 롤을 덮어쓰지 않는다 */
     S.mods = Object.assign({}, p.nextMods || {}); p.nextMods = {};
     S.offerPick = -1; S.pendingNumber = null; S.windowQ = [];
     S.evQ = EVENTS.seasonQueue(ctxFor(p)); S.evIdx = 0; S.evOut = null;
@@ -9953,13 +10249,15 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const el = document.createElement('div'); el.className = 'reel' + (sc.warp ? ' warp' : '') + (reduce ? ' still' : ''); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', `${sl(res.year)} 시즌 진행`);
     el.innerHTML = `<div class="reel-in"><p class="reel-eye">${sc.warp ? '세계선이 갈라진다 · ' : ''}${sl(res.year)}</p><p class="reel-who"><b>${esc(p.name)}</b><span>${esc(club(res.club).name)} · ${esc(res.pos || p.pos)} · ${res.age}세</span></p>
       <div class="reel-bar" aria-hidden="true"><i></i></div><div class="reel-ticks" aria-hidden="true">${sc.stages.map((s, i, a) => `<span style="left:${(i / (a.length - 1) * 100).toFixed(2)}%">${esc(s)}</span>`).join('')}</div>
-      <p class="reel-stage" aria-live="polite"></p><p class="reel-line"></p>
+      <p class="reel-stage" aria-live="polite"></p><p class="reel-line"></p>${res.goal?.mine ? `<div class="reel-goal"><span class="rg-l">목표 · ${esc(goalLabel(res.goal.mine))}</span><span class="rg-bar"><i></i></span><b class="rg-v px-num">0</b><span class="rg-m"></span></div>` : ''}
       <div class="reel-ft"><button class="reel-off" type="button">다음부터 끄기</button><span>누르면 건너뛰어요</span></div></div>`;
     document.body.appendChild(el);
+    const GM = res.goal?.mine; const rgV = el.querySelector('.rg-v'), rgB = el.querySelector('.rg-bar i'), rgM = el.querySelector('.rg-m');
+    const goalAt = (f, last) => { if (!GM || !rgV) return; const cnt = !['award', 'rating'].includes(GM.m); if (cnt) { const v = Math.round((+GM.got || 0) * f); rgV.textContent = v; rgB.style.width = Math.min(100, v / Math.max(1, GM.t) * 100).toFixed(0) + '%'; } else rgV.textContent = last ? (GM.m === 'rating' ? (+GM.got).toFixed(2) : GM.ok ? '수상' : '—') : '…'; if (last) { rgM.textContent = GM.ok ? '달성!' : '실패'; rgM.className = 'rg-m ' + (GM.ok ? 'ok' : 'no'); if (!cnt) rgB.style.width = GM.ok ? '100%' : '30%'; } };
     const bar = el.querySelector('.reel-bar i'), st = el.querySelector('.reel-stage'), ln = el.querySelector('.reel-line');
     const seq = [...sc.fr, sc.end]; const T = reduce ? 3200 : 5200; const step = T / seq.length; let i = 0, timer = null, done = false;
     const stageAt = (f) => sc.stages[Math.min(sc.stages.length - 1, Math.floor(f * (sc.stages.length - .001)))];
-    const show = () => { const f = (i + 1) / seq.length; bar.style.width = (f * 100).toFixed(0) + '%'; st.textContent = i === seq.length - 1 ? sc.stages[sc.stages.length - 1] : stageAt(i / (seq.length - 1)); ln.classList.remove('on'); void ln.offsetWidth; ln.textContent = seq[i]; ln.classList.add('on'); };
+    const show = () => { const f = (i + 1) / seq.length; bar.style.width = (f * 100).toFixed(0) + '%'; goalAt(f, i === seq.length - 1); st.textContent = i === seq.length - 1 ? sc.stages[sc.stages.length - 1] : stageAt(i / (seq.length - 1)); ln.classList.remove('on'); void ln.offsetWidth; ln.textContent = seq[i]; ln.classList.add('on'); };
     const finish = () => { if (done) return; done = true; clearTimeout(timer); document.removeEventListener('visibilitychange', vis); el.classList.add('out'); setTimeout(() => el.remove(), reduce ? 0 : 260); REEL = null; setTimeout(showCuts, reduce ? 0 : 200); };
     const tick = () => { if (i >= seq.length) { timer = setTimeout(finish, 700); return; } show(); i++; timer = setTimeout(tick, step); };
     const vis = () => { if (document.hidden) finish(); };
@@ -9968,10 +10266,54 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     document.addEventListener('visibilitychange', vis);
     REEL = el; tick();
   }
+  // ---------- 1.5 시즌 목표: 구단 기대(자동) + 개인 목표(세 단계 중 하나). 경기 결과는 바꾸지 않고, 판정만 해서 다음 시즌 상태에 반영 ----------
+  const GOAL_TIER = { s: ['안정', { ok: { morale: 4, fans: 2 }, no: { morale: -4, trust: -2 } }], c: ['도전', { ok: { morale: 7, fans: 4, rep: 2 }, no: { morale: -6, trust: -3 } }], l: ['전설', { ok: { morale: 10, fans: 6, rep: 4 }, no: { morale: -8, rep: -1 } }] };
+  const GOAL_MET = { goals: ['골', (r) => r.goals || 0], assists: ['도움', (r) => r.assists || 0], apps: ['경기 출전', (r) => r.apps || 0], cs: ['클린시트', (r) => r.cs || 0], rating: ['평점', (r) => +(r.rating || 0)], award: ['수상', (r) => r.awards || []] };
+  function goalLabel(g) { if (!g) return ''; if (g.m === 'award') return `${g.t} 수상`; if (g.m === 'rating') return `평점 ${(+g.t).toFixed(2)} 이상`; if (g.m === 'apps') return `${g.t}경기 출전`; if (g.m === 'cs') return `클린시트 ${g.t}경기`; return `${g.t}${g.m === 'goals' ? '골' : '도움'} (모든 대회)`; }
+  function goalOptions(p) {
+    if (p.youth || p.forcedRetire) return [];
+    const L = [...p.seasons].reverse().find(r => !r.youthTeam && r.apps >= 10); const pos = ch0pos(p); const o = Math.round(E.ovr(p)); const grp = E.POS[pos].grp;
+    const m = pos === 'GK' ? 'cs' : ['ST', 'LW', 'RW'].includes(pos) || (pos === 'AM' && (!L || L.goals >= L.assists)) ? 'goals' : ['AM', 'CM', 'LB', 'RB', 'LWB', 'RWB'].includes(pos) ? 'assists' : 'rating';
+    const exp = (k) => { if (L && L[k] != null) return L[k]; const q = Math.max(.3, 1 + (o - 75) * .05); return k === 'goals' ? E.POS[pos].g * 38 * q : k === 'assists' ? E.POS[pos].a * 38 * q : k === 'cs' ? 9 + (o - 75) * .4 : 6.85; };
+    const benched = !L || (L.share ?? 1) < .45 || p.age <= 21;
+    const out = [];
+    if (benched) out.push({ tier: 's', m: 'apps', t: Math.max(15, Math.min(34, Math.round((L?.apps || 18) + 6))) });
+    else if (m === 'rating') out.push({ tier: 's', m: 'rating', t: +(Math.max(6.7, Math.round((exp('rating') - .1) * 20) / 20)).toFixed(2) });
+    else out.push({ tier: 's', m, t: Math.max(1, Math.round(exp(m) * .8)) });
+    if (m === 'rating') out.push({ tier: 'c', m: 'rating', t: +(Math.round((Math.max(6.9, exp('rating')) + .15) * 20) / 20).toFixed(2) });
+    else out.push({ tier: 'c', m, t: Math.max(2, Math.round(exp(m) * 1.2 + 1)) });
+    const aw = m === 'goals' && grp === 'FW' ? '득점왕' : m === 'assists' ? '도움왕' : o >= 84 ? '리그 MVP' : '베스트 11';
+    out.push({ tier: 'l', m: 'award', t: aw });
+    return out;
+  }
+  const ch0pos = (p) => (S.choice && S.choice.tempPos) || p.pos;
+  function clubExpect(p, clubId) { let o = null; try { o = E.offerOutlook(p, clubId, S.world, {}); } catch { } if (!o) return null; const rk = o.rank;
+    const t = rk === 1 ? 1 : rk <= 2 ? 2 : rk <= 4 ? 4 : rk <= 8 ? rk + 2 : 99; return { rk, t, race: o.race }; }
+  const expLabel = (e) => !e ? '' : e.t === 1 ? '리그 우승' : e.t === 99 ? '1부 잔류 · 강등 피하기' : `리그 ${e.t}위 이내`;
+  function judgeGoal(p, res) {
+    const G = p.goal; if (!G || G.year !== res.year || res.youthTeam) { if (G && G.year <= res.year) delete p.goal; return null; }
+    const out = { exp: null, mine: null }; const B = [];
+    if (G.exp) { const lg = E.LEAGUES[res.lg]; const n = res.lgSize || 20; const ok = G.exp.t === 99 ? res.rank <= n - 3 && !(res.move === 'down') : res.rank <= G.exp.t; out.exp = { ...G.exp, ok, got: res.rank };
+      B.push(E.bump(p, 'trust', ok ? 3 : -3)); if (ok) E.bump(p, 'fans', 2); }
+    if (G.mine) { const g = G.mine; const v = GOAL_MET[g.m][1](res); const ok = g.m === 'award' ? v.includes(g.t) : v >= g.t; out.mine = { ...g, ok, got: g.m === 'award' ? (v.includes(g.t) ? g.t : null) : v };
+      const eff = GOAL_TIER[g.tier][1][ok ? 'ok' : 'no']; for (const [k, d] of Object.entries(eff)) E.bump(p, k, d); out.mine.eff = eff; }
+    delete p.goal; return out;
+  }
+  const EFF_NAME = { morale: '사기', trust: '감독 신뢰', fans: '팬심', rep: '명성' };
+  const effTxt = (e) => Object.entries(e || {}).map(([k, d]) => `${EFF_NAME[k]} ${d > 0 ? '+' : ''}${d}`).join(' · ');
+  function goalResultBlock(r) { const g = r.goal; if (!g || (!g.exp && !g.mine)) return '';
+    const row = (lbl, txt, ok, got, eff) => `<div class="gl-r ${ok ? 'ok' : 'no'}"><span class="gl-ic">${ok ? '✔' : '✕'}</span><span class="gl-l">${lbl}</span><b>${esc(txt)}</b><small>${got}${eff ? ' · ' + eff : ''}</small></div>`;
+    return `<div class="goalres">${g.exp ? row('구단 기대', expLabel(g.exp), g.exp.ok, `${g.exp.got}위`, g.exp.ok ? '감독 신뢰 +3 · 팬심 +2' : '감독 신뢰 -3') : ''}${g.mine ? row(`개인 목표 · ${GOAL_TIER[g.mine.tier][0]}`, goalLabel(g.mine), g.mine.ok, g.mine.m === 'award' ? (g.mine.ok ? '수상' : '수상 못 함') : g.mine.m === 'rating' ? (+g.mine.got).toFixed(2) : `${g.mine.got}`, effTxt(g.mine.eff)) : ''}</div>`; }
+  function goalPicker(p, tgt) {
+    const opts = goalOptions(p); if (!opts.length) return '';
+    const ch = S.choice; if (ch.goalTier === undefined) ch.goalTier = 's'; const ex = clubExpect(p, tgt);
+    return `<div class="goalpick"><p class="gp-exp"><span class="plbl">구단 기대</span><b>${esc(expLabel(ex))}</b> <span class="muted small">예상 판도 ${esc(ex?.race || '')}</span></p><div class="gp-opts">${opts.map(o => { const [nm, rw] = GOAL_TIER[o.tier]; return `<button class="gp-o t${o.tier}${ch.goalTier === o.tier ? ' on' : ''}" data-goal="${o.tier}"><span class="gp-t">${nm}</span><b>${esc(goalLabel(o))}</b><small>성공 ${effTxt(rw.ok)}<br>실패 ${effTxt(rw.no)}</small></button>`; }).join('')}</div></div>`;
+  }
   function runSim() {
     const p = S.p;
-    const res = E.simulateSeason(p, { ...S.choice, role: p.role, liveFinal: true }, S.world, S.mods || {});
+    const res = E.simulateSeason(p, { ...S.choice, role: S.choice.tempPos ? S.choice.role : p.role, liveFinal: true }, S.world, S.mods || {});
     S.lastRes = res; S.choice.memo = ''; p.stage = 'post'; S.mods = {};
+    try { const gj = judgeGoal(p, res); if (gj) res.goal = gj; } catch (e) { console.warn('goal', e); }
     S.postQ = []; S.evIdx = 0; S.evOut = null; S.summerDone = false;
     try { if (res.tacNew && !res.pendingFinal) tacDiscover(p, res); } catch (e) { console.warn('tac', e); }
     if (res.branch) branchCut(res.branch, res.year);
@@ -9982,10 +10324,32 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     S.phase = 'post'; render(); window.scrollTo(0, 0);
   }
   // 시즌 결과 확정 뒤: 언론·연출·시즌 후 사건. 결승을 직접 치렀으면 그 뒤에 붙는다
+  // ---------- 1.5 업적 도감: 세계선의 모든 커리어 기록에서 판정(소급). 결과는 요약에 캐시하고, 업적 규칙이 바뀌면 다시 계산 ----------
+  const ACH_PAL = { 1: { g: '#d8925a', h: '#f3c49a', s: '#a8622f', d: '#7a4520', w: '#ffe6cf', o: '#4a2810', L: '#9a5a2a' }, 2: { g: '#c9d2df', h: '#eef2f8', s: '#8d99ae', d: '#5e6a80', w: '#ffffff', o: '#1f2733', L: '#7d899e' }, 3: null };
+  const ACH_TIER = { 1: '동', 2: '은', 3: '금' };
+  const achBadge = (t, px = 1.4, dim) => pix('medal', px, dim ? PAL_DIM : ACH_PAL[t]);
+  const ACF = new Set();
+  function achFill(w) {
+    const need = (w.careers || []).filter(c => c.achV !== E.ACH_VER && !ACF.has(c.id)); if (!need.length) return;
+    need.forEach(c => ACF.add(c.id));
+    Promise.all(need.map(c => Store.loadCareer(c.id).then(d => { if (d?.seasons?.length) { c.ach = E.achOf(d, w); c.achV = E.ACH_VER; } }, () => { })))
+      .then(() => { Store.save('world', w); if (S.view === 'world' && S.worldTab === 'ach') { const y = scrollY; render(); scrollTo(0, y); } });
+  }
+  function viewAch(w) {
+    achFill(w); const cs = (w.careers || []).filter(c => !c.hidden); const live = S.p && S.p.status !== 'retired' ? S.p : null; const liveA = live ? E.achOf(live, w) : [];
+    const holders = (id) => { const L = cs.filter(c => (c.ach || []).includes(id)).sort((a, b) => a.endYear - b.endYear); if (liveA.includes(id) && !L.some(c => c.id === live.id)) L.push({ id: live.id, name: live.name, live: true, endYear: live.year }); return L; };
+    const got = E.ACH.filter(a => holders(a.id).length).length;
+    return `<div class="achhead"><span class="px-lbl">ACHIEVEMENTS</span><b class="px-num">${got}</b><span class="muted">/ ${E.ACH.length}</span><span class="muted small">세계선의 모든 커리어 기록으로 판정해요. 지난 커리어도 소급돼요.</span></div>` + [3, 2, 1].map(t => `<h3 class="h3 ach-t t${t}">${ACH_TIER[t]}</h3><div class="achgrid">${E.ACH.filter(a => a.t === t).map(a => { const H = holders(a.id); const on = H.length > 0; return `<div class="achc${on ? ' on' : ''} t${t}">${achBadge(t, 1.6, !on)}<div class="achm"><b>${esc(a.name)}</b><small>${esc(a.desc)}</small>${on ? `<span class="achw">처음: ${H[0].live ? `<button class="link" data-go="career">${esc(H[0].name)}</button> (진행 중)` : `<button class="link" data-card="${H[0].id}">${esc(H[0].name)}</button>`}${H.length > 1 ? ` · ${H.length}명` : ''}</span>` : '<span class="achw muted">아직 아무도</span>'}</div></div>`; }).join('')}</div>`).join('');
+  }
+  function achChips(p) { if (!p?.seasons) return ''; const A = E.achOf(p, S.world).map(id => E.ACH.find(a => a.id === id)).filter(Boolean).sort((a, b) => b.t - a.t); if (!A.length) return '';
+    return `<div class="tr-ach"><span class="px-lbl">ACHIEVEMENTS · ${A.length}</span><div>${A.map(a => `<span class="ach-chip t${a.t}" title="${esc(a.desc)}">${achBadge(a.t, .8)}${esc(a.name)}</span>`).join('')}</div></div>`; }
+  function achCheck(p, res) { const now = E.achOf(p, S.world); if (!p.achSeen) { p.achSeen = now; return; } const nu = now.filter(x => !p.achSeen.includes(x)); p.achSeen = now; if (!nu.length) return;
+    const A = nu.map(id => E.ACH.find(a => a.id === id)).filter(Boolean); res.events = (res.events || []).concat(A.map(a => `업적 달성 · ${a.name}`)); setTimeout(() => toast(`업적 달성 · ${A.map(a => a.name).join(', ')}`), 1600); }
   function afterSeason(res, fresh) {
     const p = S.p;
     try { PRESS.flushInto(p, res); } catch (e) { console.warn('press', e); }
     try { if (!p.flags.deceased) seasonCuts(p, res); } catch (e) { console.warn('cut', e); }
+    try { achCheck(p, res); } catch (e) { console.warn('ach', e); }
     Store.save('career', p); Store.save('world', S.world); // 시즌 중 사건이 세계의 기록(부모의 죽음 등)을 바꿨을 수 있다
     const post = p.flags.deceased ? [] : EVENTS.draw('post', ctxFor(p, { res }), Math.random() < .35 ? 1 : 0); S.postQ.push(...post);
     if (fresh && !S.postQ.length) { S.summerDone = true; summerStart(); }
@@ -9999,7 +10363,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const jinx = p.flags.jinx ? ` 결승 ${p.flags.jinxMax || 3}연패. 기자회견장에서 또 그 질문이 나왔다.` : '';
     const bench = t.playP >= .9 ? '' : t.playP >= .5 ? ' 선발은 장담할 수 없다.' : t.playP > 0 ? ' 벤치에서 시작한다. 감독이 부를지도 모른다.' : ' 이번 결승은 명단 밖이다.';
     const go = (ap) => {
-      const m = E.tourKO(p, t, ap);
+      const sd0 = sideOf(t); const stg0 = t.mode === 'bronze' ? '동메달 결정전' : t.ko[t.ri]; const m = E.tourKO(p, t, ap); setTimeout(() => matchBoard([{ m, key: `${p.id}|${t.year}|${t.comp}|${stg0}|${sd0.away}`, label: `${t.comp} · ${stg0}`, ...sd0 }]), 30);
       if (t.pk) { S.postQ.push(pkCard(t)); S.evOutHtml = `<p><b>${m.a}-${m.b}</b> · 연장까지 승부가 나지 않았다. 승부차기.</p><p class="muted small">${esc(meLine(m, p))}</p>`; return ''; }
       const ht = m.ht && (m.ht[0] !== m.a || m.ht[1] !== m.b) ? `<p class="muted small">전반 ${m.ht[0]}-${m.ht[1]}${m.ht[0] < m.ht[1] && m.won ? ' · 뒤집었다' : m.ht[0] > m.ht[1] && !m.won ? ' · 뒤집혔다' : ''}</p>` : '';
       S.evOutHtml = `<p><b class="${m.won ? 'pos' : 'neg'}">${m.won ? '우승' : '준우승'} ${scoreTxt(m)}</b></p>${ht}<p class="muted small">${esc(meLine(m, p))}</p>`;
@@ -10132,6 +10496,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       Store.save('career', p); render(); return;
     }
     if (a === 'fwlast') { keepMemo(); if (p.flags.lastSeason === p.year) return; p.flags.lastSeason = p.year; p.flags.lastWhy = 'declare'; E.fanCer(p, p.club, 10); p.morale = Math.min(100, (p.morale ?? 60) + 8); try { PRESS.queue(p, PRESS.both('fw_last', p, {})); } catch { } S.fwMsg = '이번 시즌이 마지막이라고 발표했다. 남은 경기마다 박수가 따라올 것이다.'; Store.save('career', p); render(); return; }
+    if (a === 'boardtoggle') { boardSet(!boardOn()); toast(boardOn() ? '경기 보드판을 켰어요.' : '경기 보드판을 껐어요.'); render(); return; }
     if (a === 'reeltoggle') { reelSet(!reelOn()); toast(reelOn() ? '시즌 진행 연출을 켰어요.' : '시즌 진행 연출을 껐어요.'); render(); return; }
     if (a === 'intlback') {
       keepMemo(); if (p.flags.retAsk === p.year) return; p.flags.retAsk = p.year;
