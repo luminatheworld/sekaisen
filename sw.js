@@ -1,5 +1,5 @@
 // 세계선 커리어 · 오프라인 캐시
-const C = 'sekaisen-1.5.2';
+const C = 'sekaisen-1.5.3';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './crests.json'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(C).then((c) => c.addAll(CORE.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting())); });
 self.addEventListener('message', (e) => { if (e.data === 'skip') self.skipWaiting(); });

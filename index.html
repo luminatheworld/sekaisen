@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='1.5.2'</script>
+<script>window.SK_VER='1.5.3'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1376,7 +1376,7 @@ const ENGINE = (() => {
   function clubStr(id, year) {
     const c = CLUB[id]; if (!c) return 60;
     const ec = !c.mil && year >= ECON_Y0 ? econCur() : null;
-    if (ec) { let s = ec.pow[id][Math.min(year, ECON_Y1) - ECON_Y0]; for (const m of CLUB_MODS) if (m.club === id && year >= m.from && year <= m.to) s += m.d; return clamp(s, 48, 94); }
+    if (ec) { let s = ec.pow[id][Math.min(year, ec.y1) - ECON_Y0]; for (const m of CLUB_MODS) if (m.club === id && year >= m.from && year <= m.to) s += m.d; return clamp(s, 48, 94); }
     const b = Math.floor((year - 2026) / 5);
     const n0 = gauss(seeded('drift|' + id + '|' + b)), n1 = gauss(seeded('drift|' + id + '|' + (b + 1)));
     const t = ((year - 2026) % 5) / 5;
@@ -1416,13 +1416,16 @@ const ENGINE = (() => {
   const CUP_SIM = [['ucl', 'UEFA 챔피언스리그', .6, .05, 0], ['uel', 'UEFA 유로파리그', .3, .025, 1]];
   const PAIRS = Object.entries(LEAGUES).filter(([k, l]) => l.parent).map(([k, l]) => [l.parent, k]); const PAIRED = new Set(PAIRS.flat()); const PROMO_N = 2;
   // 그해 그 구단이 뛰는 리그. 승강이 있는 나라만 해마다 바뀐다
-  function lgAt(id, year) { const c = CLUB[id]; if (!c) return null; if (!PAIRED.has(c.lg) || c.mil || year == null || year < ECON_Y0) return c.lg; const ec = econCur(); const m = ec?.mem?.[id]; return (m && m[Math.min(year, ECON_Y1) - ECON_Y0]) || c.lg; }
+  function lgAt(id, year) { const c = CLUB[id]; if (!c) return null; if (!PAIRED.has(c.lg) || c.mil || year == null || year < ECON_Y0) return c.lg; const ec = econCur(); const m = ec?.mem?.[id]; return (m && m[Math.min(year, ec.y1) - ECON_Y0]) || c.lg; }
   function clubsIn(lg, year) { if (!PAIRED.has(lg) || year == null) return CLUBS.filter(c => c.lg === lg); return CLUBS.filter(c => !c.mil && PAIRED.has(c.lg) && lgAt(c.id, year) === lg || (c.mil && c.lg === lg)); }
   // 그해의 승강(축구사·연감용)
   function movesAt(year) { const ec = econCur(); return (ec?.moves || []).filter(m => m.y === year); }
   function buildEcon(led, seed, folds = [], act = []) {
     const rng0 = seeded('econ|' + seed), rngX = seeded('econx|' + seed); let rng = rng0; const gn = () => (rng() + rng() + rng() - 1.5) * 1.41;
-    const NY = ECON_Y1 - ECON_Y0 + 1; const pow = {}, fame = {}, raw = {}, fiO = {}, boost = {}, crisis = {}, tk = {};
+    // 1.5.3 축구사의 끝: 기본 2130년, 기록된 시즌·진행 중 커리어가 그 뒤로 가면 그만큼 늘린다(앞의 해는 같은 난수 흐름이라 그대로). 전엔 2130년에 멈춰서, 그 뒤엔 2부 우승을 해도 승격이 없었다
+    let yMax = 0; for (const { s } of led?.seasons || []) yMax = Math.max(yMax, s[0]); for (const r of act) yMax = Math.max(yMax, r[0]); if (ACT && ACT.year) yMax = Math.max(yMax, ACT.year);
+    const y1 = Math.min(2600, Math.max(ECON_Y1, Math.ceil((yMax + 12) / 10) * 10));
+    const NY = y1 - ECON_Y0 + 1; const pow = {}, fame = {}, raw = {}, fiO = {}, boost = {}, crisis = {}, tk = {};
     const lm = {}, trend = {}, lgM = {}, lgIdx = {}; const ev = []; const st = {};
     // 승강: 구단의 그해 리그(mem)와, 리그 수준을 천천히 따라가는 기준선(base)
     const mem = {}, memY = {}, base = {};
@@ -1519,11 +1522,11 @@ const ENGINE = (() => {
         down.forEach(id => { mem[id] = S2; moves.push({ y, club: id, from: T, to: S2 }); }); up.forEach(id => { mem[id] = T; moves.push({ y, club: id, from: S2, to: T }); });
       }
     }
-    return { pow, st, ev, lgM, lgIdx, tk, mem: memY, moves, cups: cupsY, fame0: Object.fromEntries(ECON_CLUBS.map(c => [c.id, c.str])) };
+    return { y1, pow, st, ev, lgM, lgIdx, tk, mem: memY, moves, cups: cupsY, fame0: Object.fromEntries(ECON_CLUBS.map(c => [c.id, c.str])) };
   }
   // 그해 그 구단의 사정: 이벤트·꼬리표가 읽는다
   function econAt(clubId, year) {
-    const ec = econCur(); const c = CLUB[clubId]; if (!ec || !c || c.mil || year < ECON_Y0) return null; const i = Math.min(year, ECON_Y1) - ECON_Y0;
+    const ec = econCur(); const c = CLUB[clubId]; if (!ec || !c || c.mil || year < ECON_Y0) return null; const i = Math.min(year, ec.y1) - ECON_Y0;
     const S = ec.st[clubId] || []; const kind = S[i] || null; const recent = (k, n) => { for (let j = Math.max(0, i - n); j <= i; j++) if (S[j] === k) return ECON_Y0 + j; return null; };
     const pw = ec.pow[clubId][i], p10 = ec.pow[clubId][Math.max(0, i - 10)];
     const tag = recent('fold', 2) ? '재건 중' : (recent('crisis', 1) || recent('deduct', 1)) ? '재정난' : recent('takeover', 3) ? '신흥 부자' : c.str - pw >= 7 ? '몰락한 명문' : pw - c.str >= 7 ? '떠오르는 구단' : pw - p10 >= 6 ? '상승세' : p10 - pw >= 6 ? '하락세' : null;
@@ -1531,7 +1534,7 @@ const ENGINE = (() => {
   }
   // 주인공이 겪은 구단 해체는 세계의 사건이 된다: 그 세계선의 축구사에 남고, 구단은 바닥에서 다시 시작한다
   function recordFold(world, p, club, year) { const w = world || CUR?.world; if (!w) return; w.folds = w.folds || []; if (w.folds.some(f => f.club === club && f.year === year && f.line === (p.line || 'L0'))) return; w.folds.push({ club, year, line: p.line || 'L0', by: p.id, name: p.name }); EC_LAST = null; }
-  const lgMoney = (lg, year) => { const ec = econCur(); if (!ec || year < ECON_Y0 || !ec.lgM[lg]) return 0; return ec.lgM[lg][Math.min(year, ECON_Y1) - ECON_Y0] || 0; };
+  const lgMoney = (lg, year) => { const ec = econCur(); if (!ec || year < ECON_Y0 || !ec.lgM[lg]) return 0; return ec.lgM[lg][Math.min(year, ec.y1) - ECON_Y0] || 0; };
   function seasonPower(id, year) { return clubStr(id, year) + gauss(seeded('pow|' + id + '|' + year)) * 2.4; }
   const leagueClubs = (lg) => CLUBS.filter(c => c.lg === lg);
 
@@ -2583,7 +2586,8 @@ const ENGINE = (() => {
     // 승부차기: 키커로 나설 확률은 포지션마다 다르다. 큰 경기 기질이 성공률을 ±12%p 움직인다
     let pk = null;
     if (sc.pens && playing && !isGK && R() < ({ FW: .9, MF: .7, DF: .4 })[grp]) pk = R() < clamp(.76 + ((p.attrs.SHO || 60) - 70) * .003 + be * .12, .45, .95);
-    return { comp, year, opp: oppId, won, a: sc.a, b: sc.b, pens: sc.pens, pa: sc.pa, pb: sc.pb, played: playing, g, as: a, tk, it, sv, rating, exp, pw: pw != null ? +pw.toFixed(2) : null, gp: +gp.toFixed(3), club: p.club, motm: playing && rating >= 8.2, pkMiss: pk === false, pk, number: p.number };
+    const why = playing ? null : benchWhy(p, { comp, year, kind: 'club', clubFinal: true, log: [] }, '결승', share > .12 ? Math.sqrt(share) : 0);
+    return { comp, year, opp: oppId, won, a: sc.a, b: sc.b, pens: sc.pens, pa: sc.pa, pb: sc.pb, played: playing, ...(why ? { why } : {}), g, as: a, tk, it, sv, rating, exp, pw: pw != null ? +pw.toFixed(2) : null, gp: +gp.toFixed(3), club: p.club, motm: playing && rating >= 8.2, pkMiss: pk === false, pk, number: p.number };
   }
 
   // ---------- 개인상: 리그·연도마다 고정된 경쟁자 기록과 겨룬다 ----------
@@ -2910,6 +2914,29 @@ const ENGINE = (() => {
   //   누적 차이 ÷ √(경기 수 + 1)만큼 로짓을 옮긴다. 잘하면 오르고 못하면 내려간다(양방향). 상한 0.97: 결승 출전도 보장하지 않는다. 판정 사유는 만들지 않는다
   let NT_K = 1.5; const setNtK = (v) => { NT_K = v; };
   function ntForm(t, d) { if (!NT_K) return; t.fz = (t.fz || 0) + d; t.fn = (t.fn || 0) + 1; const b = t.starter ? .95 : .55; const L = Math.log(b / (1 - b)) + NT_K * t.fz / Math.sqrt(t.fn + 1); t.pp = clamp(1 / (1 + Math.exp(-L)), .2, .97); }
+  // 1.5.3 결장의 이유: 큰 경기에서 벤치에 앉으면 왜 그랬는지가 있어야 한다. 출전 판정(난수)은 그대로 두고, 이유만 따로 고정된 난수로 고른다
+  //   잘 뛰던 주전일수록 부상·출장 정지 쪽, 자리가 불안한 선수일수록 감독의 선택 쪽. 앞선 경기 기록(경고 누적·직전 부진)을 본다
+  function benchWhy(p, t, stage, pp) {
+    const prev = (t.log || []).filter(x => x.played); const last = (t.log || [])[t.log ? t.log.length - 1 : 0];
+    const avg = prev.length ? prev.reduce((a, x) => a + (x.rating || 6.6), 0) / prev.length : null; const big = stage === '결승' || stage === '4강';
+    const rng = seeded('bw|' + (p.id || '') + '|' + (t.year ?? '') + '|' + (t.comp || '') + '|' + stage + '|' + (t.log ? t.log.length : 0));
+    if (pp < .2) return { k: 'squad', t: pick(['주전 경쟁에서 밀려 출전 명단에 들지 못했다', '감독의 구상에서 빠져 관중석에서 경기를 봤다'], rng) };
+    const club = !!t.clubFinal || t.kind === 'club'; const canSusp = club ? true : prev.length >= 2 && stage !== '결승'; // 대표팀 대회는 8강 뒤 경고가 지워진다
+    const red = last && last.played && last.red;
+    const W = pp >= .8 ? { inj: .42, ill: .1, susp: canSusp ? .28 : 0, coach: .2 } : pp >= .5 ? { inj: .25, ill: .06, susp: canSusp ? .14 : 0, coach: .55 } : { inj: .14, ill: .04, susp: canSusp ? .07 : 0, coach: .75 };
+    if (red) return { k: 'red', t: '직전 경기 퇴장으로 출장 정지 징계를 받았다' };
+    let k = 'coach'; { let s = Object.values(W).reduce((a, b) => a + b, 0), u = rng() * s; for (const [kk, v] of Object.entries(W)) { if ((u -= v) < 0) { k = kk; break; } } }
+    const T = {
+      inj: big ? ['경기 이틀 전 훈련에서 햄스트링을 다쳤다', '직전 경기에서 접질린 발목이 끝내 낫지 않았다', '킥오프 몇 시간 전 종아리에 통증이 와서 명단에서 빠졌다', '워밍업 도중 허벅지 뒤쪽이 올라왔다']
+        : ['가벼운 근육 피로로 의료진이 쉬게 했다', '훈련 중 발목에 충격을 받아 한 경기 쉬었다'],
+      ill: ['전날 밤부터 고열에 시달려 출전하지 못했다', '장염으로 이틀을 앓아 끝내 몸이 따라 주지 않았다'],
+      susp: club ? ['준결승에서 받은 경고가 쌓여 이 경기에 나설 수 없었다', '경고 누적으로 출장 정지. 터치라인 뒤에서 경기를 봤다'] : ['조별리그부터 쌓인 경고로 출장 정지를 받았다', '경고 누적. 이 경기는 관중석에서 봐야 했다'],
+      coach: pp >= .8 && (avg == null || avg >= 6.9) ? ['감독이 상대 맞춤 전술을 택하며 선발에서 뺐다. 경기 전부터 논란이 됐다', '감독은 "체력 안배"라고 했지만, 기자회견장 분위기는 싸늘했다', '감독이 수비적인 카드를 골랐다. 선발 명단이 나오자 관중석이 술렁였다']
+        : avg != null && avg < 6.6 ? ['직전 경기 부진 뒤, 감독이 다른 선택을 했다', '감독은 지난 경기 내 모습에 만족하지 않았다']
+        : ['감독은 지난 경기 조합을 그대로 밀었다', '상대 측면을 막으려 감독이 다른 카드를 골랐다', '감독이 끝까지 교체 카드로 아꼈지만 부르지 않았다'],
+    };
+    return { k, t: pick(T[k], rng) };
+  }
   function natMatch(p, t, opp, ap, stage) {
     const cx = natContext(p, t, opp);
     // 세계선의 관성: 기록된 우승팀은 쉽게 지지 않는다
@@ -2955,7 +2982,8 @@ const ENGINE = (() => {
       rating = +clamp(rating, 4.8, 10).toFixed(1); exp = +exp.toFixed(2);
       if (t.playP == null && !t.clubFinal) ntForm(t, rating - exp);
     }
-    return { opp: opp.name, oppId: opp.id || null, a, b, ht: [a1, b1], g, as, tk, it, sv, played, rating, exp, xg: +xg.toFixed(3), pw: +logistic((EA - EB) * 1.1).toFixed(2), gp: +gs0.toFixed(3), ap, cx: cx.side, ...(gkfm ? { gkf: gkfm } : {}) };
+    const why = played ? null : benchWhy(p, t, stage, pp);
+    return { opp: opp.name, oppId: opp.id || null, a, b, ht: [a1, b1], g, as, tk, it, sv, played, ...(why ? { why } : {}), rating, exp, xg: +xg.toFixed(3), pw: +logistic((EA - EB) * 1.1).toFixed(2), gp: +gs0.toFixed(3), ap, cx: cx.side, ...(gkfm ? { gkf: gkfm } : {}) };
   }
   // ---------- 대륙 대회 결승 (직접 플레이) ----------
   function clubFinalStart(p, res, world) { const t = withPos(p, res.tempPos, () => clubFinalStart0(p, res, world)); if (res.tempPos) t.pos = res.tempPos; return t; }
@@ -2968,7 +2996,7 @@ const ENGINE = (() => {
   function clubFinalFinish(p, res, t) { return withPos(p, res.tempPos, () => clubFinalFinish0(p, res, t)); }
   function clubFinalFinish0(p, res, t) {
     const pf = res.pendingFinal; if (!pf) return null; const fin = t.log[t.log.length - 1] || {}; const won = t.finish === '우승';
-    const f = { comp: pf.comp, year: res.year, opp: pf.opp, won, a: fin.a, b: fin.b, pens: !!fin.pens, pa: fin.pa, pb: fin.pb, et: !!fin.et, played: !!fin.played, g: fin.g || 0, as: fin.as || 0, tk: fin.tk || 0, it: fin.it || 0, sv: fin.sv || 0, rating: fin.rating, exp: fin.exp ?? null, sr: res.rating, club: p.club, motm: !!fin.played && fin.rating >= 8.2, pkMiss: !!fin.pkMiss, pk: fin.myPK ? fin.myPK.ok : null, gkSave: !!fin.myGK?.saved, pw: fin.pw ?? null, gp: fin.gp ?? null, number: p.number, live: true };
+    const f = { comp: pf.comp, year: res.year, opp: pf.opp, won, a: fin.a, b: fin.b, pens: !!fin.pens, pa: fin.pa, pb: fin.pb, et: !!fin.et, played: !!fin.played, ...(fin.why ? { why: fin.why } : {}), g: fin.g || 0, as: fin.as || 0, tk: fin.tk || 0, it: fin.it || 0, sv: fin.sv || 0, rating: fin.rating, exp: fin.exp ?? null, sr: res.rating, club: p.club, motm: !!fin.played && fin.rating >= 8.2, pkMiss: !!fin.pkMiss, pk: fin.myPK ? fin.myPK.ok : null, gkSave: !!fin.myGK?.saved, pw: fin.pw ?? null, gp: fin.gp ?? null, number: p.number, live: true };
     if (fin.gkf) f.gkf = { ...fin.gkf, win: gkfWin(f, fin.gkf) };
     recordBig(p, f, { stage: '결승', y: res.year + .5, ys: slY(res.year) });
     res.finals.push(f); p.finals.push(f); addFeat(p, f); if (res.cont) res.cont.reached = won ? '우승' : '준우승';
@@ -3121,7 +3149,7 @@ const ENGINE = (() => {
     if (fin && !fin.won && fin.played && fin.rating != null && fin.rating <= 6.3 && isStar(p) && majorT(t) && t.rn >= 3) { const pre = (t.rsum - fin.rating) / (t.rn - 1); if (pre >= 7.4 || t.g - (fin.g || 0) >= 4) addLegend(p, t, 'vanish', fin); }
     if (fin) {
       rec.final = { opp: fin.opp, a: fin.a, b: fin.b, pens: !!fin.pens, pa: fin.pa, pb: fin.pb, won: fin.won };
-      const nf = { comp: t.comp, year: t.year, opp: fin.opp, oppNation: true, won: fin.won, a: fin.a, b: fin.b, pens: !!fin.pens, pa: fin.pa, pb: fin.pb, played: fin.played, g: fin.g, as: fin.as, tk: fin.tk || 0, it: fin.it || 0, sv: fin.sv || 0, rating: fin.rating, club: null, national: true, nation: t.nation, motm: fin.played && fin.rating >= 8.2, pkMiss: !!fin.pkMiss, pk: fin.myPK ? fin.myPK.ok : null };
+      const nf = { comp: t.comp, year: t.year, opp: fin.opp, oppNation: true, won: fin.won, a: fin.a, b: fin.b, pens: !!fin.pens, pa: fin.pa, pb: fin.pb, played: fin.played, ...(fin.why ? { why: fin.why } : {}), g: fin.g, as: fin.as, tk: fin.tk || 0, it: fin.it || 0, sv: fin.sv || 0, rating: fin.rating, club: null, national: true, nation: t.nation, motm: fin.played && fin.rating >= 8.2, pkMiss: !!fin.pkMiss, pk: fin.myPK ? fin.myPK.ok : null };
       if (fin.gkf) nf.gkf = { ...fin.gkf, win: gkfWin(nf, fin.gkf) };
       nf.sr = t.sr; nf.exp = fin.exp; p.finals.push(nf); { const ft = addFeat(p, nf); if (ft) rec.feat = ft; } const jx = jinxCheck(p, [nf]); if (jx) rec.jinx = jx;
     }
@@ -3730,22 +3758,26 @@ const ENGINE = (() => {
   const LEGACY_BAR = { big: { n: 12, fan: 92, major: 2, icon: true, hof: 7, hfan: 78 }, mid: { n: 9, fan: 88, major: 0, icon: false, hof: 6, hfan: 74 }, small: { n: 7, fan: 84, major: 0, icon: false, hof: 5, hfan: 70 } };
   const clubSize = (id) => { const s = CLUB[id]?.str || 60; return s >= 84 ? 'big' : s >= 77 ? 'mid' : 'small'; };
   const MAJOR_T = new Set(['league', 'ucl', 'cont', 'euro2']);
-  function legacyAt(p, sum, clubId) {
+  // 1.5.3 번호의 무게: 1~11번은 구단 역사에 주인이 많아 결번이 훨씬 어렵고, 12번부터는 그 선수의 번호로 기억되기 쉽다
+  const numTier = (num) => num == null ? null : num <= 11 ? { dn: 2, dfan: 3, mul: .55 } : { dn: -1, dfan: -2, mul: 1.35 };
+  function legacyAt(p, sum, clubId, num) {
     const ss = p.seasons.filter(s => s.club === clubId && !s.youthTeam && !s.loan); const n = ss.length;
     const fan = Math.max(0, (p.fans[clubId] || 0) - (p.flags?.fanCer?.[clubId] || 0)); const size = clubSize(clubId); const bar = LEGACY_BAR[size];
     const tro = p.trophies.filter(x => x.club === clubId); const major = tro.filter(x => MAJOR_T.has(x.type)).length;
     const capt = ss.filter(s => s.captain).length; const star = ss.filter(s => s.rating >= 7.25).length;
     const icon = capt >= 3 || sum.bdo > 0 || sum.peakOvr >= 89 || n >= 15;
-    const ok = n >= bar.n && fan >= bar.fan && major >= bar.major && (!bar.icon || icon);
+    const nt = numTier(num); const okN = bar.n + (nt ? nt.dn : 0), okF = bar.fan + (nt ? nt.dfan : 0);
+    const ok = n >= okN && fan >= okF && major >= bar.major && (!bar.icon || icon);
     let pr = 0;
-    if (ok) pr = (size === 'big' ? .1 : size === 'mid' ? .2 : .28) + (n - bar.n) * .03 + (capt ? .06 : 0) + (p.trait === 'loyal' ? .06 : 0) + sum.bdo * .1 + (n >= 15 ? .1 : 0) + (ss.length === p.seasons.filter(s => !s.youthTeam).length ? .1 : 0);
+    if (ok) pr = (size === 'big' ? .1 : size === 'mid' ? .2 : .28) + (n - okN) * .03 + (capt ? .06 : 0) + (p.trait === 'loyal' ? .06 : 0) + sum.bdo * .1 + (n >= 15 ? .1 : 0) + (ss.length === p.seasons.filter(s => !s.youthTeam).length ? .1 : 0);
     const hof = n >= bar.hof && fan >= bar.hfan || (n >= 4 && major >= 3 && fan >= 65);
+    if (nt) pr *= nt.mul;
     return { n, fan, major, capt: capt > 0, pr: clamp(pr, 0, .85), hof };
   }
   function clubLegacy(p, sum) {
     const numbers = [], hof = [];
     for (const t of sum.topClubs) {
-      const L = legacyAt(p, sum, t.club); const num = sum.numByClub[t.club];
+      const num = sum.numByClub[t.club]; const L = legacyAt(p, sum, t.club, num);
       if (num && L.pr > 0 && R() < L.pr) numbers.push({ club: t.club, num, seasons: L.n });
       else if (L.hof || L.pr > 0) hof.push({ club: t.club, seasons: L.n, major: L.major, capt: L.capt });
     }
@@ -5035,7 +5067,7 @@ const ENGINE = (() => {
   }
 
   return {
-    lgAt, clubsIn, movesAt, setActive, PAIRS, LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
+    lgAt, clubsIn, movesAt, setActive, econY1: () => econCur()?.y1 || ECON_Y1, PAIRS, LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     ACH, ACH_VER, achOf, DREAMS, dreamOptions, dreamJudge, posDist, posRequestChance, posRefusePenalty, withPos, rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
     coachStints, parentsAlive, coachNow, recordDeath, farewellAsk, farewellAgree, farewellRefused, homecomingOffer, farewellOf, fwPact, fwClubLine, fanCer, fwSeasons, FW_CLUB,
     LG_SCHOOL, SCHOOLS, CLUB_SCHOOL, schoolOf, wiEcho, wiRewrite, goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
@@ -8375,7 +8407,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function econTag(cid, y) { let ea = null; try { ea = E.econAt(cid, y); } catch { } return ea && ea.tag ? `<span class="ectag ${EC_TAGC[ea.tag] || ''}">${esc(ea.tag)}</span>` : ''; }
   const LGN = (k) => E.LEAGUES[k]?.name || k;
   const EVW = { takeover: '인수', crisis: '재정난', deduct: '승점 삭감', fold: '법정관리' };
-  function histMaxYear(w, VL) { let m = 2030; for (const c of w.careers) m = Math.max(m, c.endYear || 0); if (S.p && (S.p.line || 'L0') === VL) m = Math.max(m, S.p.year - 1); return Math.min(m, 2129); }
+  function histMaxYear(w, VL) { let m = 2030; for (const c of w.careers) m = Math.max(m, c.endYear || 0); if (S.p && (S.p.line || 'L0') === VL) m = Math.max(m, S.p.year - 1); return Math.min(m, (E.econY1 ? E.econY1() : 2130) - 1); }
   function almFootball(w, VL, Y) {
     let ec = null; try { ec = E.econOf(w, VL); } catch { } if (!ec || Y < E.ECON_Y0) return ''; const i = Y - E.ECON_Y0;
     const lgs = Object.keys(ec.lgIdx).filter(k => (E.LEAGUES[k].tier || 9) <= 3).sort((a, b) => ec.lgIdx[b][i] - ec.lgIdx[a][i]);
@@ -8832,6 +8864,20 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   }
   const cityLine = (p, cid) => { try { const c = CITIES.of(cid); if (!c) return ''; if (CITIES.same(p.club, cid)) return `<span class="cityl small"><b>${esc(c.city)}</b> · 지금 사는 도시 그대로. 이사할 필요가 없다.</span>`; return `<span class="cityl small"><b>${esc(c.city)}</b> · ${esc(c.line)}</span>`; } catch { return ''; } };
   // ---------- 이미지로 저장 ----------
+  // 1.5.3 그림 저장의 글꼴: 라이브러리가 구글 글꼴 CSS를 읽지 못해(다른 출처) 픽셀 글꼴이 빠지고 폭이 바뀌어 줄이 넘쳤다.
+  //   그림에 든 글자만 담은 글꼴 조각(text=)을 직접 받아 data URL로 넣는다. 못 받으면 예전처럼 그린다
+  const SHOT_FONT = {};
+  async function shotFontCss(node) {
+    try {
+      const chars = [...new Set((node.textContent || '').replace(/\s/g, '') + '0123456789×·%-.,:/+()WLRB')].sort().join(''); if (SHOT_FONT[chars]) return SHOT_FONT[chars];
+      const url = 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&family=Silkscreen:wght@400;700&family=Jersey+10&display=swap&text=' + encodeURIComponent(chars);
+      const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 5000);
+      let css = await (await fetch(url, { signal: ctl.signal })).text(); const urls = [...new Set([...css.matchAll(/url\((['"]?)([^)'"]+)\1\)/g)].map(m => m[2]))];
+      const data = await Promise.all(urls.map(async (u) => { const b = await (await fetch(u, { signal: ctl.signal })).blob(); return await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(b); }); }));
+      clearTimeout(to); urls.forEach((u, i) => { css = css.split(u).join(data[i]); });
+      if (!/@font-face/.test(css)) return null; return (SHOT_FONT[chars] = css);
+    } catch { return null; }
+  }
   async function shotNode(node, name, width) {
     const holder = document.createElement('div'); holder.className = 'shotholder'; const inner = document.createElement('div'); inner.className = 'shotin'; inner.style.width = width + 'px'; inner.appendChild(node); holder.appendChild(inner); document.body.appendChild(holder);
     try {
@@ -8844,8 +8890,9 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       // 그림 안에서 글자 폭이 화면과 조금만 달라도(기기 글꼴·힌팅 차이) 고정된 칸 안에서 줄이 넘쳐 겹친다.
       // 그래서 복제본에서는 글자가 든 칸의 높이를 풀어 주고, 짧은 꼬리표는 줄바꿈 없이 제 폭을 쓰게 한다. 늘어난 만큼 아래 여유를 둔다
       const relax = (root) => { const all = [root, ...root.querySelectorAll('*')]; for (const n of all) { const t = n.tagName; if (!n.style || /^(IMG|CANVAS|SVG|svg|I|INPUT|BUTTON)$/.test(t)) continue; if (!(n.textContent || '').trim()) continue; n.style.height = 'auto'; n.style.maxHeight = 'none';
-        if (n.matches && n.matches('.tmp-n b, .pill, .sch, .gr-style, .cc-badges span, .gr-leg span, .famtag, .achi, .gr-t, .wi-eye, .cc-eye, .tmp-l, .tmp-d')) { n.style.width = 'auto'; n.style.maxWidth = 'none'; n.style.whiteSpace = 'nowrap'; } if (window.__shotStress) n.style.letterSpacing = '.06em'; } return root; };
-      const opt = { scale, backgroundColor: bg, timeout: 6000, width: w, height: h + 60, onCloneNode: relax };
+        if (n.matches && n.matches('.tmp-n b, .pill, .sch, .gr-style, .lchip, .tr-n, .px-ovr, .aw-chip, .cc-badges span, .gr-leg span, .famtag, .achi, .gr-t, .wi-eye, .cc-eye, .tmp-l, .tmp-d')) { n.style.width = 'auto'; n.style.maxWidth = 'none'; n.style.whiteSpace = 'nowrap'; } if (window.__shotStress) n.style.letterSpacing = '.06em'; } return root; };
+      const fcss = await shotFontCss(inner);
+      const opt = { scale, backgroundColor: bg, timeout: 6000, width: w, height: h + 60, onCloneNode: relax, ...(fcss ? { font: { cssText: fcss } } : {}) };
       await MS.domToCanvas(inner, opt).catch(() => null); // 사파리는 첫 렌더에서 이미지를 빠뜨리곤 해서 한 번 더 그린다
       let cv = await MS.domToCanvas(inner, opt); if (!cv) throw new Error('canvas');
       // 아래에 남겨 둔 여유 중 빈 부분은 잘라 낸다(배경색과 다른 마지막 줄 + 원래 아래 여백)
@@ -8981,7 +9028,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function finalLine(f, pos) {
     const opp = f.oppNation ? f.opp : club(f.opp).name;
     const sc = `${f.a}-${f.b}${f.pens ? ` (승부차기 ${f.pa}-${f.pb})` : ''}`;
-    const me = f.played ? ((f.g || f.as || f.tk || f.it || f.sv) ? ` · ${finalMe(f, pos || (f.sv ? 'GK' : 'CM'))}` : '') + (f.motm ? ' · MOTM' : '') + (f.pkMiss ? ' · 승부차기 실축' : '') : ' · 결장';
+    const me = f.played ? ((f.g || f.as || f.tk || f.it || f.sv) ? ` · ${finalMe(f, pos || (f.sv ? 'GK' : 'CM'))}` : '') + (f.motm ? ' · MOTM' : '') + (f.pkMiss ? ' · 승부차기 실축' : '') : ` · 결장${whyTag(f)}`;
     return `${f.comp} 결승 ${f.won ? '우승' : '준우승'} vs ${opp}${f.oppStar ? `(${f.oppStar})` : ''} ${sc}${me}`;
   }
   // 득점 루트: 마무리 수단(어느 발·머리)과 득점 상황(어디서·어떻게)을 두 줄로. 두 줄은 같은 골을 다른 시선으로 센 것이라 더하지 않는다
@@ -9615,6 +9662,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <h2>영구결번과 구단 명예의 전당</h2><ul>
         <li>구단이 클수록 문턱이 높아요. <b>빅클럽</b>(전력 84+): 그 구단에서 12시즌 이상(유스·임대 제외) · 팬심 92 이상 · 주요 트로피(리그·챔스·대륙컵·유럽 대항전) 2개 이상 · 그리고 주장 3시즌 이상이나 발롱도르나 피크 89 이상이나 15시즌 이상. <b>중견</b>(77~83): 9시즌 · 팬심 88. <b>작은 구단</b>: 7시즌 · 팬심 84.</li>
         <li>조건을 채우면 결번 확률 = 빅 10% · 중견 20% · 작은 구단 28% + 넘친 시즌마다 3% + 주장 6% + 충성파 6% + 발롱도르마다 10% + 15시즌 이상 10% + 원클럽맨 10% (최대 85%).</li>
+        <li><b>번호의 무게</b>: 1~11번은 구단 역사에 주인이 많아 훨씬 어려워요(필요 시즌 +2 · 팬심 +3 · 확률 ×0.55). 12번부터는 그 선수의 번호로 기억되기 쉬워요(필요 시즌 −1 · 팬심 −2 · 확률 ×1.35).</li>
         <li><b>구단 명예의 전당</b>: 결번까지는 아니어도 빅클럽 7시즌·팬심 78, 중견 6시즌·74, 작은 구단 5시즌·70 이상이거나, 4시즌 이상에 주요 트로피 3개·팬심 65 이상이면 헌액돼요.</li>
         <li>결번된 번호는 이후 커리어에서 쓸 수 없지만, 같은 가문 후손에게는 구단이 다시 열어 주기도 해요.</li></ul>
       <h2>은퇴</h2><ul>
@@ -9811,8 +9859,10 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     return `<div class="ctx"><span class="${side[1]}">${side[0]}</span><span>${star}</span></div>`;
   }
   const apOpts = (p, run) => approaches(p).map(([k, label, hint]) => ({ label, hint, run: () => run(k) }));
+  const WHY_TAG = { inj: '부상', ill: '몸살', susp: '경고 누적', red: '출장 정지', coach: '감독 결정', squad: '명단 제외' };
+  const whyTag = (f) => f?.why && WHY_TAG[f.why.k] ? ` (${WHY_TAG[f.why.k]})` : '';
   function meLine(m, p) {
-    if (!m.played) return '벤치에서 지켜봤다';
+    if (!m.played) return m.why ? m.why.t : '벤치에서 지켜봤다';
     const pts = [m.g ? `${m.g}골` : '', m.as ? `${m.as}도움` : ''].filter(Boolean).join(' ');
     const def = p.pos === 'GK' ? `${m.gkf ? gkfMatchTxt(m.gkf, true) + ' · ' : ''}선방 ${m.sv || 0}${m.b === 0 ? ' · 무실점' : ''}` : (E.POS[p.pos].grp === 'DF' || p.pos === 'DM') ? `태클 ${m.tk || 0} · 가로채기 ${m.it || 0}` : '';
     return `${pts || def || '공격포인트 없음'} · 평점 ${m.rating}`;
@@ -9985,7 +10035,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       S.evOutHtml = `<p>${esc(mine)}</p><p><b class="${won ? 'pos' : 'neg'}">승부차기 ${r.pa}-${r.pb} ${won ? (t.clubFinal ? '우승' : '승리') : (t.clubFinal ? '준우승' : '패배')}</b></p>`;
       S.postQ.push(t.clubFinal ? cfEndCard(t) : t.done ? endCard(t) : koCard(t)); return '';
     };
-    if (!m.played) { text = '벤치에서 지켜볼 수밖에 없다.'; options = [{ label: '두 손을 모은다', run: () => run('skip') }]; }
+    if (!m.played) { text = m.why ? `${m.why.t}. 승부차기는 벤치에서 지켜볼 수밖에 없다.` : '벤치에서 지켜볼 수밖에 없다.'; options = [{ label: '두 손을 모은다', run: () => run('skip') }]; }
     else if (isGK) { text = '상대 첫 키커가 공을 내려놓는다. 어느 쪽에 걸까.'; options = [['L', '왼쪽으로 몸을 날린다'], ['C', '끝까지 버틴다'], ['R', '오른쪽으로 몸을 날린다']].map(([k, label]) => ({ label, run: () => run(k) })); }
     else { text = '감독이 키커 명단을 적는다. 네 이름 옆에서 펜이 멈췄다.'; options = [...dirs.map(([k, label]) => ({ label: `${J(label, '으로')} 찬다`.replace('데으로', '데로'), run: () => run(k) })), { label: '키커에서 빠진다', run: () => run('skip') }]; }
     return { label: t.clubFinal ? CF : NAT, title: `승부차기 · vs ${m.opp}`, tone: 'legacy', text, options };
@@ -10383,7 +10433,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   function cfEndCard(t) {
     const p = S.p; const res = S.lastRes; const f = E.clubFinalFinish(p, res, t); S.cfinal = null; if (res.branch) branchCut(res.branch, res.year); Store.save('career', p);
     const ucl = t.comp === 'UEFA 챔피언스리그';
-    const me = f.played ? `${finalMe(f, p.pos)}${f.rating ? ' · 평점 ' + f.rating : ''}${f.motm ? ' · MOTM' : ''}` : '결장';
+    const me = f.played ? `${finalMe(f, p.pos)}${f.rating ? ' · 평점 ' + f.rating : ''}${f.motm ? ' · MOTM' : ''}` : `결장${whyTag(f)}`;
     const opts = f.won ? [[ucl ? '빅이어를 들어 올린다' : '트로피를 들어 올린다', 'morale', 3], ['서포터석으로 달려간다', 'fans', 4]] : [['메달을 받고 고개를 든다', 'rep', 1], ['말없이 라커룸으로 들어간다', 'morale', -1]];
     const jx = res.jinx?.kind === 'break' ? `<p class="note">결승 ${res.jinx.k}연패의 사슬을 끊었다.</p>` : res.jinx ? `<p class="note">결승 ${res.jinx.k}연패.</p>` : '';
     return { label: CF, title: `${t.comp} ${f.won ? '우승' : '준우승'}`, tone: f.won ? 'good' : 'neutral', text: '', html: `<p>${f.a}-${f.b}${f.pens ? ` · 승부차기 ${f.pa}-${f.pb}` : ''} · ${esc(me)}</p>${jx}`, options: opts.map(([label, k, d]) => ({ label, run() { E.bump(p, k, d); afterSeason(res, false); return ''; } })) };
