@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='1.5.1'</script>
+<script>window.SK_VER='1.5.2'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -186,6 +186,8 @@ details.fold .foldin { padding-top: 10px; display: flex; flex-direction: column;
 .ph-left { display: flex; gap: 14px; align-items: center; min-width: 0; flex: 1; }
 .ph-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .pname { font-size: clamp(21px, 5vw, 28px); font-weight: 900; letter-spacing: -.02em; line-height: 1.2; }
+.rn-pen { border: 0; background: none; color: var(--royal); opacity: .45; font-size: .6em; cursor: pointer; padding: 2px 4px; vertical-align: middle; } .rn-pen:hover, .rn-pen:focus-visible { opacity: 1; }
+.rn-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; } .rn-form .inp { min-width: 0; font-size: 16px; font-weight: 800; } .rn-help { margin: 4px 0 0; }
 .pnum { font-size: .6em; font-weight: 900; color: var(--gold); vertical-align: 3px; margin-left: 2px; }
 .ph-sub { font-size: 14px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .ph-ovr { display: flex; flex-direction: column; align-items: center; flex: none; }
@@ -8568,7 +8570,7 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     const ct = (p.youth ? '유스' : p.loanFrom ? '임대' : p.contract <= 0 ? '계약 만료' : `계약 ${p.contract}년`) + (!p.youth && p.wage ? ` · 연봉 ${E.fmtWon(p.wage)}` : '');
     return `<section class="phead">
       <div class="ph-left">${ava(p.look, p.club, { gk: p.pos === 'GK', age: p.age, cls: 'md' })}<div class="ph-txt">
-        <h1 class="pname">${esc(p.name)}${p.number ? ` <span class="pnum">${p.number}</span>` : ''}</h1>
+        ${S.renameOpen === p.id ? renameForm(p.id, p.name) : `<h1 class="pname">${esc(p.name)}${p.number ? ` <span class="pnum">${p.number}</span>` : ''} <button class="rn-pen" data-act="renameopen" data-id="${p.id}" title="이름 고치기" aria-label="이름 고치기">✎</button></h1>`}
         <p class="ph-sub">${crest(p.club, 'xs')} <b>${esc(c.name)}</b>${p.captain ? ' <span class="pill gold">C</span>' : ''} ${p.youth ? '<span class="muted small">유스</span>' : lgTag(p.club, p.year, p)}</p>
         <p class="ph-sub muted dl">${[sl(p.year), `${p.age}세`, p.pos, flag(E.natT(p)), ...(p.body ? [`${E.heightAt(p)}cm${(() => { const f = E.bodyForecast(p); return f ? ` (다 크면 ${f[0]}~${f[1]})` : ''; })()}`, E.BUILD[p.body.b] || ''] : []), p.ambi && p.flags.ambiSeen ? `<span class="foot" title="타고난 양발잡이"><b>양발</b></span>` : p.foot ? `<span class="foot" title="약발 등급 ${p.weak || 3}/5">${E.FOOT_NAME[p.foot]} <span class="wstar">${wstars(p.weak || 3)}</span></span>` : ''].filter(Boolean).map(x => `<span>${x}</span>`).join('')}</p></div></div>
       <div class="ph-ovr"><span class="big">${o}</span>${last && !last.youthTeam ? `<span class="delta ${last.growth >= 0 ? 'up' : 'down'}">${last.growth >= 0 ? '▲' : '▼'}</span>` : ''}</div>
@@ -9289,7 +9291,8 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
       <div class="cc-dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
       ${wiCompare(sum)}${wiKids(sum)}
     </section>
-    <section class="panel"><div class="row wrapgap">${fresh ? '<button class="btn primary" data-act="newafter">다음 커리어 시작</button>' : ''}<button class="btn" data-act="saveimg" data-what="card">카드 이미지로 저장</button>${S.world.careers.some(c => c.id === sum.id) ? `<button class="btn" data-act="hidecareer" data-id="${sum.id}">${S.world.careers.find(c => c.id === sum.id)?.hidden ? '목록에 다시 보이기' : '목록에서 숨기기'}</button>` : ''}<button class="btn" data-act="viewrec" data-id="${sum.id}">전체 기록 보기</button>${S.world.careers.some(c => c.id === sum.id) ? `<button class="btn wi-btn" data-act="whatif" data-id="${sum.id}">만약에…</button>` : ''}${S.world.careers.some(c => c.id === sum.id) && !sum.parentId && linkCands(sum).length ? `<button class="btn" data-act="linkopen" data-id="${sum.id}">가문으로 잇기</button>` : ''}<button class="btn" data-act="sample" data-id="${sum.id}" id="samplebtn" hidden>커뮤 반응 만들기</button><button class="btn" data-go="world">세계선으로</button></div>
+    ${S.renameOpen === sum.id ? `<section class="panel">${renameForm(sum.id, sum.name)}</section>` : ''}
+    <section class="panel"><div class="row wrapgap">${fresh ? '<button class="btn primary" data-act="newafter">다음 커리어 시작</button>' : ''}<button class="btn" data-act="saveimg" data-what="card">카드 이미지로 저장</button>${S.world.careers.some(c => c.id === sum.id) ? `<button class="btn" data-act="hidecareer" data-id="${sum.id}">${S.world.careers.find(c => c.id === sum.id)?.hidden ? '목록에 다시 보이기' : '목록에서 숨기기'}</button>` : ''}<button class="btn" data-act="renameopen" data-id="${sum.id}">이름 고치기</button><button class="btn" data-act="viewrec" data-id="${sum.id}">전체 기록 보기</button>${S.world.careers.some(c => c.id === sum.id) ? `<button class="btn wi-btn" data-act="whatif" data-id="${sum.id}">만약에…</button>` : ''}${S.world.careers.some(c => c.id === sum.id) && !sum.parentId && linkCands(sum).length ? `<button class="btn" data-act="linkopen" data-id="${sum.id}">가문으로 잇기</button>` : ''}<button class="btn" data-act="sample" data-id="${sum.id}" id="samplebtn" hidden>커뮤 반응 만들기</button><button class="btn" data-go="world">세계선으로</button></div>
     ${S.linkFor === sum.id ? linkPanel(sum) : ''}<div id="sampleout" class="sampleout" hidden></div></section>`;
   }
   // 가혹한 운명: 아무 의미 없는 을씨년스러운 문장. 실제 사건과는 무관하게, 정해진 확률로만 나온다
@@ -9648,7 +9651,21 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
   }
 
   // ---------- BIND ----------
+  // 1.5.2 선수 이름 고치기: 진행 중·멈춘·은퇴 커리어 모두. 그 커리어 문서 안의 이름은 전부, 세계선·도감에서는 이름이 정확히 같은 칸만 바꾼다(다른 사람 이름은 건드리지 않게)
+  function renameForm(id, name) { return `<div class="rn-form"><input id="renameinp" class="inp grow" value="${esc(name)}" maxlength="40" aria-label="선수 이름" data-id="${id}"><button class="btn sm primary" data-act="renamesave" data-id="${id}">저장</button><button class="btn sm" data-act="renamecancel">취소</button></div><p class="small muted rn-help">대소문자·띄어쓰기까지 그대로 저장돼요. 기록·카드·세계선 연대기·도감의 이름이 함께 바뀌어요.</p>`; }
+  function swapName(o, from, to, deep) { if (!o || typeof o !== 'object') return; for (const k of Object.keys(o)) { const v = o[k]; if (typeof v === 'string') { if (v === from) o[k] = to; else if (deep && v.includes(from)) o[k] = v.split(from).join(to); } else if (v && typeof v === 'object') swapName(v, from, to, deep); } }
+  async function renameCareer(id, to) {
+    const w = S.world; to = String(to || '').replace(/\s+/g, ' ').trim().slice(0, 40); if (!to) { toast('이름을 비워 둘 수는 없어요.'); return false; }
+    const doc = S.p && S.p.id === id ? S.p : await Store.loadCareer(id); const sumc = w.careers.find(c => c.id === id); const from = doc?.name || sumc?.name || (w.paused || []).find(x => x.id === id)?.name; if (!from) return false; if (from === to) return true;
+    // 같은 사람의 「만약에」 갈래(이름·생년이 같은 커리어)도 함께
+    const by = doc?.birthYear ?? sumc?.birthYear; const ids = new Set([id]); for (const c of [...w.careers, ...(w.paused || [])]) if (c.name === from && (c.birthYear == null || by == null || c.birthYear === by)) ids.add(c.id);
+    for (const cid of ids) { const d = S.p && S.p.id === cid ? S.p : await Store.loadCareer(cid); if (d) { swapName(d, from, to, true); Store.save('career', d); } }
+    swapName(w, from, to, false); Store.save('world', w);
+    try { let ch = false; for (const e of Object.values(Codex.d.e || {})) { if (e?.first && (ids.has(e.first.careerId) || e.first.name === from)) { swapName(e, from, to, true); ch = true; } } if (ch) Codex.save(); } catch { }
+    return true;
+  }
   function bind() {
+    const rni = $('#renameinp'); if (rni) rni.onkeydown = (e) => { if (e.isComposing) return; if (e.key === 'Enter') { e.preventDefault(); $('[data-act="renamesave"]')?.click(); } else if (e.key === 'Escape') $('[data-act="renamecancel"]')?.click(); };
     $$('[data-go]').forEach(b => b.onclick = () => { S.view = b.dataset.go; render(); window.scrollTo(0, 0); });
     $$('[data-wtab]').forEach(b => b.onclick = () => { S.worldTab = b.dataset.wtab; render(); });
     $$('[data-grsel]').forEach(b => b.onclick = () => { S.grSel = +b.dataset.grsel; const y = scrollY; render(); scrollTo(0, y); });
@@ -10496,6 +10513,9 @@ const homeCands = (p) => Object.entries(p.fans).filter(([k, v]) => k !== p.club 
     }
     if (a === 'qclear') { keepMemo(); S.choice.q = ''; render(); return; }
     if (a === 'evnext') return evNext();
+    if (a === 'renameopen') { S.renameOpen = el.dataset.id; const y = scrollY; render(); scrollTo(0, y); const i = $('#renameinp'); if (i) { i.focus(); i.select(); } return; }
+    if (a === 'renamecancel') { S.renameOpen = null; const y = scrollY; render(); scrollTo(0, y); return; }
+    if (a === 'renamesave') { const i = $('#renameinp'); if (!i) return; renameCareer(el.dataset.id, i.value).then(ok => { if (!ok) return; S.renameOpen = null; toast('이름을 고쳤어요.'); const y = scrollY; render(); scrollTo(0, y); }); return; }
     if (a === 'hidecareer') { const c = S.world.careers.find(x => x.id === el.dataset.id); if (!c) return; c.hidden = !c.hidden; Store.save('world', S.world); toast(c.hidden ? '목록에서 숨겼어요. 기록과 세계선 역사는 그대로예요.' : '목록에 다시 보이게 했어요.'); render(); return; }
     if (a === 'saveimg') { saveImage(el.dataset.what); return; }
     if (a === 'evcustom') { const v = ($('#evcustom')?.value || '').trim(); if (!v) { toast('별명을 입력해 줘요.'); return; } const list = S.phase === 'events' ? S.evQ : S.phase === 'post' ? S.postQ : winLive(); const ev = S.phase === 'prep' ? list[0] : list[S.evIdx]; if (!ev?.custom) return; const k = ev.options.push({ label: `‘${v}’`, run: (x) => ev.custom.run(x, v) }) - 1; return chooseOpt(k); }
