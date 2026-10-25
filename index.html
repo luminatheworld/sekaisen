@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='1.5.4'</script>
+<script>window.SK_VER='1.5.5'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1651,6 +1651,37 @@ const ENGINE = (() => {
     const last = S[S.length - 1]; if (last && !doc.forcedRetire && !doc.flags?.deceased && !doc.flags?.medEnd && last.age <= 37) P.push({ kind: 'retire', y: last.year + 1, id: 'retire', label: `${last.age}세에 은퇴하지 않았다면`, sub: `${slY(last.year + 1)} · 한 시즌 더` });
     const seen = new Set(); return P.filter(x => { const k = x.kind + x.y + x.id; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => a.y - b.y);
   }
+  // 1.5.x 시점 복원(「만약에」와 스쿼드 불러오기가 함께 쓴다): rewind가 그대로 두던 '사람 안쪽의 누적값'을 Y년 시즌 시작 시점으로 되돌린다
+  //   역할 숙련: Y 이전 시즌의 숙련 획득을 처음부터 다시 쌓는다(시즌 기록의 역할·출전·결장·나이로. 사건이 준 추가 배율은 기록에 없어 오차가 남는다)
+  //   숨은 기질: Y 이후에 쌓인 변화 기록을 거꾸로 뺀다. 기록이 처음부터 다 있으면 최저·최고점도 다시 잰다
+  //   결승 징크스: Y 이전 결승만으로 엔진과 같은 규칙(연속 패배 3회부터, 우승하면 풀림)을 다시 센다
+  //   doc(원본)은 읽기만 한다. p는 rewind가 만든 복사본
+  function stateAt(doc, Y, p) {
+    const keep = (doc.seasons || []).filter(s => s.year < Y); const out = { xp: 'replay', tmp: 'none', jinx: 0 };
+    const q = { age: 0, pos: doc.pos, roleXp: {}, talent: doc.talent, trait: doc.trait, attrs: { ...p.attrs } };
+    // 숙련은 그 시즌 성장 뒤에 쌓인다(역할 상한도 성장한 능력치로 정해진다): 다음 시즌 시작 스냅숏이 곧 그때의 능력치
+    for (let i = 0; i < keep.length; i++) { const s = keep[i]; q.age = s.age; q.pos = s.pos || q.pos; q.attrs = (keep[i + 1] && keep[i + 1].a0) || (i === keep.length - 1 ? p.attrs : q.attrs); if (!s.role) continue; const av = clamp(1 - (s.injuryWeeks || 0) / 44, .02, 1); gainRoleXp(q, s.role, s.youthTeam ? .6 : (s.share ?? 0) * av, 1); }
+    // 숙련은 줄지 않으므로 은퇴 때의 값이 위로 막는다: 옛 규칙으로 쌓인 세이브(곁가지 숙련·역할 목록이 지금과 다름)를 지금 규칙으로 다시 쌓아 부풀리지 않게
+    const fin = doc.roleXp || {}; const rx = {}; for (const [k, v] of Object.entries(q.roleXp)) { const c = Math.min(v, fin[k] ?? 0); if (c > 0 || fin[k] != null) rx[k] = +c.toFixed(1); }
+    for (const k of Object.keys(fin)) if (rx[k] == null) rx[k] = 0;
+    out.xpCapped = Object.keys(q.roleXp).filter(k => q.roleXp[k] > (fin[k] ?? 0) + .05).length; p.roleXp = rx;
+    if (p.tmp && Array.isArray(p.tmp.log)) {
+      const t = p.tmp; const full = t.log.length < 40; const after = t.log.filter(e => e.y >= Y);
+      for (let i = after.length - 1; i >= 0; i--) { const e = after[i]; t[e.a] = clamp((t[e.a] || 0) - e.d, -2, 2); }
+      t.log = t.log.filter(e => e.y < Y);
+      if (full && t.big0 != null) { let b = t.big0, lo = b, hi = b; for (const e of t.log) if (e.a === 'big') { b = clamp(b + e.d, -2, 2); lo = Math.min(lo, b); hi = Math.max(hi, b); } t.minBig = Math.min(lo, t.big); t.maxBig = Math.max(hi, t.big); }
+      else { t.minBig = Math.min(t.minBig ?? t.big, t.big); t.maxBig = Math.max(Math.min(t.maxBig ?? t.big, 2), t.big); }
+      out.tmp = full ? 'exact' : 'partial'; out.tmpBack = after.length;
+    }
+    const F = p.flags = p.flags || {}; delete F.jinx; delete F.jinxMax; delete F.jinxBroken; let streak = 0;
+    for (const f of (p.finals || [])) { if (f.won) { if (F.jinx) { F.jinx = null; F.jinxBroken = f.year; } streak = 0; } else { streak++; if (streak >= 3) { F.jinx = F.jinx || f.year; F.jinxMax = Math.max(F.jinxMax || 0, streak); } } }
+    out.jinx = F.jinxMax || 0;
+    // 성인 대표 데뷔 표시(국적 변경 잠금): Y 이전에 21세 이상으로 대표팀 경기를 뛴 시즌이 없으면 아직 아니다
+    if (F.natCapAdult && !keep.some(s => (s.caps || 0) > 0 && s.age >= 21)) delete F.natCapAdult;
+    // 이름에 연도가 붙은 표시(대표팀 외면 등): 그해부터는 아직 일어나지 않은 일
+    for (const k of Object.keys(F)) { const m = /(\d{4})$/.exec(k); if (m && +m[1] >= Y && +m[1] < 2400) delete F[k]; }
+    return out;
+  }
   function rewind(doc, pt) {
     const p = JSON.parse(JSON.stringify(doc)); const Y = pt.y;
     const keep = p.seasons.filter(s => s.year < Y), cut = p.seasons.filter(s => s.year >= Y);
@@ -1699,6 +1730,7 @@ const ENGINE = (() => {
     if (pt.kind === 'nat') { p.natTeam = pt.id; F.natPick = { year: Y, chose: pt.id, over: [doc.flags.natPick?.chose].filter(Boolean) }; }
     const fz = Object.keys(F).filter(k => /^f_f_/.test(k) && typeof F[k] === 'number'); F.fateN = fz.length; F.fateY = fz.length ? Math.max(...fz.map(k => F[k])) : -99;
     if (p.intlRetired && !(F.intlRetY < Y)) p.intlRetired = false;
+    const st = stateAt(doc, Y, p); verify.state = st;
     p.status = 'active'; p.forcedRetire = false; p.released = false; p.wantOut = false; p.wantOutNext = false; p.pendingOffers = []; p.pendingEvents = []; p.renewOffer = null;
     delete p.retireMemo; delete p.coach; delete p.hidden;
     const orig = doc.seasons.map(s => [s.year, s.club, s.age, s.ovrEnd, !!s.loan]); const oInj = (doc.injuries || []).filter(i => i.major || (i.weeks || 0) >= 20).map(i => [i.year, i.name]);
@@ -5070,7 +5102,7 @@ const ENGINE = (() => {
   }
 
   return {
-    lgAt, clubsIn, movesAt, setActive, econY1: () => econCur()?.y1 || ECON_Y1, PAIRS, LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
+    lgAt, clubsIn, movesAt, setActive, stateAt, econY1: () => econCur()?.y1 || ECON_Y1, PAIRS, LEAGUES, CLUBS, CLUB, RIVALS, NATIONS, NATION, POS, ROLES, ROLE, STYLES, STYLE_DESC, ATTR_NAME, ATTR_GROUPS, GROUP_NAME, TALENT, TRAITS, HOME_LEAGUE, CONT_CUP, INJURIES,
     ACH, ACH_VER, achOf, DREAMS, dreamOptions, dreamJudge, posDist, posRequestChance, posRefusePenalty, withPos, rolesFor, roleGroup, attrsFor, groupsFor, ovr, ovrOf, roleScore, scoutStars, roleFit, clubStr, setClubMods, managerFor, takenNumbers, retiredAt, createPlayer, simulateSeason, endOfSeason, applyMove, setNumber,
     coachStints, parentsAlive, coachNow, recordDeath, farewellAsk, farewellAgree, farewellRefused, homecomingOffer, farewellOf, fwPact, fwClubLine, fanCer, fwSeasons, FW_CLUB,
     LG_SCHOOL, SCHOOLS, CLUB_SCHOOL, schoolOf, wiEcho, wiRewrite, goalRoutes, routesOf, routeSum, routeStyle, GR_KEYS, GR_NAME, GR_ALL, grTot, grFin, grSit, routeTop, routeByRole, routeShift, routeShiftLine,
