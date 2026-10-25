@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='1.5.3'</script>
+<script>window.SK_VER='1.5.4'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1433,8 +1433,11 @@ const ENGINE = (() => {
     CLUBS.filter(c => c.mil).forEach(c => { pow[c.id] = new Array(NY).fill(c.str); });
     LG_KEYS.forEach(k => { lm[k] = 0; trend[k] = null; lgM[k] = new Array(NY); lgIdx[k] = new Array(NY); });
     // 기록된 시즌(은퇴한 주인공과 진행 중인 커리어): 그해 그 구단의 리그와 순위는 사실이다
-    const recY = {}; const putRec = (y, club, lg, rank) => { if (!memY[club] || !PAIRED.has(lg)) return; (recY[y] = recY[y] || {})[club] = { lg, rank }; };
-    for (const { s } of led?.seasons || []) putRec(s[0], s[1], s[2], s[7]); for (const r of act) putRec(r[0], r[1], r[2], r[3]);
+    const recY = {}; const putRec = (y, club, lg, rank, src) => { if (!memY[club] || !PAIRED.has(lg)) return; (recY[y] = recY[y] || {})[club] = { lg, rank, src }; };
+    // 1.5.4 진행 중 커리어가 먼저: 내가 그 구단에서 뛴 다음 해에는, 은퇴한 주인공의 기록이 그 구단의 리그를 묶지 않는다(내 순위로 승강이 정해진다).
+    //   전엔 2130년 버그 시절의 은퇴 커리어가 '그해 리옹은 2부'라고 적어 둔 탓에, 같은 구단에서 우승해도 다시 2부로 끌려 내려갔다
+    const actAt = new Set(act.map(r => r[1] + '|' + r[0]));
+    for (const { s } of led?.seasons || []) if (!actAt.has(s[1] + '|' + (s[0] - 1)) || actAt.has(s[1] + '|' + s[0])) putRec(s[0], s[1], s[2], s[7], 'led'); for (const r of act) putRec(r[0], r[1], r[2], r[3], 'act');
     const moves = []; const cupsY = new Array(NY);
     // 기록된 시즌의 구단: 그해 대륙 대회 우승 기록이 없으면 우승하지 않은 것이다
     const recClubY = {}; const recWon = {};
