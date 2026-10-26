@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>window.SK_VER='1.5.6'</script>
+<script>window.SK_VER='1.5.7'</script>
 <title>세계선 커리어</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1733,6 +1733,7 @@ const ENGINE = (() => {
     p.press = (p.press || []).filter(x => yr(x.year)); p.branches = (p.branches || []).filter(b => b.year < Y);
     // 희귀 전술: 갈라진 해보다 앞서 실제로 발현한 것만 물려받는다(시즌이 끝날 때 판정하므로 그 시즌 연도 < 갈림길). 숨은 친화도는 같은 사람의 것
     p.tacs = (p.tacs || []).filter(t => t.year < Y).map(t => ({ ...t, cut: 0 })); p.tacKey = doc.tacKey || doc.id; // 물려받은 발현은 컷씬을 다시 띄우지 않는다
+    if (doc.pos === 'GK' || (doc.seasons || []).some(s => s.pos === 'GK')) p.gkfKey = doc.gkfKey || doc.id; // 1.5.7: 골키퍼 경력이 있는 분기는 원본이 쓰던 연습 성향 기준을 물려받는다(원본이 옛 분기라도 그 분기가 실제로 쓰던 자기 id)
     p.pkLog = (p.pkLog || []).filter(x => x.y == null || x.y < Y); p.bigLog = (p.bigLog || []).filter(x => x.y == null || x.y < Y);
     const F = p.flags || {}; for (const k of Object.keys(F)) { const v = F[k]; if (typeof v === 'number' && v >= 1990 && v >= Y) delete F[k]; else if (v && typeof v === 'object' && typeof v.year === 'number' && v.year >= Y) delete F[k]; }
     ['lastSeason', 'lastWhy', 'fateRetire', 'early', 'fateMove', 'scandal'].forEach(k => { if (F[k] != null && !(typeof F[k] === 'number' && F[k] < Y)) delete F[k]; });
@@ -4241,7 +4242,7 @@ const ENGINE = (() => {
   const GKF_P = { pk0: .14, fk0: .6, pkShare: .7, fkShare: .75, A0: 88, P0: 4.5, xK: 1.2, xMax: 6, tq0: 84, tqK: .5, pen: 8, inc: 4, ctr: .08, ctrXg: .35, gPK: .083, gFK: .024 };
   const gkfApt = (a) => .75 * (a.KIC || 0) + .25 * (a.GPO || 0);
   const gkfPk = (sk) => clamp(.78 + (sk - 80) * .005, .62, .9), gkfFk = (sk) => clamp(.05 + (sk - 80) * .0022, .015, .11);
-  const gkfTau = (p) => { const u = seeded('gkfTau|' + p.id)(); return u * u * u; }; /* 숨은 성향: 대부분 낮고 소수만 높다 */
+  const gkfTau = (p) => { const u = seeded('gkfTau|' + (p.gkfKey || p.id))(); return u * u * u; }; /* 1.5.7: 「만약에」로 갈라져도 같은 사람의 타고난 연습 성향(gkfKey = 원본 선수의 성향 기준). gkfKey가 없는 선수(새 선수·1.5.6 이전 분기)는 지금까지처럼 자기 id */ /* 숨은 성향: 대부분 낮고 소수만 높다 */
   const gkfEnc = (mgr) => ((hashStr('gkfE|' + (mgr?.name || '')) % 9) - 4) / 10; /* 감독의 세트피스 장려 −0.4~+0.4 */
   const gkfPath = (p) => ({ X: clamp((p.flags.gkfSP || 0) * GKF_P.xK, 0, GKF_P.xMax), mt: p.flags.gkfMT || 0 }); /* 전문 경로 효과: 숙련 X, 감독 신뢰 mt */
   function gkfDuty(p, tq, inc, mres, rng, apps) {
